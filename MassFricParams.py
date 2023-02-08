@@ -65,8 +65,8 @@ class MassFricParams:
         elif t > self.T[-1]:
             s = self.S[-1]
         else:
-            s = self.stFunc(t)
-        return torch.tensor(s, dtype=torch.float)
+            s = torch.from_numpy(self.stFunc(t))
+        return s
     
     # Output the information of this class
     def print_info(self):

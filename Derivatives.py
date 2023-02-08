@@ -41,14 +41,16 @@ def DCDy(y, v, t, MFParams):
     DCDy[1, 0, :] = MFParams.k / MFParams.m
     DCDy[1, 1, :] = MFParams.g * MFParams.RSParams[0] / y[1, :]
     DCDy[1, 2, :] = MFParams.g * MFParams.RSParams[1] / y[2, :]
-    DCDy[2, 1, :] = y[2, :] / MFParams.RSParams[2]
-    DCDy[2, 2, :] = y[1, :] / MFParams.RSParams[2]
+    # DCDy[2, 1, :] = y[2, :] / MFParams.RSParams[2]
+    # DCDy[2, 2, :] = y[1, :] / MFParams.RSParams[2]
+    DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2]
+    DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2]
     return DCDy
 
 # \partial C / \partial y, regularized
 def DCDy_regularized(y, v, t, MFParams):
     # Compute auxiliary Q1 and !2
-    Q1 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
+    Q1 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * y[2, :] * MFParams.RSParams[2])
     Q1 = Q1 / MFParams.RSParams[0]
     Q2 = y[1, :] / 2 / 1.e-6 * torch.exp(Q1)
     Q2_cliped = torch.clamp(Q2, min = -1.e10, max = 1.e10)

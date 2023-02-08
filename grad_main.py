@@ -18,6 +18,7 @@ from MassFricParams import MassFricParams
 from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
 from GradientDescent import GradDescent, objGradFunc
+from plotSequences import plot_differences
 
 torch.set_default_dtype(torch.float)
 
@@ -47,6 +48,8 @@ max_iters = 100
 maxFuncCalls = 200
 regularizedFlag = False
 noLocalSearch = True
+stepping = 'lsrh'
+lsrh_steps = 10
 
 # Sequence specific parameters
 T = 5.
@@ -68,9 +71,12 @@ kwgs = {
     'beta_targ' : beta_targ, 
     'beta_low' : beta_low, 
     'beta_high' : beta_high, 
+    'scaling' : scaling, 
     'regularizedFlag' : regularizedFlag, 
     'maxFuncCalls' : maxFuncCalls, 
     'noLocalSearch' : noLocalSearch, 
+    'stepping' : stepping, 
+    'lsrh_steps' : lsrh_steps, 
     'T' : T, 
     'NofTPts' : NofTPts, 
     'this_rtol': this_rtol, 
@@ -116,8 +122,8 @@ for i in range(N_AllIters):
     myGradBB = GradDescent(this_alpha, kwgs['alp_low'], kwgs['alp_high'], kwgs['VT'], 
                            this_beta, kwgs['beta_low'], kwgs['beta_high'], 
                            kwgs['y0'], v, t, 
-                           objGrad_func = objGradFunc, scaling = scaling, 
-                           max_steps = 10, stepping = 'BB', obs_rtol = 1e-5, lsrh_steps = 10, 
+                           objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
+                           max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
                            regularizedFlag = kwgs['regularizedFlag'], 
                            T = kwgs['T'], NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'])
     
@@ -126,3 +132,4 @@ for i in range(N_AllIters):
     # Update parameters
     this_beta = myGradBB.beta_optimal
     print("Optimal beta: ", this_beta)
+
