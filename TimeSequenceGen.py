@@ -63,6 +63,7 @@ class TimeSequenceGen:
                                  self.MFParams.g * (a * torch.asinh(
                                      y[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2] / DRS)) / a)
                                  )), 
+                                 # 1 - 1.e-6 * y[2] / DRS]) 
                                  1 - y[2] * y[1] / DRS])
         else:
             DyDt = torch.tensor([y[1], 
@@ -70,7 +71,8 @@ class TimeSequenceGen:
                                  self.MFParams.g * (fStar + \
                                                     a * torch.log(y[1] / 1.e-6) + \
                                                     b * torch.log(1.e-6 * y[2] / DRS)), 
-                                 1 - y[2] * y[1] / DRS])             
+                                 # 1 - 1.e-6 * y[2] / DRS]) 
+                                 1 - y[2] * y[1] / DRS])           
         # DEBUG LINES
 #         print("-" * 30)
 #         print('t = ', t)
