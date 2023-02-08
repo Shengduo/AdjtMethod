@@ -1,4 +1,6 @@
 ## Import standard librarys
+from atexit import register
+import re
 import torch
 import torchdiffeq
 import pickle
@@ -28,7 +30,7 @@ from Derivatives import *
 # this_atol = 1.e-10
 
 # Function observation function
-def objGradFunc(alpha, VT, beta, y0, targ_y, scaling, regularizedFlag = False, objOnly = False, 
+def objGradFunc(alpha, VT, beta, y0, targ_y, scaling, regularizedFlag, objOnly = False, 
                 T = 5., NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8):
     # Generate target v
     this_RSParams = beta * scaling
@@ -66,7 +68,8 @@ class GradDescent:
                  beta0, beta_low, beta_high, 
                  y0, targ_y, t, 
                  objGrad_func, max_steps, scaling = torch.tensor([1., 1., 1., 1.]), 
-                 stepping = 'BB', obs_rtol = 1e-5, grad_atol = 1.e-10, lsrh_steps = 10):
+                 stepping = 'BB', obs_rtol = 1e-5, grad_atol = 1.e-10, lsrh_steps = 10, 
+                 regularizedFlag = False, T = 5., NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8):
         # Initial parameters, and their lower and upper bound
         # Alpha contains the non-gradient-able parameters
         self.alpha0 = alpha0
@@ -113,14 +116,23 @@ class GradDescent:
         
         # Maximum line search steps
         self.lsrh_steps = lsrh_steps
-        
+
+        # Time sequence parameters
+        self.regularizedFlag = regularizedFlag
+        self.T = T
+        self.NofTPts = NofTPts
+        self.this_rtol = this_rtol
+        self.this_atol = this_atol
+
         # Get Initial observations
         self.objs = []
     
     # First descent, cannot use Barzilai–Borwein stepping, using linesearch
     def firstDescent(self):
         # Compute obj and grad
-        obj, grad = self.objGrad_func(self.alpha0, self.VT, self.betas[-1], self.y0, self.targ_y, self.scaling)
+        obj, grad = self.objGrad_func(self.alpha0, self.VT, self.betas[-1], self.y0, self.targ_y, self.scaling, 
+                                      self.regularizedFlag, False, 
+                                      self.T, self.NofTPts, self.this_rtol, self.this_atol)
         self.objs = [obj]
         self.grads = [grad]
         
@@ -146,7 +158,8 @@ class GradDescent:
 
             # Append the betas and objs
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
-                                                      self.scaling, objOnly = False)
+                                                      self.scaling, self.regularizedFlag, False, 
+                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol)
             self.betas.append(beta_trial)
             self.objs.append(obj_trial)
             self.grads.append(grad_trial)
@@ -203,7 +216,8 @@ class GradDescent:
         for i in range(self.lsrh_steps):
             beta_trial = self.project(self.betas[-1] - stepSize * self.grads[-1])
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
-                                                      self.scaling, objOnly = True)
+                                                      self.scaling, self.regularizedFlag, True, 
+                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol)
             print("shit")
             
             # Break if this beta is good
@@ -219,7 +233,8 @@ class GradDescent:
         
         # Append the betas and objs
         obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
-                                                  self.scaling, objOnly = False)
+                                                  self.scaling, self.regularizedFlag, False, 
+                                                  self.T, self.NofTPts, self.this_rtol, self.this_atol)
         self.betas.append(beta_trial)
         self.objs.append(obj_trial)
         self.grads.append(grad_trial)
