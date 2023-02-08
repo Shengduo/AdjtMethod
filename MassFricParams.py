@@ -80,7 +80,8 @@ class MassFricParams:
         print('fr:       ', self.RSParams[3])
         print('a:        ', self.RSParams[0])
         print('b:        ', self.RSParams[1])
-        print('DRS:      ', self.RSParams[2])
+        # print('DRS:      ', self.RSParams[2])
+        print('1 / DRS:      ', self.RSParams[2])
         print('y0:       ', self.y0)
         
         # Plot V at t

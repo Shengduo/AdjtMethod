@@ -134,8 +134,9 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit.png'):
 
 
 ## Main executions 
-betas = torch.tensor([[0.011, 0.016, 1.e0, 0.58], 
-                      [0.008, 0.012, 2.e0, 0.5], 
-                      [0.0110, 0.0100, 1.9997, 0.5050]])
+betas = torch.tensor([[0.011, 0.016, 1. / 1.e0, 0.58], 
+                      [0.008, 0.012, 1. / 2.e0, 0.5], 
+                      # [0.0110, 0.0100, 1. / 1.9997, 0.5050]])
+                      [0.0110, 0.0099, 0.5007, 0.5032]])
 betas_legend = ["True", "Init", "Finl"]
 plot_differences(kwgs, betas, betas_legend, './plots/shit.png')

@@ -50,6 +50,7 @@ def DCDy(y, v, t, MFParams):
 # \partial C / \partial y, regularized
 def DCDy_regularized(y, v, t, MFParams):
     # Compute auxiliary Q1 and !2
+    # Q1 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
     Q1 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * y[2, :] * MFParams.RSParams[2])
     Q1 = Q1 / MFParams.RSParams[0]
     Q2 = y[1, :] / 2 / 1.e-6 * torch.exp(Q1)
@@ -65,8 +66,10 @@ def DCDy_regularized(y, v, t, MFParams):
     DCDy[1, 0, :] = MFParams.k / MFParams.m
     DCDy[1, 1, :] = MFParams.g * pfpy1
     DCDy[1, 2, :] = MFParams.g * pfpy2
-    DCDy[2, 1, :] = y[2, :] / MFParams.RSParams[2]
-    DCDy[2, 2, :] = y[1, :] / MFParams.RSParams[2]
+    # DCDy[2, 1, :] = y[2, :] / MFParams.RSParams[2]
+    # DCDy[2, 2, :] = y[1, :] / MFParams.RSParams[2]
+    DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2]
+    DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2]
     
 #     # DEBUG LINES
 #     print("DCDy: ", DCDy)
@@ -90,16 +93,22 @@ def DDCDyDotDt(y, v, t, MFParams):
 def DCDBeta(y, v, t, MFParams):
     DCDBeta = torch.zeros([y.shape[0], MFParams.RSParams.shape[0], y.shape[1]])
     DCDBeta[1, 0, :] = MFParams.g * torch.log(y[1, :] / 1.e-6)
-    DCDBeta[1, 1, :] = MFParams.g * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
-    DCDBeta[1, 2, :] = -MFParams.g * MFParams.RSParams[1] / MFParams.RSParams[2]
+    # DCDBeta[1, 1, :] = MFParams.g * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
+    # DCDBeta[1, 2, :] = -MFParams.g * MFParams.RSParams[1] / MFParams.RSParams[2]
+    
+    DCDBeta[1, 1, :] = MFParams.g * torch.log(1.e-6 * y[2, :] * MFParams.RSParams[2])
+    DCDBeta[1, 2, :] = MFParams.g * MFParams.RSParams[1] / MFParams.RSParams[2]
+
     DCDBeta[1, 3, :] = MFParams.g
-    DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
+    # DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
+    DCDBeta[2, 2, :] = y[1, :] * y[2, :]
     return DCDBeta
 
 # \partial C / \partial \beta, regularized
 def DCDBeta_regularized(y, v, t, MFParams):
     # Compute auxiliary Q1 and !2
-    Q1 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
+    # Q1 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
+    Q1 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * y[2, :] * MFParams.RSParams[2]) 
     Q1 = Q1 / MFParams.RSParams[0]
     Q2 = y[1, :] / 2 / 1.e-6 * torch.exp(Q1)
     Q2_cliped = torch.clamp(Q2, min = -1.e10, max = 1.e10)
@@ -110,8 +119,10 @@ def DCDBeta_regularized(y, v, t, MFParams):
     
     # Partial derivatives
     pfpbeta0 = torch.asinh(Q2) - Q1 * Q2Term
-    pfpbeta1 = Q2Term * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
-    pfpbeta2 = -Q2Term * MFParams.RSParams[1] / MFParams.RSParams[2]
+    # pfpbeta1 = Q2Term * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
+    pfpbeta1 = Q2Term * torch.log(1.e-6 * y[2, :] * MFParams.RSParams[2])
+    # pfpbeta2 = -Q2Term * MFParams.RSParams[1] / MFParams.RSParams[2]
+    pfpbeta2 = Q2Term * MFParams.RSParams[1] / MFParams.RSParams[2]
     pfpbeta3 = Q2Term
     
     DCDBeta = torch.zeros([y.shape[0], MFParams.RSParams.shape[0], y.shape[1]])
@@ -119,8 +130,8 @@ def DCDBeta_regularized(y, v, t, MFParams):
     DCDBeta[1, 1, :] = MFParams.g * pfpbeta1
     DCDBeta[1, 2, :] = MFParams.g * pfpbeta2
     DCDBeta[1, 3, :] = MFParams.g * pfpbeta3
-    DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
-    
+    # DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
+    DCDBeta[2, 2, :] = y[1, :] * y[2, :]
 #     # DEBUG LINES
 #     print("DCDBeta: ", DCDBeta)
     

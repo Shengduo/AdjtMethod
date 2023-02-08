@@ -33,14 +33,14 @@ alp_hi = torch.tensor([100., 2., 10., 10.])
 y0 = torch.tensor([0., 1.0, 1.0])
 
 # Start beta
-beta0 = torch.tensor([0.008, 0.012, 2.e0, 0.5])
+beta0 = torch.tensor([0.008, 0.012, 1. / 2.e0, 0.5])
 
 # Target beta
-beta_targ = torch.tensor([0.011, 0.016, 1.e0, 0.58])
+beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e0, 0.58])
 
 # Beta ranges
-beta_low = torch.tensor([0.001, 0.006, 0.5e-3, 0.3])
-beta_high = torch.tensor([0.021, 0.026, 5, 0.8])
+beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
+beta_high = torch.tensor([0.021, 0.026, 1. / 0.5e-3, 0.8])
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
@@ -87,7 +87,7 @@ kwgs = {
 def generate_target_v(alpha, VT, beta, y0, this_rtol, this_atol, regularizedFlag):
     # y0[1] = alpha[2]
     targ_SpringSlider = MassFricParams(alpha, VT, beta, y0)
-    targ_SpringSlider.print_info()
+    # targ_SpringSlider.print_info()
     targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, 
                                rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag)
     v = targ_seq.default_y[1, :], 

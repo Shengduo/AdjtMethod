@@ -48,7 +48,8 @@ class TimeSequenceGen:
         # Need to use regularized rate-and-state
         a = self.MFParams.RSParams[0]
         b = self.MFParams.RSParams[1]
-        DRS = self.MFParams.RSParams[2]
+        # DRS = self.MFParams.RSParams[2]
+        DRSInv = self.MFParams.RSParams[2]
         fStar = self.MFParams.RSParams[3]
         
         # Regularized rate-and-state friction
@@ -58,21 +59,35 @@ class TimeSequenceGen:
         # Get the displacement at t of the spring
         
         if self.regularizedFlag:
+            # DyDt = torch.tensor([y[1], 
+            #                      self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
+            #                      self.MFParams.g * (a * torch.asinh(
+            #                          y[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2] / DRS)) / a)
+            #                      )), 
+            #                      # 1 - 1.e-6 * y[2] / DRS]) 
+            #                      1 - y[2] * y[1] / DRS])
             DyDt = torch.tensor([y[1], 
                                  self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
                                  self.MFParams.g * (a * torch.asinh(
-                                     y[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2] / DRS)) / a)
+                                     y[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2] * DRSInv)) / a)
                                  )), 
                                  # 1 - 1.e-6 * y[2] / DRS]) 
-                                 1 - y[2] * y[1] / DRS])
+                                 1 - y[2] * y[1] * DRSInv])
         else:
+            # DyDt = torch.tensor([y[1], 
+            #                      self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
+            #                      self.MFParams.g * (fStar + \
+            #                                         a * torch.log(y[1] / 1.e-6) + \
+            #                                         b * torch.log(1.e-6 * y[2] / DRS)), 
+            #                      # 1 - 1.e-6 * y[2] / DRS]) 
+            #                      1 - y[2] * y[1] / DRS])     
             DyDt = torch.tensor([y[1], 
                                  self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
                                  self.MFParams.g * (fStar + \
                                                     a * torch.log(y[1] / 1.e-6) + \
-                                                    b * torch.log(1.e-6 * y[2] / DRS)), 
+                                                    b * torch.log(1.e-6 * y[2] * DRSInv)), 
                                  # 1 - 1.e-6 * y[2] / DRS]) 
-                                 1 - y[2] * y[1] / DRS])           
+                                 1 - y[2] * y[1] * DRSInv])   
         # DEBUG LINES
 #         print("-" * 30)
 #         print('t = ', t)
