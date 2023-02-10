@@ -33,22 +33,26 @@ alp_hi = torch.tensor([100., 2., 10., 10.])
 y0 = torch.tensor([0., 1.0, 1.0])
 
 # Start beta
-beta0 = torch.tensor([0.008, 0.012, 1. / 2.e0, 0.5])
+beta0 = torch.tensor([0.008, 0.004, 1. / 2.e0, 0.2])
 
 # Target beta
-beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e0, 0.58])
+beta_targ = torch.tensor([0.008, 0.012, 1. / 1.e0, 0.58])
 
 # Beta ranges
-beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
-beta_high = torch.tensor([0.021, 0.026, 1. / 0.5e-3, 0.8])
+# beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
+beta_low = torch.tensor([0.001, 0.001, 1.e-3, 0.3])
+# beta_high = torch.tensor([0.021, 0.026, 1. / 0.5e-3, 0.8])
+beta_high = torch.tensor([100., 100., 1.0e3, 0.8])
+
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
 max_iters = 100
 maxFuncCalls = 200
-regularizedFlag = False
+regularizedFlag = True
 noLocalSearch = True
-stepping = 'lsrh'
+# stepping = 'lsrh'
+stepping = 'BB'
 lsrh_steps = 10
 
 # Sequence specific parameters
@@ -133,3 +137,11 @@ for i in range(N_AllIters):
     this_beta = myGradBB.beta_optimal
     print("Optimal beta: ", this_beta)
 
+# Plot sequences
+print("beta_targ: ", beta_targ)
+print("beta0: ", beta0)
+print("this_beta: ", this_beta)
+
+betas = [beta_targ, beta0, this_beta]
+betas_legend = ["True", "Init", "Finl"]
+plot_differences(kwgs, betas, betas_legend, './plots/trial5_resultCurves.png')

@@ -44,20 +44,20 @@ this_atol = 1.e-10
 regularizedFlag = True
 
 # Generate target v
-targ_RSParams = torch.tensor([0.011, 0.016, 1. / 1.e-3, 0.58])
+targ_RSParams = torch.tensor([0.006, 0.010, 1. / 1., 0.58])
 targ_SpringSlider = MassFricParams(kmg, VT, targ_RSParams, y0)
-targ_SpringSlider.print_info()
+# targ_SpringSlider.print_info()
 targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag)
 v = targ_seq.default_y[1, :]
 # targ_seq.plotY(targ_seq.t, targ_seq.default_y)
 
 
 # A new set of RS params
-new_RSParams = torch.tensor([0.008, 0.020, 1. / 6.e-3, 0.6])
+new_RSParams = torch.tensor([0.008, 0.012, 1. / 5., 0.3])
 # new_RSParams = torch.tensor([0.011, 0.016, 1.e-3, 0.58])
 new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0)
 new_seq = TimeSequenceGen(T, NofTPts, new_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag)
-new_seq.plotY(new_seq.t, new_seq.default_y)
+# new_seq.plotY(new_seq.t, new_seq.default_y)
 
 
 # Report observation:

@@ -181,6 +181,7 @@ class GradDescent:
         print("Initial descent succeeds: ", success)
         print("Observation: ", self.objs[-1])
         print("Gradient (scaled): ", self.grads[-1])
+        print("beta: ", self.betas[-1])
         print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / torch.linalg.norm(self.targ_y))
         
         if torch.min(self.grad_norms) < self.grad_atol:
@@ -194,6 +195,7 @@ class GradDescent:
             print("The {0}th descent succeeds: ".format(i + 1), success)
 #             print("Observation: ", self.objs[-1])
             print("Gradient (scaled): ", self.grads[-1])
+            print("beta: ", self.betas[-1])
             print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / torch.linalg.norm(self.targ_y))
             
             # Check if the gradient is small enough
