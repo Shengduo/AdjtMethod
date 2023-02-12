@@ -84,8 +84,8 @@ class MassFricParams:
         print('1 / DRS:      ', self.RSParams[2])
         print('y0:       ', self.y0)
         
-        # Plot V at t
-        plt.figure()
-        plt.plot(self.T, self.V, linewidth = 2.0)
-        plt.show()
+        # # Plot V at t
+        # plt.figure()
+        # plt.plot(self.T, self.V, linewidth = 2.0)
+        # plt.show()
         

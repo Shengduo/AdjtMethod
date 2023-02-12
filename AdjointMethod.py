@@ -15,7 +15,7 @@ from Derivatives import *
 
 class AdjDerivs:
     # Constructor
-    def __init__(self, y, v, t, MFParams, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8):
+    def __init__(self, y, v, t, MFParams, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8, solver = 'dopri5'):
         self.y = y
         self.v = v
         self.t = t
@@ -29,7 +29,7 @@ class AdjDerivs:
         self.regularizedFlag = regularizedFlag
         self.rtol = rtol
         self.atol = atol
-        
+        self.solver = solver
         
         ## Calculate the partial derivatives ##
         if regularizedFlag:
@@ -186,7 +186,7 @@ class AdjDerivs:
         
         # Solve for L(t)
         L = odeint(self.f_l, L0, torch.flip(self.tau, [0]), 
-                   rtol = self.rtol, atol = self.atol, method = 'dopri5')
+                   rtol = self.rtol, atol = self.atol, method = self.solver)
         
         L = L.reshape([L.shape[0], 1, L.shape[1]])
         L = torch.flip(L, [0])

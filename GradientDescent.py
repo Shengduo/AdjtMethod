@@ -31,13 +31,14 @@ from Derivatives import *
 
 # Function observation function
 def objGradFunc(alpha, VT, beta, y0, targ_y, scaling, regularizedFlag, objOnly = False, 
-                T = 5., NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8):
+                T = 5., NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, solver = 'dopri5'):
     # Generate target v
     this_RSParams = beta * scaling
     this_SpringSlider = MassFricParams(alpha, VT, this_RSParams, y0)
     
     this_seq = TimeSequenceGen(T, NofTPts, this_SpringSlider, 
-                               rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag)
+                               rtol = this_rtol, atol = this_atol, regularizedFlag = regularizedFlag, 
+                               solver = solver)
     
     # Compute the value of objective function
     obj = O(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider)
@@ -53,7 +54,7 @@ def objGradFunc(alpha, VT, beta, y0, targ_y, scaling, regularizedFlag, objOnly =
         grad = 0.
     else:
         myAdj = AdjDerivs(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider, 
-                          rtol = this_rtol, atol = this_atol, regularizedFlag = regularizedFlag)
+                          rtol = this_rtol, atol = this_atol, regularizedFlag = regularizedFlag, solver = solver)
         grad = myAdj.dOdBeta / scaling
         
     return obj, grad
@@ -69,7 +70,8 @@ class GradDescent:
                  y0, targ_y, t, 
                  objGrad_func, max_steps, scaling = torch.tensor([1., 1., 1., 1.]), 
                  stepping = 'BB', obs_rtol = 1e-5, grad_atol = 1.e-10, lsrh_steps = 10, 
-                 regularizedFlag = False, T = 5., NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8):
+                 regularizedFlag = False, T = 5., NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
+                 solver = 'dopri5'):
         # Initial parameters, and their lower and upper bound
         # Alpha contains the non-gradient-able parameters
         self.alpha0 = alpha0
@@ -123,6 +125,7 @@ class GradDescent:
         self.NofTPts = NofTPts
         self.this_rtol = this_rtol
         self.this_atol = this_atol
+        self.solver = solver
 
         # Get Initial observations
         self.objs = []
@@ -132,7 +135,7 @@ class GradDescent:
         # Compute obj and grad
         obj, grad = self.objGrad_func(self.alpha0, self.VT, self.betas[-1], self.y0, self.targ_y, self.scaling, 
                                       self.regularizedFlag, False, 
-                                      self.T, self.NofTPts, self.this_rtol, self.this_atol)
+                                      self.T, self.NofTPts, self.this_rtol, self.this_atol, self.solver)
         self.objs = [obj]
         self.grads = [grad]
         
@@ -159,7 +162,7 @@ class GradDescent:
             # Append the betas and objs
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
                                                       self.scaling, self.regularizedFlag, False, 
-                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol)
+                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol, self.solver)
             self.betas.append(beta_trial)
             self.objs.append(obj_trial)
             self.grads.append(grad_trial)
@@ -219,7 +222,7 @@ class GradDescent:
             beta_trial = self.project(self.betas[-1] - stepSize * self.grads[-1])
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
                                                       self.scaling, self.regularizedFlag, True, 
-                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol)
+                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol, self.solver)
             print("shit")
             
             # Break if this beta is good
@@ -236,7 +239,7 @@ class GradDescent:
         # Append the betas and objs
         obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
                                                   self.scaling, self.regularizedFlag, False, 
-                                                  self.T, self.NofTPts, self.this_rtol, self.this_atol)
+                                                  self.T, self.NofTPts, self.this_rtol, self.this_atol, self.solver)
         self.betas.append(beta_trial)
         self.objs.append(obj_trial)
         self.grads.append(grad_trial)
