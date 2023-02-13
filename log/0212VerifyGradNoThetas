@@ -1,0 +1,26 @@
+Objective value:  tensor(0.1912)
+Time cost in computing gradients:  2.446556329727173
+Time cost in computing gradients:  2.374472141265869
+====================  Gradient via Adjoint method  ====================
+myRegADJ.dOdBeta:  tensor([-13.6874,  18.9395,  -0.0741,  -1.2292])
+myUnRegADJ.dOdBeta:  tensor([-13.6875,  18.9396,  -0.0741,  -1.2292])
+
+
+====================  Gradient via Finite Difference  ====================
+----------------------------------------
+RSParams:  tensor([0.0080, 0.0120, 0.2000, 0.3000])
+RSParamsPlus:  tensor([0.0081, 0.0120, 0.2000, 0.3000])
+RSParamsMinus:  tensor([0.0079, 0.0120, 0.2000, 0.3000])
+----------------------------------------
+RSParams:  tensor([0.0080, 0.0120, 0.2000, 0.3000])
+RSParamsPlus:  tensor([0.0080, 0.0121, 0.2000, 0.3000])
+RSParamsMinus:  tensor([0.0080, 0.0119, 0.2000, 0.3000])
+----------------------------------------
+RSParams:  tensor([0.0080, 0.0120, 0.2000, 0.3000])
+RSParamsPlus:  tensor([0.0080, 0.0120, 0.2020, 0.3000])
+RSParamsMinus:  tensor([0.0080, 0.0120, 0.1980, 0.3000])
+----------------------------------------
+RSParams:  tensor([0.0080, 0.0120, 0.2000, 0.3000])
+RSParamsPlus:  tensor([0.0080, 0.0120, 0.2000, 0.3030])
+RSParamsMinus:  tensor([0.0080, 0.0120, 0.2000, 0.2970])
+Numerical gradient via Finite Difference:  tensor([-13.6925,  18.8882,  -0.0740,  -1.2307])
