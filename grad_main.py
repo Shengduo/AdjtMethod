@@ -94,9 +94,9 @@ def generate_target_v(alpha, VT, beta, y0, this_rtol, this_atol, regularizedFlag
     # targ_SpringSlider.print_info()
     targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, 
                                rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag)
-    v = targ_seq.default_y[1, :], 
+    # v = targ_seq.default_y[1, :]
     t = targ_seq.t
-    return v[0], t
+    return targ_seq.default_y, t
 
 
 ## Number of total alpha-beta iterations
@@ -144,4 +144,4 @@ print("this_beta: ", this_beta)
 
 betas = [beta_targ, beta0, this_beta]
 betas_legend = ["True", "Init", "Finl"]
-plot_differences(kwgs, betas, betas_legend, './plots/trial5_resultCurves.png')
+plot_differences(kwgs, betas, betas_legend, './plots/trial6_resultCurves.png')

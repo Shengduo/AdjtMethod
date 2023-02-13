@@ -1,7 +1,7 @@
 """
 Use class GenerateVT to generate imposed sliprate-time history
 """
-## Import standard librarys
+## Import standard libraries
 import torch
 import torchdiffeq
 import pickle
@@ -39,7 +39,7 @@ VT_NofTpts = 1000
 VT_flag = "simple"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-plt_save_path = "./plots/VT_" + plotsName + ".png"
+plt_save_path = "./plots/0212VT_" + plotsName + ".png"
 
 # For prescribed VT
 VT_tts = torch.linspace(VT_Trange[0], VT_Trange[1], VT_nOfTerms)
@@ -137,9 +137,9 @@ def generate_target_v(alpha, VT, beta, y0, this_rtol, this_atol, regularizedFlag
     # targ_SpringSlider.print_info()
     targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, 
                                rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
-    v = targ_seq.default_y[1, :], 
+    # v = targ_seq.default_y[1, :], 
     t = targ_seq.t
-    return v[0], t
+    return targ_seq.default_y, t
 
 
 ## Number of total alpha-beta iterations
@@ -184,10 +184,12 @@ for i in range(N_AllIters):
     print("Optimal beta: ", this_beta)
 
 # Plot sequences
+print("VV: ", VT_instance.VV)
+print("tt: ", VT_instance.tt)
 print("beta_targ: ", beta_targ)
 print("beta0: ", beta0)
 print("this_beta: ", this_beta)
 
 betas = [beta_targ, beta0, this_beta]
 betas_legend = ["True", "Init", "Finl"]
-plot_differences(kwgs, betas, betas_legend, "./plots/Res_" + plotsName + ".png")
+plot_differences(kwgs, betas, betas_legend, "./plots/0212Res_" + plotsName + ".png")

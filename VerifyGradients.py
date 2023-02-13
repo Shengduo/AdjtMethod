@@ -20,6 +20,8 @@ from AdjointMethod import AdjDerivs
 from GradientDescent import GradDescent, objGradFunc
 from plotSequences import plot_differences
 from Derivatives import *
+# from DerivativesAddTheta import *
+
 
 torch.set_default_dtype(torch.float)
 
@@ -48,7 +50,7 @@ targ_RSParams = torch.tensor([0.006, 0.010, 1. / 1., 0.58])
 targ_SpringSlider = MassFricParams(kmg, VT, targ_RSParams, y0)
 # targ_SpringSlider.print_info()
 targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag)
-v = targ_seq.default_y[1, :]
+v = targ_seq.default_y
 # targ_seq.plotY(targ_seq.t, targ_seq.default_y)
 
 

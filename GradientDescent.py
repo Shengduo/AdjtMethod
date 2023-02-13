@@ -1,6 +1,4 @@
 ## Import standard librarys
-from atexit import register
-import re
 import torch
 import torchdiffeq
 import pickle
@@ -18,7 +16,7 @@ from MassFricParams import MassFricParams
 from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
 from Derivatives import *
-
+# from DerivativesAddTheta import *
 
 ## Fixed parameters
 # # Sequence specific parameters

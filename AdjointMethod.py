@@ -12,12 +12,13 @@ from torchdiffeq import odeint
 from xitorch.interpolate import Interp1D
 from scipy.interpolate import interp1d
 from Derivatives import *
+# from DerivativesAddTheta import *
 
 class AdjDerivs:
     # Constructor
-    def __init__(self, y, v, t, MFParams, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8, solver = 'dopri5'):
+    def __init__(self, y, y_targ, t, MFParams, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8, solver = 'dopri5'):
         self.y = y
-        self.v = v
+        self.y_targ = y_targ
         self.t = t
         
         # Define tau = T - t
@@ -33,20 +34,20 @@ class AdjDerivs:
         
         ## Calculate the partial derivatives ##
         if regularizedFlag:
-            self.dCdy = DCDy_regularized(y, v, t, MFParams)
-            self.dCdBeta = DCDBeta_regularized(y, v, t, MFParams)
+            self.dCdy = DCDy_regularized(y, y_targ, t, MFParams)
+            self.dCdBeta = DCDBeta_regularized(y, y_targ, t, MFParams)
         else:
-            self.dCdy = DCDy(y, v, t, MFParams)
-            self.dCdBeta = DCDBeta(y, v, t, MFParams)
+            self.dCdy = DCDy(y, y_targ, t, MFParams)
+            self.dCdBeta = DCDBeta(y, y_targ, t, MFParams)
         
-        self.dody = DoDy(y, v, t, MFParams)
-        self.dCdyDot = DCDyDot(y, v, t, MFParams)
-        self.ddCdyDotdt = DDCDyDotDt(y, v, t, MFParams)
-        self.dodyDot = DoDyDot(y, v, t, MFParams)
-        self.ddodyDotdt = DDoDyDotDt(y, v, t, MFParams)
-        self.dodBeta = DoDBeta(y, v, t, MFParams)
-        self.dodyDot = DoDyDot(y, v, t, MFParams)
-        self.dCdyDot = DCDyDot(y, v, t, MFParams)
+        self.dody = DoDy(y, y_targ, t, MFParams)
+        self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
+        self.ddCdyDotdt = DDCDyDotDt(y, y_targ, t, MFParams)
+        self.dodyDot = DoDyDot(y, y_targ, t, MFParams)
+        self.ddodyDotdt = DDoDyDotDt(y, y_targ, t, MFParams)
+        self.dodBeta = DoDBeta(y, y_targ, t, MFParams)
+        self.dodyDot = DoDyDot(y, y_targ, t, MFParams)
+        self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         
         # Calculate A_z and u_z
         self.Az = self.A_z()

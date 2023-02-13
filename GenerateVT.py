@@ -57,6 +57,10 @@ class GenerateVT:
         for i in range(1, len(tt)):
             V[T >= tt[i]] = VV[i]
         
+        # Update self.tt, self.VV
+        self.tt = tt
+        self.VV = VV
+
         return torch.stack([V, T])
 
     # Fourier function series
@@ -81,6 +85,10 @@ class GenerateVT:
 
         # Clip V
         V = torch.clip(V, min=self.Vrange[0], max=self.Vrange[1])
+
+        # Update self.tt, self.VV
+        self.tt = 0.
+        self.VV = 0.
 
         return torch.stack([V, T])
     
@@ -113,5 +121,9 @@ class GenerateVT:
         for i in range(1, len(tt)):
             V[T >= tt[i]] = VV[i]
         
+        # Update self.tt, self.VV
+        self.tt = tt
+        self.VV = VV
+
         return torch.stack([V, T])
 

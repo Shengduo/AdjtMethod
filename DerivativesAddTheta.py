@@ -1,5 +1,5 @@
 ## Implement the specific derivatives
-## O = \int_0^T (y[1](t) - v(t)) ^ 2 dt 
+## O = \int_0^T (y[1](t) - v(t)) ^ 2 + (y[2](t) - theta(t)) dt 
 # To compute dO / d \beta, one needs to implement six functions
 # In all tensors, the last dimension is time
 ## Import standard librarys
@@ -20,6 +20,7 @@ from matplotlib import pyplot as plt
 def DoDy(y, y_targ, t, MFParams):
     DoDy = torch.zeros(y.shape)
     DoDy[1, :] = 2. * (y[1, :] - y_targ[1, :])
+    DoDy[2, :] = 2. * (y[2, :] - y_targ[2, :]) 
     return DoDy
 
 # \partial o / \partial yDot
@@ -142,7 +143,7 @@ def DCDBeta_regularized(y, y_targ, t, MFParams):
 def O(y, y_targ, t, MFParams):
     # Least square error
     O = torch.trapezoid(
-        torch.square(y[1, :] - y_targ[1, :]), 
+        torch.square(y[1, :] - y_targ[1, :]) + torch.square(y[2, :] - y_targ[2, :]) , 
         t
     )
     
