@@ -97,7 +97,7 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit.png'):
         targ_SpringSlider = MassFricParams(kwgs['alpha0'], kwgs['VT'], beta, kwgs['y0'])
         # targ_SpringSlider.print_info()
         targ_seq = TimeSequenceGen(kwgs['T'], kwgs['NofTPts'], targ_SpringSlider, 
-                                   rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], regularizedFlag=kwgs['regularizedFlag'])
+                                   rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
         
         # Append the sequences into the list
         ys.append(targ_seq.default_y)

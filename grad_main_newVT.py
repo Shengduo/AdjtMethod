@@ -29,15 +29,15 @@ torch.set_default_dtype(torch.float)
 # Gradient descent on fixed $\alpha = [k, m, g]$ and $V$ 
 # Set up the parameters
 plotsName = "SimpleGen"
-alpha0 = torch.tensor([50., 1., 9.8])
+alpha0 = torch.tensor([50., 5., 9.8])
 # VT = torch.tensor([[1., 1.], [0., 5.]])
 
 # Generate VT series
 VT_Vrange = torch.tensor([5., 15.])
-VT_Trange = torch.tensor([0., 50.])
+VT_Trange = torch.tensor([0., 20.])
 VT_NofTpts = 1000
 VT_flag = "simple"
-VT_nOfTerms = 20
+VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
 plt_save_path = "./plots/VT_" + plotsName + ".png"
 
@@ -102,7 +102,8 @@ this_rtol = 1.e-6
 this_atol = 1.e-8
 
 # Solver
-solver = 'rk4'
+# solver = 'rk4'
+solver = 'dopri5'
 
 # Store the keywords for optAlpha
 kwgs = {
