@@ -1,617 +1,619 @@
+/home/shengduo/anaconda3/lib/python3.9/site-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.16.5 and <1.23.0 is required for this version of SciPy (detected version 1.24.1
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
 ########################################  Total Iteration 0 ########################################
-Time cost in computing gradients:  0.9442088603973389
+Time cost in computing gradients:  0.90547776222229
 shit
-Time cost in computing gradients:  0.9057719707489014
+Time cost in computing gradients:  0.7078397274017334
 ========================================
 Initial descent succeeds:  tensor(True)
-Observation:  tensor(4.2930)
-Gradient (scaled):  tensor([-6.4240e+02,  5.6282e+02,  3.9823e-01, -3.9659e+01])
+Observation:  tensor(4.2905)
+Gradient (scaled):  tensor([-6.4220e+02,  5.6267e+02,  3.9790e-01, -3.9647e+01])
 beta:  tensor([0.0088, 0.0093, 0.5000, 0.3000])
 Relative error of observation:  tensor(0.0005)
-Time cost in computing gradients:  0.8371438980102539
+Time cost in computing gradients:  0.7057785987854004
 ========================================
 The 1th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-86.0650,  79.7590,  -0.1788,  -8.9295])
+Gradient (scaled):  tensor([-86.1799,  79.8555,  -0.1781,  -8.9254])
 beta:  tensor([0.0145, 0.0043, 0.5000, 0.3004])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8149118423461914
+Time cost in computing gradients:  0.703014612197876
 ========================================
 The 2th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-9.1848, 12.7137, -0.1791, -4.4739])
+Gradient (scaled):  tensor([-9.2653, 12.7433, -0.1782, -4.4628])
 beta:  tensor([0.0154, 0.0035, 0.5000, 0.3004])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8202812671661377
+Time cost in computing gradients:  0.7185704708099365
 ========================================
 The 3th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.7553,  3.1323, -0.1753, -3.8219])
+Gradient (scaled):  tensor([ 2.4617,  2.5094, -0.1753, -3.7771])
 beta:  tensor([0.0155, 0.0033, 0.5000, 0.3005])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8228049278259277
+Time cost in computing gradients:  0.7197690010070801
 ========================================
-The 4th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.2597,  2.6659, -0.1737, -3.7981])
+The 4th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 2.2181,  2.6926, -0.1735, -3.7892])
 beta:  tensor([0.0155, 0.0033, 0.5000, 0.3005])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8270609378814697
+Time cost in computing gradients:  0.7202863693237305
 ========================================
-The 5th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.8505,  2.1544, -0.1715, -3.7634])
+The 5th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 2.4519,  2.4781, -0.1720, -3.7770])
 beta:  tensor([0.0154, 0.0033, 0.5000, 0.3006])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8427300453186035
+Time cost in computing gradients:  0.7139465808868408
 ========================================
 The 6th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.5685,  2.3855, -0.1703, -3.7691])
+Gradient (scaled):  tensor([ 2.4239,  2.4909, -0.1702, -3.7751])
 beta:  tensor([0.0154, 0.0032, 0.5000, 0.3006])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8230702877044678
+Time cost in computing gradients:  0.7251207828521729
 ========================================
-The 7th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.2004,  2.6660, -0.1689, -3.7913])
-beta:  tensor([0.0154, 0.0032, 0.5000, 0.3007])
+The 7th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 1.3932,  2.7241, -0.0914, -3.7799])
+beta:  tensor([0.0140, 0.0018, 0.5001, 0.3029])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8311879634857178
+Time cost in computing gradients:  0.7093565464019775
 ========================================
-The 8th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 3.8739,  1.2520, -0.1690, -3.7036])
-beta:  tensor([0.0154, 0.0032, 0.5000, 0.3007])
+The 8th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([-22.4653,  23.0127,  -0.0475,  -5.1019])
+beta:  tensor([0.0126, 0.0010, 0.5002, 0.3067])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8279550075531006
+Time cost in computing gradients:  0.7054543495178223
 ========================================
 The 9th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.4864,  2.4155, -0.1672, -3.7679])
-beta:  tensor([0.0154, 0.0032, 0.5000, 0.3007])
+Gradient (scaled):  tensor([-8.5542, 10.9336, -0.0492, -4.2916])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3067])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8274047374725342
+Time cost in computing gradients:  0.7012760639190674
 ========================================
-The 10th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.1783,  2.6659, -0.1665, -3.7949])
-beta:  tensor([0.0153, 0.0032, 0.5000, 0.3008])
+The 10th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([-3.6293,  6.6557, -0.0498, -4.0036])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3068])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8248960971832275
+Time cost in computing gradients:  0.7163946628570557
 ========================================
-The 11th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.5860,  2.3265, -0.1664, -3.7716])
-beta:  tensor([0.0153, 0.0032, 0.5000, 0.3008])
+The 11th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([-1.4646,  4.7735, -0.0501, -3.8781])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3068])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8404278755187988
+Time cost in computing gradients:  0.7064650058746338
 ========================================
-The 12th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.6017,  2.3007, -0.1661, -3.7672])
-beta:  tensor([0.0153, 0.0032, 0.5000, 0.3008])
+The 12th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([-0.4856,  3.9204, -0.0502, -3.8224])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3069])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8254349231719971
+Time cost in computing gradients:  0.7080657482147217
 ========================================
 The 13th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.6638,  3.0863, -0.1604, -3.8129])
-beta:  tensor([0.0152, 0.0031, 0.5000, 0.3009])
+Gradient (scaled):  tensor([-0.0159,  3.5208, -0.0503, -3.7940])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3069])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8224608898162842
+Time cost in computing gradients:  0.6999640464782715
 ========================================
 The 14th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.7494,  2.1320, -0.1591, -3.7568])
-beta:  tensor([0.0152, 0.0030, 0.5000, 0.3010])
+Gradient (scaled):  tensor([ 0.1690,  3.3588, -0.0503, -3.7833])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3070])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8393831253051758
+Time cost in computing gradients:  0.7015664577484131
 ========================================
-The 15th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.2993,  2.5016, -0.1581, -3.7831])
-beta:  tensor([0.0152, 0.0030, 0.5000, 0.3010])
+The 15th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.1205,  3.3979, -0.0503, -3.7859])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3070])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8393797874450684
+Time cost in computing gradients:  0.7041072845458984
 ========================================
 The 16th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.5439,  2.2960, -0.1571, -3.7697])
-beta:  tensor([0.0152, 0.0030, 0.5000, 0.3010])
+Gradient (scaled):  tensor([ 0.1547,  3.3704, -0.0503, -3.7844])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3070])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8093149662017822
+Time cost in computing gradients:  0.7065634727478027
 ========================================
-The 17th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.0676,  2.6848, -0.1568, -3.7972])
-beta:  tensor([0.0152, 0.0030, 0.5000, 0.3010])
+The 17th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.1447,  3.3754, -0.0503, -3.7840])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3070])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8857989311218262
+Time cost in computing gradients:  0.7026920318603516
 ========================================
 The 18th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.0902,  2.6551, -0.1565, -3.7890])
-beta:  tensor([0.0152, 0.0030, 0.5000, 0.3010])
+Gradient (scaled):  tensor([ 0.3661,  3.1735, -0.0503, -3.7658])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3073])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8494141101837158
+Time cost in computing gradients:  0.7010080814361572
 ========================================
 The 19th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.6994,  2.1271, -0.1548, -3.7570])
-beta:  tensor([0.0151, 0.0030, 0.5000, 0.3011])
+Gradient (scaled):  tensor([ 0.1973,  3.3177, -0.0502, -3.7756])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3074])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8196811676025391
+Time cost in computing gradients:  0.6991448402404785
 ========================================
-The 20th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 3.0952,  1.8020, -0.1550, -3.7380])
-beta:  tensor([0.0151, 0.0030, 0.5000, 0.3011])
+The 20th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.0927,  3.3992, -0.0502, -3.7787])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3075])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8539690971374512
+Time cost in computing gradients:  0.6977696418762207
 ========================================
-The 21th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.9876,  2.7412, -0.1531, -3.7975])
-beta:  tensor([0.0151, 0.0029, 0.5000, 0.3012])
+The 21th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2221,  3.2956, -0.0502, -3.7720])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3075])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8048110008239746
+Time cost in computing gradients:  0.7070643901824951
 ========================================
-The 22th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.8744,  2.7873, -0.1509, -3.7885])
-beta:  tensor([0.0151, 0.0029, 0.5000, 0.3012])
+The 22th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2547,  3.2682, -0.0502, -3.7709])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3075])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8294579982757568
+Time cost in computing gradients:  0.699265718460083
 ========================================
-The 23th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 5.8281, -0.7200, -0.1393, -3.5605])
-beta:  tensor([0.0149, 0.0026, 0.5000, 0.3015])
+The 23th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.2443,  3.2753, -0.0502, -3.7707])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3076])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8651127815246582
+Time cost in computing gradients:  0.6971170902252197
 ========================================
 The 24th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.6231,  2.0555, -0.1384, -3.7420])
-beta:  tensor([0.0148, 0.0027, 0.5000, 0.3016])
+Gradient (scaled):  tensor([ 0.1013,  3.3907, -0.0501, -3.7724])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3081])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8475921154022217
+Time cost in computing gradients:  0.6990969181060791
 ========================================
 The 25th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.0658,  2.5085, -0.1368, -3.7695])
-beta:  tensor([0.0148, 0.0026, 0.5000, 0.3016])
+Gradient (scaled):  tensor([ 0.8274,  2.7464, -0.0502, -3.7257])
+beta:  tensor([0.0130, 0.0010, 0.5002, 0.3086])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8594450950622559
+Time cost in computing gradients:  0.6984052658081055
 ========================================
-The 26th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.4563,  2.1782, -0.1361, -3.7596])
-beta:  tensor([0.0148, 0.0026, 0.5001, 0.3017])
+The 26th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.3384,  3.1702, -0.0501, -3.7533])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3086])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8686120510101318
+Time cost in computing gradients:  0.7050454616546631
 ========================================
-The 27th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.7637,  1.9352, -0.1360, -3.7416])
-beta:  tensor([0.0148, 0.0026, 0.5001, 0.3017])
+The 27th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2575,  3.2349, -0.0501, -3.7578])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3087])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8408160209655762
+Time cost in computing gradients:  0.7011425495147705
 ========================================
 The 28th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.0450,  2.5290, -0.1352, -3.7744])
-beta:  tensor([0.0148, 0.0026, 0.5001, 0.3017])
+Gradient (scaled):  tensor([ 0.3105,  3.1949, -0.0501, -3.7546])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3087])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8443379402160645
+Time cost in computing gradients:  0.7057452201843262
 ========================================
 The 29th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.4531,  2.1901, -0.1351, -3.7509])
-beta:  tensor([0.0148, 0.0026, 0.5001, 0.3017])
+Gradient (scaled):  tensor([ 0.2861,  3.2087, -0.0501, -3.7557])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3087])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8418309688568115
+Time cost in computing gradients:  0.7156968116760254
 ========================================
-The 30th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.4642,  2.1811, -0.1352, -3.7556])
-beta:  tensor([0.0148, 0.0026, 0.5001, 0.3017])
+The 30th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.2011,  3.2812, -0.0500, -3.7576])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3088])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8071222305297852
+Time cost in computing gradients:  0.699040412902832
 ========================================
-The 31th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.4087,  3.0200, -0.1255, -3.8095])
-beta:  tensor([0.0146, 0.0024, 0.5001, 0.3020])
+The 31th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2903,  3.2046, -0.0501, -3.7546])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3088])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8455240726470947
+Time cost in computing gradients:  0.7032482624053955
 ========================================
-The 32th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.6827,  1.8700, -0.1220, -3.7377])
-beta:  tensor([0.0145, 0.0023, 0.5001, 0.3021])
+The 32th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.2091,  3.2712, -0.0500, -3.7570])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3089])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8364737033843994
+Time cost in computing gradients:  0.6997456550598145
 ========================================
 The 33th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.9518,  2.4780, -0.1196, -3.7649])
-beta:  tensor([0.0145, 0.0023, 0.5001, 0.3021])
+Gradient (scaled):  tensor([ 0.2516,  3.2445, -0.0500, -3.7540])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3089])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8301370143890381
+Time cost in computing gradients:  0.696570634841919
 ========================================
 The 34th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.3603,  2.1277, -0.1180, -3.7406])
-beta:  tensor([0.0145, 0.0023, 0.5001, 0.3022])
+Gradient (scaled):  tensor([ 0.1758,  3.3004, -0.0500, -3.7576])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3090])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8590598106384277
+Time cost in computing gradients:  0.7020208835601807
 ========================================
 The 35th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.5683,  1.9346, -0.1176, -3.7362])
-beta:  tensor([0.0145, 0.0023, 0.5001, 0.3022])
+Gradient (scaled):  tensor([ 0.2284,  3.2625, -0.0500, -3.7552])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3090])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8293778896331787
+Time cost in computing gradients:  0.6993005275726318
 ========================================
 The 36th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.4280,  2.0666, -0.1170, -3.7451])
-beta:  tensor([0.0144, 0.0023, 0.5001, 0.3022])
+Gradient (scaled):  tensor([ 0.2283,  3.2625, -0.0500, -3.7552])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3090])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8309481143951416
+Time cost in computing gradients:  0.7000637054443359
 ========================================
-The 37th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.4254,  2.0743, -0.1160, -3.7480])
-beta:  tensor([0.0144, 0.0022, 0.5001, 0.3023])
+The 37th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.1091,  3.3501, -0.0500, -3.7615])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3090])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7612569332122803
+Time cost in computing gradients:  0.6982259750366211
 ========================================
-The 38th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([-2.2322e+02,  1.9703e+02, -1.9529e-02, -1.6531e+01])
-beta:  tensor([0.0083, 0.0010, 0.5004, 0.3118])
-Relative error of observation:  tensor(0.0003)
-Time cost in computing gradients:  0.7914533615112305
+The 38th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.0960,  3.3614, -0.0500, -3.7614])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3090])
+Relative error of observation:  tensor(0.0002)
+Time cost in computing gradients:  0.6981332302093506
 ========================================
 The 39th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-9.1408e+01,  8.2758e+01, -3.7727e-02, -9.0306e+00])
-beta:  tensor([0.0108, 0.0010, 0.5004, 0.3120])
+Gradient (scaled):  tensor([ 0.2338,  3.2524, -0.0500, -3.7532])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3091])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8133211135864258
+Time cost in computing gradients:  0.6968841552734375
 ========================================
-The 40th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-41.8601,  39.7403,  -0.0442,  -6.1688])
-beta:  tensor([0.0119, 0.0010, 0.5004, 0.3121])
+The 40th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2448,  3.2394, -0.0500, -3.7544])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3091])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8070096969604492
+Time cost in computing gradients:  0.7136991024017334
 ========================================
 The 41th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-18.3579,  19.3144,  -0.0472,  -4.8047])
-beta:  tensor([0.0124, 0.0010, 0.5004, 0.3122])
+Gradient (scaled):  tensor([-0.0646,  3.4823, -0.0499, -3.7675])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3095])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8119111061096191
+Time cost in computing gradients:  0.7055511474609375
 ========================================
 The 42th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-7.3361,  9.7609, -0.0486, -4.1626])
-beta:  tensor([0.0126, 0.0010, 0.5004, 0.3122])
+Gradient (scaled):  tensor([ 0.4003,  3.0968, -0.0499, -3.7383])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3095])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8025720119476318
+Time cost in computing gradients:  0.7013757228851318
 ========================================
 The 43th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-3.3396,  6.2676, -0.0490, -3.9214])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3123])
+Gradient (scaled):  tensor([ 0.3505,  3.1367, -0.0499, -3.7399])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3096])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7865128517150879
+Time cost in computing gradients:  0.7039721012115479
 ========================================
 The 44th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([-0.9838,  4.2314, -0.0494, -3.7925])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3123])
+Gradient (scaled):  tensor([ 0.2638,  3.2124, -0.0499, -3.7457])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3097])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7862379550933838
+Time cost in computing gradients:  0.7015326023101807
 ========================================
 The 45th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([-0.0117,  3.4180, -0.0496, -3.7433])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3124])
+Gradient (scaled):  tensor([ 0.1346,  3.3178, -0.0499, -3.7533])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3097])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7723419666290283
+Time cost in computing gradients:  0.7060186862945557
 ========================================
 The 46th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-0.3696,  3.6831, -0.0494, -3.7541])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3124])
+Gradient (scaled):  tensor([ 0.2300,  3.2426, -0.0499, -3.7449])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3097])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7221701145172119
+Time cost in computing gradients:  0.7006032466888428
 ========================================
-The 47th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-0.6065,  3.8550, -0.0493, -3.7620])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3124])
+The 47th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2269,  3.2444, -0.0499, -3.7461])
+beta:  tensor([0.0129, 0.0010, 0.5002, 0.3097])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7957780361175537
+Time cost in computing gradients:  0.7051997184753418
 ========================================
-The 48th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([-0.4694,  3.7817, -0.0494, -3.7569])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3124])
+The 48th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([-0.2211,  3.5403, -0.0492, -3.7271])
+beta:  tensor([0.0126, 0.0010, 0.5003, 0.3136])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8265359401702881
+Time cost in computing gradients:  0.7010326385498047
 ========================================
-The 49th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([-0.1434,  3.4958, -0.0496, -3.7480])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3124])
+The 49th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([12.1953, -7.3210, -0.0504, -2.9746])
+beta:  tensor([0.0128, 0.0010, 0.5003, 0.3158])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8321189880371094
+Time cost in computing gradients:  0.701371431350708
 ========================================
 The 50th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-0.0711,  3.4193, -0.0495, -3.7404])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3125])
+Gradient (scaled):  tensor([ 1.5399,  1.9880, -0.0536, -3.6002])
+beta:  tensor([0.0126, 0.0011, 0.5003, 0.3159])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8093929290771484
+Time cost in computing gradients:  0.7062184810638428
 ========================================
 The 51th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-0.0851,  3.4026, -0.0494, -3.7303])
-beta:  tensor([0.0127, 0.0010, 0.5004, 0.3126])
+Gradient (scaled):  tensor([ 1.7023,  1.8192, -0.0524, -3.5881])
+beta:  tensor([0.0126, 0.0011, 0.5003, 0.3159])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8173179626464844
+Time cost in computing gradients:  0.7021703720092773
 ========================================
-The 52th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 29.9183, -22.8234,  -0.0520,  -1.8886])
-beta:  tensor([0.0129, 0.0010, 0.5005, 0.3203])
+The 52th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 27.8661, -20.9591,  -0.0528,  -2.0436])
+beta:  tensor([0.0130, 0.0010, 0.5003, 0.3173])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8324217796325684
+Time cost in computing gradients:  0.703467845916748
 ========================================
 The 53th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.0171,  2.3894, -0.0620, -3.5825])
-beta:  tensor([0.0125, 0.0013, 0.5005, 0.3204])
+Gradient (scaled):  tensor([ 1.8607,  1.7555, -0.0621, -3.5675])
+beta:  tensor([0.0127, 0.0013, 0.5003, 0.3173])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8338329792022705
+Time cost in computing gradients:  0.6980528831481934
 ========================================
-The 54th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.1336,  1.4327, -0.0608, -3.5157])
-beta:  tensor([0.0125, 0.0013, 0.5005, 0.3204])
+The 54th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 1.6936,  1.8783, -0.0610, -3.5766])
+beta:  tensor([0.0127, 0.0012, 0.5003, 0.3174])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8350498676300049
+Time cost in computing gradients:  0.7113442420959473
 ========================================
-The 55th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.0244,  1.5230, -0.0605, -3.5331])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+The 55th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 1.9263,  1.6730, -0.0594, -3.5626])
+beta:  tensor([0.0127, 0.0012, 0.5003, 0.3174])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7690210342407227
+Time cost in computing gradients:  0.7056005001068115
 ========================================
-The 56th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.5815,  1.0630, -0.0606, -3.5004])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+The 56th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 1.7743,  1.7883, -0.0587, -3.5721])
+beta:  tensor([0.0126, 0.0012, 0.5003, 0.3174])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.781196117401123
+Time cost in computing gradients:  0.7022278308868408
 ========================================
 The 57th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.9603,  1.5548, -0.0602, -3.5254])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+Gradient (scaled):  tensor([ 1.6852,  1.8493, -0.0575, -3.5731])
+beta:  tensor([0.0126, 0.0012, 0.5003, 0.3175])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8160593509674072
+Time cost in computing gradients:  0.7086062431335449
 ========================================
 The 58th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.0963,  1.4541, -0.0602, -3.5174])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+Gradient (scaled):  tensor([ 2.1600,  1.3995, -0.0525, -3.5417])
+beta:  tensor([0.0125, 0.0011, 0.5003, 0.3177])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7879650592803955
+Time cost in computing gradients:  0.7023823261260986
 ========================================
-The 59th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.3922,  1.2180, -0.0604, -3.5132])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+The 59th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 1.4640,  1.9902, -0.0512, -3.5791])
+beta:  tensor([0.0125, 0.0010, 0.5003, 0.3178])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8354668617248535
+Time cost in computing gradients:  0.6950349807739258
 ========================================
-The 60th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.3536,  2.0550, -0.0599, -3.5635])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+The 60th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 1.6355,  1.8232, -0.0500, -3.5706])
+beta:  tensor([0.0125, 0.0010, 0.5003, 0.3178])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8465049266815186
+Time cost in computing gradients:  0.7001008987426758
 ========================================
 The 61th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.2464,  2.1322, -0.0596, -3.5630])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+Gradient (scaled):  tensor([ 1.0420,  2.3239, -0.0487, -3.6032])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3179])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7967789173126221
+Time cost in computing gradients:  0.7009186744689941
 ========================================
 The 62th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.1241,  1.4312, -0.0599, -3.5280])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+Gradient (scaled):  tensor([ 0.6955,  2.6368, -0.0487, -3.6253])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3179])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8147809505462646
+Time cost in computing gradients:  0.7012319564819336
 ========================================
 The 63th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.9947,  1.5302, -0.0597, -3.5268])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+Gradient (scaled):  tensor([ 0.1805,  3.0722, -0.0486, -3.6517])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3180])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8455100059509277
+Time cost in computing gradients:  0.6960256099700928
 ========================================
-The 64th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.5972,  1.8447, -0.0594, -3.5497])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3204])
+The 64th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.2984,  2.9787, -0.0486, -3.6426])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3180])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7750110626220703
+Time cost in computing gradients:  0.7012732028961182
 ========================================
-The 65th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.0083,  1.5236, -0.0593, -3.5287])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+The 65th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.2442,  3.0248, -0.0486, -3.6450])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3180])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8244180679321289
+Time cost in computing gradients:  0.7037463188171387
 ========================================
 The 66th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.1225,  1.4211, -0.0594, -3.5234])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.2597,  3.0081, -0.0486, -3.6464])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3181])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8420557975769043
+Time cost in computing gradients:  0.7054998874664307
 ========================================
 The 67th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.8573,  1.6446, -0.0592, -3.5316])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([-0.0634,  3.2719, -0.0485, -3.6588])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3185])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8314821720123291
+Time cost in computing gradients:  0.705956220626831
 ========================================
 The 68th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.9721,  1.5544, -0.0593, -3.5307])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.4626,  2.8230, -0.0486, -3.6287])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3186])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8018860816955566
+Time cost in computing gradients:  0.706244707107544
 ========================================
 The 69th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.0371,  1.4968, -0.0591, -3.5249])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.1060,  3.1172, -0.0485, -3.6480])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7993490695953369
+Time cost in computing gradients:  0.7047362327575684
 ========================================
-The 70th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.5008,  1.9294, -0.0586, -3.5432])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+The 70th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.1272,  3.0972, -0.0485, -3.6468])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8376150131225586
+Time cost in computing gradients:  0.7020695209503174
 ========================================
-The 71th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.8839,  1.6275, -0.0585, -3.5287])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+The 71th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.3203,  2.9403, -0.0485, -3.6340])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8358988761901855
+Time cost in computing gradients:  0.6996121406555176
 ========================================
 The 72th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.0289,  1.4974, -0.0586, -3.5279])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.2322,  3.0118, -0.0485, -3.6418])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8512959480285645
+Time cost in computing gradients:  0.697643518447876
 ========================================
 The 73th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.8233,  1.6816, -0.0585, -3.5409])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.2541,  2.9919, -0.0485, -3.6412])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8259661197662354
+Time cost in computing gradients:  0.6982355117797852
 ========================================
 The 74th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.5983,  1.8478, -0.0582, -3.5414])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.2650,  2.9884, -0.0485, -3.6405])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7919328212738037
+Time cost in computing gradients:  0.6958591938018799
 ========================================
-The 75th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.7658,  1.7138, -0.0580, -3.5418])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+The 75th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.2465,  2.9952, -0.0485, -3.6398])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8499252796173096
+Time cost in computing gradients:  0.6982724666595459
 ========================================
-The 76th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.7920,  1.6926, -0.0579, -3.5386])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+The 76th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.0459,  3.1575, -0.0485, -3.6514])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3187])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8215999603271484
+Time cost in computing gradients:  0.7042455673217773
 ========================================
 The 77th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.6848,  1.7757, -0.0576, -3.5423])
-beta:  tensor([0.0125, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.1489,  3.0758, -0.0485, -3.6452])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3188])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7997188568115234
+Time cost in computing gradients:  0.6976926326751709
 ========================================
 The 78th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.5023,  1.9211, -0.0571, -3.5460])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.1701,  3.0570, -0.0485, -3.6428])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3188])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8120253086090088
+Time cost in computing gradients:  0.7014586925506592
 ========================================
 The 79th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.7744,  1.6919, -0.0568, -3.5314])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3205])
+Gradient (scaled):  tensor([ 0.2120,  3.0257, -0.0485, -3.6420])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3188])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.852802038192749
+Time cost in computing gradients:  0.7001020908355713
 ========================================
-The 80th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.4961,  1.1071, -0.0570, -3.5035])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 80th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.2293,  3.0099, -0.0485, -3.6405])
+beta:  tensor([0.0124, 0.0010, 0.5003, 0.3188])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8099179267883301
+Time cost in computing gradients:  0.6960713863372803
 ========================================
 The 81th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.0946,  1.4349, -0.0569, -3.5232])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.1145,  3.0998, -0.0485, -3.6454])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3189])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8378522396087646
+Time cost in computing gradients:  0.7011826038360596
 ========================================
-The 82th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.8726,  1.6104, -0.0567, -3.5311])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 82th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.1651,  3.0554, -0.0485, -3.6431])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3189])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.776392936706543
+Time cost in computing gradients:  0.7073731422424316
 ========================================
-The 83th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.6201,  1.8261, -0.0566, -3.5530])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 83th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.3263,  2.9292, -0.0485, -3.6329])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3189])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7894480228424072
+Time cost in computing gradients:  0.7001879215240479
 ========================================
-The 84th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.9199,  1.5791, -0.0564, -3.5267])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 84th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2380,  2.9974, -0.0485, -3.6386])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3189])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8219258785247803
+Time cost in computing gradients:  0.6998405456542969
 ========================================
 The 85th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.6412,  1.7948, -0.0563, -3.5419])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.1928,  3.0351, -0.0485, -3.6413])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3189])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8375239372253418
+Time cost in computing gradients:  0.7047972679138184
 ========================================
 The 86th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.9132,  1.5889, -0.0563, -3.5268])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.2218,  3.0080, -0.0485, -3.6382])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3189])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.822455883026123
+Time cost in computing gradients:  0.6991574764251709
 ========================================
 The 87th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.0814,  1.4478, -0.0565, -3.5250])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.2464,  2.9921, -0.0485, -3.6378])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3190])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7869119644165039
+Time cost in computing gradients:  0.7004656791687012
 ========================================
-The 88th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.7871,  1.6788, -0.0563, -3.5326])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 88th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2742,  2.9666, -0.0485, -3.6373])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3190])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7625551223754883
+Time cost in computing gradients:  0.6979904174804688
 ========================================
 The 89th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.6217,  1.8165, -0.0562, -3.5402])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.2465,  2.9950, -0.0485, -3.6377])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3190])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7717299461364746
+Time cost in computing gradients:  0.6960458755493164
 ========================================
-The 90th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.8807,  1.6159, -0.0563, -3.5308])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 90th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.1773,  3.0518, -0.0484, -3.6393])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3193])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7890558242797852
+Time cost in computing gradients:  0.6980628967285156
 ========================================
-The 91th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.3123,  1.2627, -0.0564, -3.5120])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 91th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.4682,  2.8016, -0.0484, -3.6157])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3196])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.850247859954834
+Time cost in computing gradients:  0.7075231075286865
 ========================================
 The 92th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.6765,  1.7742, -0.0562, -3.5421])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.0667,  3.1342, -0.0483, -3.6386])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3197])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8350741863250732
+Time cost in computing gradients:  0.6992239952087402
 ========================================
 The 93th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.1527,  1.3919, -0.0564, -3.5194])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.0434,  3.1516, -0.0484, -3.6414])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3197])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8081691265106201
+Time cost in computing gradients:  0.7030963897705078
 ========================================
-The 94th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.0194,  1.4912, -0.0564, -3.5288])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 94th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([ 0.7480,  2.5340, -0.0483, -3.5925])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3201])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8355467319488525
+Time cost in computing gradients:  0.7013392448425293
 ========================================
-The 95th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 2.0453,  1.4822, -0.0563, -3.5236])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 95th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([ 0.2889,  2.9225, -0.0483, -3.6227])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3201])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.800530195236206
+Time cost in computing gradients:  0.6997663974761963
 ========================================
 The 96th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.5146,  1.9008, -0.0560, -3.5454])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.3002,  2.9151, -0.0483, -3.6191])
+beta:  tensor([0.0123, 0.0010, 0.5003, 0.3201])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7979569435119629
+Time cost in computing gradients:  0.6986207962036133
 ========================================
-The 97th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 0.9427,  2.3615, -0.0557, -3.5779])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 97th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([-1.5530,  4.4955, -0.0478, -3.7077])
+beta:  tensor([0.0121, 0.0010, 0.5003, 0.3218])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7962779998779297
+Time cost in computing gradients:  0.7011635303497314
 ========================================
 The 98th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 1.3785,  1.9921, -0.0558, -3.5562])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([-0.0890,  3.2124, -0.0480, -3.6227])
+beta:  tensor([0.0122, 0.0010, 0.5003, 0.3219])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.7948088645935059
+Time cost in computing gradients:  0.696242094039917
 ========================================
-The 99th descent succeeds:  tensor(False)
-Gradient (scaled):  tensor([ 2.0955,  1.4403, -0.0561, -3.5288])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The 99th descent succeeds:  tensor(True)
+Gradient (scaled):  tensor([-0.0167,  3.1429, -0.0480, -3.6155])
+beta:  tensor([0.0122, 0.0010, 0.5003, 0.3220])
 Relative error of observation:  tensor(0.0002)
-Time cost in computing gradients:  0.8242588043212891
+Time cost in computing gradients:  0.7015440464019775
 ========================================
 The 100th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.4832,  1.9029, -0.0558, -3.5503])
-beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+Gradient (scaled):  tensor([ 0.5616,  2.6438, -0.0480, -3.5810])
+beta:  tensor([0.0122, 0.0010, 0.5003, 0.3221])
 Relative error of observation:  tensor(0.0002)
-The final predicted parameters:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
-Optimal beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+The final predicted parameters:  tensor([0.0125, 0.0010, 0.5003, 0.3178])
+Optimal beta:  tensor([0.0125, 0.0010, 0.5003, 0.3178])
 VV:  tensor([11.8879, 12.3702,  7.9328, 13.7866,  7.0897])
 tt:  tensor([ 0.0000,  5.3533,  8.8651, 13.6162, 20.0000])
 beta_targ:  tensor([0.0110, 0.0160, 1.0000, 0.5800])
 beta0:  tensor([0.0080, 0.0100, 0.5000, 0.2000])
-this_beta:  tensor([0.0124, 0.0012, 0.5005, 0.3206])
+this_beta:  tensor([0.0125, 0.0010, 0.5003, 0.3178])

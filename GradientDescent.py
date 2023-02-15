@@ -1,4 +1,5 @@
 ## Import standard librarys
+from re import sub
 import torch
 import torchdiffeq
 import pickle
@@ -15,8 +16,8 @@ from matplotlib import pyplot as plt
 from MassFricParams import MassFricParams
 from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
-from Derivatives import *
-# from DerivativesAddTheta import *
+# from Derivatives import *
+from DerivativesAddTheta import *
 
 ## Fixed parameters
 # # Sequence specific parameters
@@ -81,7 +82,8 @@ class GradDescent:
         self.beta0 = beta0 / scaling
         self.beta_low = beta_low / scaling
         self.beta_high = beta_high / scaling
-        
+        self.beta_matters = (torch.abs(self.beta_high - self.beta_low) >= 1.e-8)
+
         # y0 is the initial condition to solve the odes
         self.y0 = y0
         # Sync the spring speed and the initial mass block speed
@@ -149,13 +151,14 @@ class GradDescent:
         assert(len(self.objs) >= 2)
         
         # Compute BB stepsize
-        BBStepSize = abs(torch.dot(self.betas[-1] - self.betas[-2], self.grads[-1] - self.grads[-2])) / \
-                       torch.sum(torch.square(self.grads[-1] - self.grads[-2]))
+        BBStepSize = abs(torch.dot(self.betas[-1][self.beta_matters] - self.betas[-2][self.beta_matters], 
+                                   self.grads[-1][self.beta_matters] - self.grads[-2][self.beta_matters])) / \
+                       torch.sum(torch.square(self.grads[-1][self.beta_matters] - self.grads[-2][self.beta_matters]))
         
         # Calculate the step size
         if self.stepping == 'BB':
             stepSize = BBStepSize
-            beta_trial = self.project(self.betas[-1] - stepSize * self.grads[-1])
+            beta_trial = self.project(self.betas[-1], stepSize * self.grads[-1])
 
             # Append the betas and objs
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
@@ -208,21 +211,44 @@ class GradDescent:
         self.beta_optimal = self.betas[torch.argmin(self.grad_norms)] * self.scaling
         return
     
-    # Line search functino
+    # Line search function
     def lineSearch(self, minStepSize = 0.):
         # Find stepsize
-        maxStepSize = 0.1 * min(abs(self.betas[-1] / self.grads[-1]))
+        # maxStepSize = 1.0 * min(abs(self.betas[-1] / self.grads[-1]))
+
+        # Consider a only
+        maxStepSize = 0.2 * min(abs(self.betas[-1][self.beta_matters] / self.grads[-1][self.beta_matters]))
+        
+        # maxStepSize = 1.
             
         # Line search
         stepSize = max(maxStepSize, minStepSize)
-        
+        # print("Initial step size: ", stepSize)
+        # print("Initial beta trial: ", self.project(self.betas[-1], stepSize * self.grads[-1]))
+
+        # # DEBUG LINES
+        # print("~"*40, " linesearch initiates ", "~"*40)
+        # print("Last objective value: ", self.objs[-1])
+
         for i in range(self.lsrh_steps):
-            beta_trial = self.project(self.betas[-1] - stepSize * self.grads[-1])
+            beta_trial = self.project(self.betas[-1], stepSize * self.grads[-1])
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
                                                       self.scaling, self.regularizedFlag, True, 
                                                       self.T, self.NofTPts, self.this_rtol, self.this_atol, self.solver)
-            print("shit")
-            
+            # # DEBUG LINES
+            # # print("shit")
+            # print("The ", i, " th lsrh iteration:")
+            # print("self.betas[-1]: ", self.betas[-1])
+            # print("self.grads[-1]: ", self.grads[-1])
+            # print("Step size: ", stepSize)
+            # print("beta_trial: ", beta_trial)
+            # print("self.beta_matters: ", self.beta_matters)
+            # beta_trial_unprojected = self.betas[-1] - stepSize * self.grads[-1]
+            # beta_trial_unprojected[~self.beta_matters] = self.beta0[~self.beta_matters]
+            # print("beta_trial (unprojected): ", beta_trial_unprojected)
+            # print("obj_trial: ", obj_trial)
+            # print("grad_trial: ", grad_trial, "\n")
+
             # Break if this beta is good
             if (stepSize < minStepSize) or (obj_trial < self.objs[-1]):
                 break
@@ -232,12 +258,22 @@ class GradDescent:
         
         # If linesearch exits but minimum step size hasn't been reached, try with minimum step size
         if (minStepSize > 0.) and (stepSize >= minStepSize) and (obj_trial > self.objs[-1]):
-            beta_trial = self.project(self.betas[-1] - minStepSize * self.grads[-1])
+            beta_trial = self.project(self.betas[-1], minStepSize * self.grads[-1])
         
+        
+
         # Append the betas and objs
         obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
                                                   self.scaling, self.regularizedFlag, False, 
                                                   self.T, self.NofTPts, self.this_rtol, self.this_atol, self.solver)
+        
+        # # DEBUG LINES
+        # print("Final step size: ", stepSize)
+        # print("Final beta trial: ", beta_trial)
+        # print("Final obj: ", obj_trial)
+        # print("Final grad: ", grad_trial)
+        # print("~"*40, " linesearch finalizes ", "~"*40)
+
         self.betas.append(beta_trial)
         self.objs.append(obj_trial)
         self.grads.append(grad_trial)
@@ -248,10 +284,21 @@ class GradDescent:
         
     
     # Project the new point into the constraint set
-    def project(self, pt):
-        fun = lambda u: np.linalg.norm(u - np.array(pt))
-        prjted = opt.minimize(fun, x0 = np.array((self.beta_low + self.beta_high) / 2.), 
-                              bounds = [(self.beta_low[i], self.beta_high[i]) 
-                                        for i in range(len(self.beta_low))]
-                             ).x
-        return torch.tensor(prjted, dtype=torch.float)
+    def project(self, pt, subtraction):
+        # First calculate the subtraction
+        prjted = torch.clone(pt)
+        prjted[~self.beta_matters] = self.beta0[~self.beta_matters]
+        prjted[self.beta_matters] -= subtraction[self.beta_matters]
+
+        # Project on the dimensions that matter
+        fun = lambda u: np.linalg.norm(u - np.array(prjted[self.beta_matters]))
+        beta_high_matters = self.beta_high[self.beta_matters]
+        beta_low_matters = self.beta_low[self.beta_matters]
+
+        prjted_matters = opt.minimize(fun, x0 = np.array((beta_high_matters + beta_low_matters) / 2.), 
+                                      bounds = [(beta_low_matters[i], beta_high_matters[i]) 
+                                                for i in range(len(beta_low_matters))]
+                                     ).x
+        
+        prjted[self.beta_matters] = torch.tensor(prjted_matters, dtype=torch.float)
+        return prjted

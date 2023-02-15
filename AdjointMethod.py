@@ -11,8 +11,8 @@ import numpy as np
 from torchdiffeq import odeint
 from xitorch.interpolate import Interp1D
 from scipy.interpolate import interp1d
-from Derivatives import *
-# from DerivativesAddTheta import *
+# from Derivatives import *
+from DerivativesAddTheta import *
 
 class AdjDerivs:
     # Constructor

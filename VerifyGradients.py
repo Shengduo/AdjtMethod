@@ -19,8 +19,8 @@ from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
 from GradientDescent import GradDescent, objGradFunc
 from plotSequences import plot_differences
-from Derivatives import *
-# from DerivativesAddTheta import *
+# from Derivatives import *
+from DerivativesAddTheta import *
 
 
 torch.set_default_dtype(torch.float)

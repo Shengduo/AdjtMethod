@@ -1,5 +1,6 @@
 ## Implement the specific derivatives
-## O = \int_0^T (y[1](t) - v(t)) ^ 2 + (y[2](t) - theta(t)) dt 
+## O = \int_0^T (y[1](t) - v(t)) ^ 2 + (log(y[1](t)) - log(v(t))) ^ 2
+#               (y[2](t) - theta(t)) ^ 2 + (log(y[2](t)) - log(theta(t))) ^ 2 dt 
 # To compute dO / d \beta, one needs to implement six functions
 # In all tensors, the last dimension is time
 ## Import standard librarys
@@ -16,11 +17,25 @@ from xitorch.interpolate import Interp1D
 from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 
+# ------------------------ Calculate the derivative: Do / D\beta -------------------------
+# Observation
+def O(y, y_targ, t, MFParams):
+    # Least square error
+    O = torch.trapezoid(
+        torch.square(y[1, :] - y_targ[1, :]) + torch.square(y[2, :] - y_targ[2, :]) 
+        + torch.square(torch.log(y[1, :]) - torch.log(y_targ[1, :]))
+        + torch.square(torch.log(y[2, :]) - torch.log(y_targ[2, :])), 
+        t
+    )
+    
+    # print("Relative L2 error: ", torch.sqrt(O) / torch.linalg.norm(v))
+    return O
+
 # \partial o(y, yDot, t; \beta) / \partial y
 def DoDy(y, y_targ, t, MFParams):
     DoDy = torch.zeros(y.shape)
-    DoDy[1, :] = 2. * (y[1, :] - y_targ[1, :])
-    DoDy[2, :] = 2. * (y[2, :] - y_targ[2, :]) 
+    DoDy[1, :] = 2. * (y[1, :] - y_targ[1, :]) + 2. * (torch.log(y[1, :]) - torch.log(y_targ[1, :])) / y[1, :]
+    DoDy[2, :] = 2. * (y[2, :] - y_targ[2, :]) + 2. * (torch.log(y[2, :]) - torch.log(y_targ[2, :])) / y[2, :]
     return DoDy
 
 # \partial o / \partial yDot
@@ -35,6 +50,7 @@ def DDoDyDotDt(y, y_targ, t, MFParams):
 def DoDBeta(y, y_targ, t, MFParams):
     return torch.zeros([MFParams.RSParams.shape[0], y.shape[1]])
 
+# ------------------------ Calculate the derivative: DC / D\beta -------------------------
 # \partial C / \partial y, unregularized
 def DCDy(y, y_targ, t, MFParams):
     DCDy = torch.zeros([y.shape[0], y.shape[0], y.shape[1]])
@@ -137,17 +153,5 @@ def DCDBeta_regularized(y, y_targ, t, MFParams):
 #     print("DCDBeta: ", DCDBeta)
     
     return DCDBeta
-
-# ------------------------ Calculate the derivative: Do / D\beta -------------------------
-# Observation
-def O(y, y_targ, t, MFParams):
-    # Least square error
-    O = torch.trapezoid(
-        torch.square(y[1, :] - y_targ[1, :]) + torch.square(y[2, :] - y_targ[2, :]) , 
-        t
-    )
-    
-    # print("Relative L2 error: ", torch.sqrt(O) / torch.linalg.norm(v))
-    return O
 
     
