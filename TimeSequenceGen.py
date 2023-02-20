@@ -37,11 +37,34 @@ class TimeSequenceGen:
         self.regularizedFlag = regularizedFlag
         self.solver = solver
 
+        # Need to use regularized rate-and-state
+        a = self.MFParams.RSParams[0]
+        b = self.MFParams.RSParams[1]
+        # DRS = self.MFParams.RSParams[2]
+        DRSInv = self.MFParams.RSParams[2]
+        fStar = self.MFParams.RSParams[3]
+        y0 = self.MFParams.y0
+        
+        if self.regularizedFlag:
+            self.deltaX = self.MFParams.g * (a * torch.asinh(
+                                     y0[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y0[2] * DRSInv)) / a)
+                                 ))
+        else:
+            self.deltaX = self.MFParams.g * (fStar + a * torch.log(y0[1] / 1.e-6) + b * torch.log(1.e-6 * y0[2] * DRSInv))
+        
         # Generate the sequence
         st = time.time()
         self.default_y = self.calculateYAtT(self.t)
         self.time_cost = time.time() - st
         # print("Time cost to generate the sequence: ", self.time_cost)
+
+        # Need to use regularized rate-and-state
+        a = self.MFParams.RSParams[0]
+        b = self.MFParams.RSParams[1]
+        # DRS = self.MFParams.RSParams[2]
+        DRSInv = self.MFParams.RSParams[2]
+        fStar = self.MFParams.RSParams[3]
+        y0 = self.MFParams.y0
         
     # Function DyDt, DyDt = f(t, y)
     def DyDt(self, t, y):
@@ -68,10 +91,10 @@ class TimeSequenceGen:
             #                      # 1 - 1.e-6 * y[2] / DRS]) 
             #                      1 - y[2] * y[1] / DRS])
             DyDt = torch.tensor([y[1], 
-                                 self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
-                                 self.MFParams.g * (a * torch.asinh(
-                                     y[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2] * DRSInv)) / a)
-                                 )), 
+                                 self.deltaX + self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
+                                 self.MFParams.g * a * (
+                                     torch.asinh(y[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2] * DRSInv)) / a))
+                                 ), 
                                  # 1 - 1.e-6 * y[2] / DRS]) 
                                  1 - y[2] * y[1] * DRSInv])
         else:
@@ -83,10 +106,13 @@ class TimeSequenceGen:
             #                      # 1 - 1.e-6 * y[2] / DRS]) 
             #                      1 - y[2] * y[1] / DRS])     
             DyDt = torch.tensor([y[1], 
-                                 self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
+                                 self.deltaX + self.MFParams.k / self.MFParams.m * (self.MFParams.SatT_interp(t) - y[0]) - \
                                  self.MFParams.g * (fStar + \
                                                     a * torch.log(y[1] / 1.e-6) + \
-                                                    b * torch.log(1.e-6 * y[2] * DRSInv)), 
+                                                    b * torch.log(1.e-6 * y[2] * DRSInv) - \
+                                                    fStar - \
+                                                    a * torch.log(self.MFParams.y0[1] / 1.e-6) - \
+                                                    b * torch.log(1.e-6 * self.MFParams.y0[2] * DRSInv)), 
                                  # 1 - 1.e-6 * y[2] / DRS]) 
                                  1 - y[2] * y[1] * DRSInv])   
         # DEBUG LINES

@@ -109,14 +109,14 @@ def DDCDyDotDt(y, y_targ, t, MFParams):
 # \partial C / \partial \beta, unregularized
 def DCDBeta(y, y_targ, t, MFParams):
     DCDBeta = torch.zeros([y.shape[0], MFParams.RSParams.shape[0], y.shape[1]])
-    DCDBeta[1, 0, :] = MFParams.g * torch.log(y[1, :] / 1.e-6)
+    DCDBeta[1, 0, :] = MFParams.g * (torch.log(y[1, :] / 1.e-6) - torch.log(MFParams.y0[1] / 1.e-6))
     # DCDBeta[1, 1, :] = MFParams.g * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
     # DCDBeta[1, 2, :] = -MFParams.g * MFParams.RSParams[1] / MFParams.RSParams[2]
     
-    DCDBeta[1, 1, :] = MFParams.g * torch.log(1.e-6 * y[2, :] * MFParams.RSParams[2])
-    DCDBeta[1, 2, :] = MFParams.g * MFParams.RSParams[1] / MFParams.RSParams[2]
+    DCDBeta[1, 1, :] = MFParams.g * (torch.log(1.e-6 * y[2, :] * MFParams.RSParams[2]) - torch.log(1.e-6 * MFParams.y0[2] * MFParams.RSParams[2]))
+    DCDBeta[1, 2, :] = MFParams.g * (MFParams.RSParams[1] / MFParams.RSParams[2] - MFParams.RSParams[1] / MFParams.RSParams[2])
 
-    DCDBeta[1, 3, :] = MFParams.g
+    DCDBeta[1, 3, :] = MFParams.g - MFParams.g
     # DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
     DCDBeta[2, 2, :] = y[1, :] * y[2, :]
     return DCDBeta
@@ -130,6 +130,8 @@ def DCDBeta_regularized(y, y_targ, t, MFParams):
     Q2 = y[1, :] / 2 / 1.e-6 * torch.exp(Q1)
     Q2_cliped = torch.clamp(Q2, min = -1.e10, max = 1.e10)
     Q2Term = Q2_cliped / torch.sqrt(Q2_cliped**2 + 1.)
+
+
 #     # DEBUG LINES
 #     print('Q1: ', Q1)
 #     print('Q2: ', Q2)
@@ -142,11 +144,27 @@ def DCDBeta_regularized(y, y_targ, t, MFParams):
     pfpbeta2 = Q2Term * MFParams.RSParams[1] / MFParams.RSParams[2]
     pfpbeta3 = Q2Term
     
+    # Account for the initial force continuity
+    Q10 = MFParams.RSParams[3] + MFParams.RSParams[1] * torch.log(1.e-6 * MFParams.y0[2] * MFParams.RSParams[2]) 
+    Q10 = Q10 / MFParams.RSParams[0]
+    Q20 = MFParams.y0[1] / 2 / 1.e-6 * torch.exp(Q10)
+    Q20_cliped = torch.clamp(Q20, min = -1.e10, max = 1.e10)
+    Q20Term = Q20_cliped / torch.sqrt(Q20_cliped**2 + 1.)
+
+    # Partial derivatives
+    pfpbeta00 = torch.asinh(Q20) - Q10 * Q20Term
+    # pfpbeta1 = Q2Term * torch.log(1.e-6 * y[2, :] / MFParams.RSParams[2])
+    pfpbeta10 = Q20Term * torch.log(1.e-6 * MFParams.y0[2] * MFParams.RSParams[2])
+    # pfpbeta2 = -Q2Term * MFParams.RSParams[1] / MFParams.RSParams[2]
+    pfpbeta20 = Q20Term * MFParams.RSParams[1] / MFParams.RSParams[2]
+    pfpbeta30 = Q20Term
+
+
     DCDBeta = torch.zeros([y.shape[0], MFParams.RSParams.shape[0], y.shape[1]])
-    DCDBeta[1, 0, :] = MFParams.g * pfpbeta0
-    DCDBeta[1, 1, :] = MFParams.g * pfpbeta1
-    DCDBeta[1, 2, :] = MFParams.g * pfpbeta2
-    DCDBeta[1, 3, :] = MFParams.g * pfpbeta3
+    DCDBeta[1, 0, :] = MFParams.g * (pfpbeta0 - pfpbeta00)
+    DCDBeta[1, 1, :] = MFParams.g * (pfpbeta1 - pfpbeta10)
+    DCDBeta[1, 2, :] = MFParams.g * (pfpbeta2 - pfpbeta20)
+    DCDBeta[1, 3, :] = MFParams.g * (pfpbeta3 - pfpbeta30)
     # DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
     DCDBeta[2, 2, :] = y[1, :] * y[2, :]
 #     # DEBUG LINES

@@ -50,7 +50,7 @@ class GenerateVT:
         tt[-1] = self.Trange[1]
 
         # Generate the V values
-        VV = self.Vrange[0] + (self.Vrange[1] - self.Vrange[0]) * torch.rand(nOfTerms)
+        VV = torch.pow(10., self.Vrange[0] + (self.Vrange[1] - self.Vrange[0]) * torch.rand(nOfTerms))
 
         # Get the V terms evalute at T
         V = VV[0] * torch.ones(T.shape)
@@ -95,7 +95,7 @@ class GenerateVT:
     def plotVT(self):
         # Plot V at t
         plt.figure(figsize=[15, 10])
-        plt.plot(self.VT[1, :], self.VT[0, :], linewidth = 2.0)
+        plt.semilogy(self.VT[1, :], self.VT[0, :], linewidth = 2.0)
         plt.xlabel('Time [s]', fontsize = 20)
         plt.ylabel('V [m/s]', fontsize = 20)
         plt.savefig(self.kwgs['plt_save_path'], dpi = 300.)

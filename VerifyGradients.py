@@ -55,7 +55,7 @@ v = targ_seq.default_y
 
 
 # A new set of RS params
-new_RSParams = torch.tensor([0.008, 0.012, 1. / 5., 0.3])
+new_RSParams = torch.tensor([0.02, 0.03, 1. / 1., 0.3])
 # new_RSParams = torch.tensor([0.011, 0.016, 1.e-3, 0.58])
 new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0)
 new_seq = TimeSequenceGen(T, NofTPts, new_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag)

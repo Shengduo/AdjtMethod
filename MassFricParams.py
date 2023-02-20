@@ -42,6 +42,9 @@ class MassFricParams:
         self.RSParams = RSParams
         self.y0 = y0
         
+        # Set initial velocity to match the leading head
+        self.y0[1] = self.V[0]
+
         # Get the function of V, S at T
         self.vtFunc = interp1d(self.T, self.V)
         self.stFunc = interp1d(self.T, self.S)
