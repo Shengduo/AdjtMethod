@@ -1,76 +1,53 @@
+/home/shengduo/anaconda3/lib/python3.9/site-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.16.5 and <1.23.0 is required for this version of SciPy (detected version 1.24.1
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
 ########################################  Total Iteration 0 ########################################
-Time cost in computing gradients:  0.7847790718078613
-Time cost in computing gradients:  0.7527518272399902
+Time cost in computing gradients:  0.7793080806732178
+Time cost in computing gradients:  0.7090215682983398
 ========================================
 Initial descent succeeds:  tensor(True)
-Observation:  tensor(0.0020)
-Gradient (scaled):  tensor([-2.9010,  1.5873,  0.0058, -0.2118])
-beta:  tensor([0.0076, 0.0124, 1.0000, 0.5800])
-Relative error of observation:  tensor(1.0924e-05)
-Time cost in computing gradients:  0.7392380237579346
+Observation:  tensor(1.0250)
+Gradient (scaled):  tensor([ 135.4397, -809.2581,    7.2875,   51.2046])
+beta:  tensor([0.0080, 0.0120, 0.1000, 0.5800])
+Relative error of observation:  tensor(0.0005)
+Time cost in computing gradients:  0.6909952163696289
 ========================================
-The 1th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.2124, -2.2271,  0.0026,  0.0225])
-beta:  tensor([0.0076, 0.0124, 1.0000, 0.5800])
-Relative error of observation:  tensor(1.0878e-05)
-Time cost in computing gradients:  0.7448351383209229
+The 1th descent succeeds:  tensor(False)
+Gradient (scaled):  tensor([-1113.7838,  -411.4313,     4.3780,    25.1313])
+beta:  tensor([0.0079, 0.0123, 0.1000, 0.5800])
+Relative error of observation:  tensor(0.0005)
+Time cost in computing gradients:  0.6893250942230225
 ========================================
 The 2th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-0.5138, -0.6308,  0.0040, -0.0765])
-beta:  tensor([0.0076, 0.0124, 1.0000, 0.5800])
-Relative error of observation:  tensor(1.0837e-05)
-Time cost in computing gradients:  0.7538959980010986
-========================================
-The 3th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-11.8632,  10.4325,   0.0128,  -0.7111])
-beta:  tensor([0.0092, 0.0143, 1.0000, 0.5800])
-Relative error of observation:  tensor(1.0112e-05)
-Time cost in computing gradients:  0.740459680557251
-========================================
-The 4th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 1.0808e+01, -1.0577e+01, -7.4777e-03,  6.0806e-01])
-beta:  tensor([0.0094, 0.0140, 1.0000, 0.5800])
-Relative error of observation:  tensor(9.7809e-06)
-Time cost in computing gradients:  0.7375040054321289
-========================================
-The 5th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-1.3894,  0.7270,  0.0034, -0.1035])
-beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-Relative error of observation:  tensor(5.5437e-06)
-Time cost in computing gradients:  0.7539913654327393
-========================================
-The 6th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-0.1935, -0.3747,  0.0023, -0.0317])
-beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-Relative error of observation:  tensor(5.4163e-06)
-Time cost in computing gradients:  0.7424430847167969
-========================================
-The 7th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-1.1698,  0.5356,  0.0031, -0.0902])
-beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-Relative error of observation:  tensor(5.4048e-06)
-Time cost in computing gradients:  0.7646427154541016
-========================================
-The 8th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-0.0304, -0.5232,  0.0021, -0.0240])
-beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-Relative error of observation:  tensor(5.3914e-06)
-Time cost in computing gradients:  0.7515528202056885
-========================================
-The 9th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([-1.0207,  0.3993,  0.0030, -0.0814])
-beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-Relative error of observation:  tensor(5.3743e-06)
-Time cost in computing gradients:  0.7558526992797852
-========================================
-The 10th descent succeeds:  tensor(True)
-Gradient (scaled):  tensor([ 0.0776, -0.6175,  0.0020, -0.0195])
-beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-Relative error of observation:  tensor(5.3377e-06)
-The final predicted parameters:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-Optimal beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
-VV:  tensor([11.8879, 12.3702,  7.9328, 13.7866,  7.0897])
-tt:  tensor([ 0.0000,  5.3533,  8.8651, 13.6162, 20.0000])
-beta_targ:  tensor([0.0110, 0.0160, 1.0000, 0.5800])
-beta0:  tensor([0.0080, 0.0120, 1.0000, 0.5800])
-this_beta:  tensor([0.0093, 0.0142, 1.0000, 0.5800])
+Gradient (scaled):  tensor([-6.6803e+02, -3.2121e+01, -8.9210e-01,  5.3037e-01])
+beta:  tensor([0.0095, 0.0129, 0.1000, 0.5800])
+Relative error of observation:  tensor(0.0005)
+Traceback (most recent call last):
+  File "/home/shengduo/InverseProblems/AdjtMethod/grad_main_newVT_AddTheta.py", line 190, in <module>
+    myGradBB.run()
+  File "/home/shengduo/InverseProblems/AdjtMethod/GradientDescent.py", line 197, in run
+    success = self.oneDescent()
+  File "/home/shengduo/InverseProblems/AdjtMethod/GradientDescent.py", line 177, in oneDescent
+    return self.lineSearch(BBStepSize)
+  File "/home/shengduo/InverseProblems/AdjtMethod/GradientDescent.py", line 235, in lineSearch
+    obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VT, beta_trial, self.y0, self.targ_y, 
+  File "/home/shengduo/InverseProblems/AdjtMethod/GradientDescent.py", line 38, in objGradFunc
+    this_seq = TimeSequenceGen(T, NofTPts, this_SpringSlider, 
+  File "/home/shengduo/InverseProblems/AdjtMethod/TimeSequenceGen.py", line 42, in __init__
+    self.default_y = self.calculateYAtT(self.t)
+  File "/home/shengduo/InverseProblems/AdjtMethod/TimeSequenceGen.py", line 103, in calculateYAtT
+    y = odeint(self.DyDt, self.MFParams.y0, t, 
+  File "/home/shengduo/anaconda3/lib/python3.9/site-packages/torchdiffeq/_impl/odeint.py", line 77, in odeint
+    solution = solver.integrate(t)
+  File "/home/shengduo/anaconda3/lib/python3.9/site-packages/torchdiffeq/_impl/solvers.py", line 105, in integrate
+    dy, f0 = self._step_func(self.func, t0, dt, t1, y0)
+  File "/home/shengduo/anaconda3/lib/python3.9/site-packages/torchdiffeq/_impl/fixed_grid.py", line 29, in _step_func
+    return rk4_alt_step_func(func, t0, dt, t1, y0, f0=f0, perturb=self.perturb), f0
+  File "/home/shengduo/anaconda3/lib/python3.9/site-packages/torchdiffeq/_impl/rk_common.py", line 111, in rk4_alt_step_func
+    k2 = func(t0 + dt * _one_third, y0 + dt * k1 * _one_third)
+  File "/home/shengduo/anaconda3/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1130, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/shengduo/anaconda3/lib/python3.9/site-packages/torchdiffeq/_impl/misc.py", line 189, in forward
+    return self.base_func(t, y)
+  File "/home/shengduo/InverseProblems/AdjtMethod/TimeSequenceGen.py", line 73, in DyDt
+    y[1] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2] * DRSInv)) / a)
+KeyboardInterrupt

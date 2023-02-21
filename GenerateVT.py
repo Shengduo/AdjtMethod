@@ -1,4 +1,5 @@
 ## Import standard librarys
+from operator import methodcaller
 import torch
 import torchdiffeq
 import pickle
@@ -37,6 +38,9 @@ class GenerateVT:
         # Prescribed simple function
         elif self.flag == "prescribed_simple":
             self.VT = self.VTPrescribedSimple()
+        
+        elif self.flag == "prescribed_linear":
+            self.VT = self.VTPrescribedLinear()
         
     # Simple function series
     def VTSimple(self):
@@ -125,5 +129,20 @@ class GenerateVT:
         self.tt = tt
         self.VV = VV
 
+        return torch.stack([V, T])
+
+    # Prescribed linear function series
+    def VTPrescribedLinear(self):
+        # Get tt and VV
+        tt = self.kwgs['tt']
+        VV = self.kwgs['VV']
+        T = torch.linspace(tt[0], tt[-1], self.kwgs['NofTpts']);
+        InterpFunc = interp1d(tt, VV)
+        V = torch.tensor(InterpFunc(T), dtype = torch.float)
+
+        # Update self.tt, self.VV
+        self.tt = tt
+        self.VV = VV
+        
         return torch.stack([V, T])
 

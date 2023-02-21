@@ -28,7 +28,7 @@ torch.set_default_dtype(torch.float)
 
 # Gradient descent on fixed $\alpha = [k, m, g]$ and $V$ 
 # Set up the parameters
-plotsName = "SimpleGen"
+plotsName = "LinearGen"
 alpha0 = torch.tensor([50., 5., 9.8])
 # VT = torch.tensor([[1., 1.], [0., 5.]])
 
@@ -37,16 +37,19 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_Trange = torch.tensor([0., 20.])
 VT_NofTpts = 1000
 # VT_flag = "simple"
-VT_flag = "prescribed_simple"
+# VT_flag = "prescribed_simple"
+VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-plt_save_path = "./plots/0220ABRK4lsrh_AddThetaVT_" + plotsName + ".png"
+plt_save_path = "./plots/0221ABRK4lsrh_AddThetaVT_" + plotsName + ".png"
 
 # # For prescribed VT
 # VT_tts = torch.linspace(VT_Trange[0], VT_Trange[1], VT_nOfTerms)
 # VT_VVs = torch.rand(VT_nOfTerms) * (VT_Vrange[1] - VT_Vrange[0]) + VT_Vrange[0]
-VT_VVs = torch.tensor([11.8879, 12.3702,  7.9328, 13.7866,  7.0897])
-VT_tts = torch.tensor([ 0.0000,  5.3533,  8.8651, 13.6162, 20.0000])
+# VT_VVs = torch.tensor([11.8879, 12.3702,  7.9328, 13.7866,  7.0897])
+# VT_tts = torch.tensor([ 0.0000,  5.3533,  8.8651, 13.6162, 20.0000])
+VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1.])
+VT_tts = torch.linspace(0., 20., 10)
 
 # Initialize VT_kwgs
 VT_kwgs = {
@@ -75,24 +78,24 @@ y0 = torch.tensor([0., VT[0, 0], 1.0])
 
 # Start beta
 # beta0 = torch.tensor([0.005, 0.005, 1. / 2.e0, 0.2])
-beta0 = torch.tensor([0.008, 0.012, 1. / 1.e0, 0.58])
+beta0 = torch.tensor([0.008, 0.012, 1. / 10.e0, 0.58])
 
 # Target beta
-beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e0, 0.58])
+beta_targ = torch.tensor([0.011, 0.016, 1. / 10.e0, 0.58])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
-beta_low = torch.tensor([0.001, 0.001, 1. / 1.e0, 0.58])
+beta_low = torch.tensor([0.001, 0.001, 1. / 10.e0, 0.58])
 # beta_low = torch.tensor([0.001, 0.001, 1. / 1.e0, 0.58])
 
 # beta_high = torch.tensor([0.021, 0.026, 1. / 0.5e-3, 0.8])
-beta_high = torch.tensor([100., 100., 1. / 1.e0, 0.58])
+beta_high = torch.tensor([100., 100., 1. / 10.e0, 0.58])
 # beta_high = torch.tensor([100., 100., 1. / 1.e0, 0.58])
 
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
-max_iters = 10
+max_iters = 100
 maxFuncCalls = 200
 regularizedFlag = True
 noLocalSearch = True
@@ -199,4 +202,4 @@ print("this_beta: ", this_beta)
 
 betas = [beta_targ, beta0, this_beta]
 betas_legend = ["True", "Init", "Finl"]
-plot_differences(kwgs, betas, betas_legend, "./plots/0220ABRK4lsrh_AddThetaRes_" + plotsName + ".png")
+plot_differences(kwgs, betas, betas_legend, "./plots/0221ABRK4lsrh_AddThetaRes_" + plotsName + ".png")
