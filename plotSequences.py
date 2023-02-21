@@ -128,9 +128,11 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit.png'):
     # Plot theta(t)
     for (t, y, lw) in zip(ts, ys, lwidths):
         axs[1][0].semilogy(t, y[2, :], linewidth=lw)
+    axs[1][0].semilogy(t, 1. / betas[0][2] / ys[0][1, :], '--', linewidth=0.5)
     # axs[1][0].semilogy(1e6 * t, self.MFParams.RSParams[2] / y[1, :], linewidth=2.0)
     axs[1][0].set_xlabel('Time [$\mu$ s]', fontsize=20)
     axs[1][0].set_ylabel('State Variable $\\theta(t)\ \mathrm{[s]}$', fontsize=20)
+    betas_legend.append("S-S")
     axs[1][0].legend(betas_legend, loc='best', fontsize=20)
     axs[1][0].grid()
     f.savefig(savePath, dpi=500.)

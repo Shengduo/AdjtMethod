@@ -40,7 +40,7 @@ VT_NofTpts = 1000
 VT_flag = "prescribed_simple"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-plt_save_path = "./plots/0214ABOnlyRK4BB__AddThetaVT_" + plotsName + ".png"
+plt_save_path = "./plots/0220ABRK4lsrh_AddThetaVT_" + plotsName + ".png"
 
 # # For prescribed VT
 # VT_tts = torch.linspace(VT_Trange[0], VT_Trange[1], VT_nOfTerms)
@@ -75,29 +75,29 @@ y0 = torch.tensor([0., VT[0, 0], 1.0])
 
 # Start beta
 # beta0 = torch.tensor([0.005, 0.005, 1. / 2.e0, 0.2])
-beta0 = torch.tensor([0.004, 0.006, 1. / 1.e0, 0.58])
+beta0 = torch.tensor([0.008, 0.012, 1. / 1.e0, 0.58])
 
 # Target beta
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e0, 0.58])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
-# beta_low = torch.tensor([0.001, 0.001, 1.e-5, 0.3])
 beta_low = torch.tensor([0.001, 0.001, 1. / 1.e0, 0.58])
+# beta_low = torch.tensor([0.001, 0.001, 1. / 1.e0, 0.58])
 
 # beta_high = torch.tensor([0.021, 0.026, 1. / 0.5e-3, 0.8])
-# beta_high = torch.tensor([100., 100., 1.0e5, 0.8])
 beta_high = torch.tensor([100., 100., 1. / 1.e0, 0.58])
+# beta_high = torch.tensor([100., 100., 1. / 1.e0, 0.58])
 
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
-max_iters = 100
+max_iters = 10
 maxFuncCalls = 200
 regularizedFlag = True
 noLocalSearch = True
-# stepping = 'lsrh'
-stepping = 'BB'
+stepping = 'lsrh'
+# stepping = 'BB'
 lsrh_steps = 50
 
 # Sequence specific parameters
@@ -105,8 +105,8 @@ T = VT_Trange[1]
 NofTPts = VT_NofTpts
 
 # Tolerance parameters
-this_rtol = 1.e-12
-this_atol = 1.e-14
+this_rtol = 1.e-8
+this_atol = 1.e-10
 
 # Solver
 solver = 'rk4'
@@ -199,4 +199,4 @@ print("this_beta: ", this_beta)
 
 betas = [beta_targ, beta0, this_beta]
 betas_legend = ["True", "Init", "Finl"]
-plot_differences(kwgs, betas, betas_legend, "./plots/0214ABOnlyRK4BB__AddThetaRes_" + plotsName + ".png")
+plot_differences(kwgs, betas, betas_legend, "./plots/0220ABRK4lsrh_AddThetaRes_" + plotsName + ".png")
