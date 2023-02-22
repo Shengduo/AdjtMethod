@@ -88,7 +88,12 @@ class TimeSequenceGen:
                                                     a * torch.log(y[1] / 1.e-6) + \
                                                     b * torch.log(1.e-6 * y[2] * DRSInv)), 
                                  # 1 - 1.e-6 * y[2] / DRS]) 
-                                 1 - y[2] * y[1] * DRSInv])   
+                                 1 - y[2] * y[1] * DRSInv])
+
+        # Check if slip law should be used
+        if self.MFParams.lawFlag == "slip":
+            DyDt[2] = -y[2] * y[1] * DRSInv * torch.log(y[2] * y[1] * DRSInv)
+
         # DEBUG LINES
 #         print("-" * 30)
 #         print('t = ', t)

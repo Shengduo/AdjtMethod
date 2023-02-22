@@ -24,7 +24,7 @@ Class MassFricParams, manages data of a mass block sliding on rate-and-state fri
 """
 class MassFricParams: 
     # Constructor
-    def __init__(self, kmg, VT, RSParams, y0):
+    def __init__(self, kmg, VT, RSParams, y0, lawFlag = "aging"):
         # Define constant parameters k, m and g
         self.k = kmg[0]
         self.m = kmg[1]
@@ -41,7 +41,8 @@ class MassFricParams:
         
         self.RSParams = RSParams
         self.y0 = y0
-        
+        self.lawFlag = lawFlag
+
         # Get the function of V, S at T
         self.vtFunc = interp1d(self.T, self.V)
         self.stFunc = interp1d(self.T, self.S)
@@ -81,9 +82,9 @@ class MassFricParams:
         print('a:        ', self.RSParams[0])
         print('b:        ', self.RSParams[1])
         # print('DRS:      ', self.RSParams[2])
-        print('1 / DRS:      ', self.RSParams[2])
+        print('1 / DRS:  ', self.RSParams[2])
         print('y0:       ', self.y0)
-        
+        print('law:      ', self.lawFlag)
         # # Plot V at t
         # plt.figure()
         # plt.plot(self.T, self.V, linewidth = 2.0)

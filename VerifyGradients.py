@@ -44,10 +44,11 @@ this_atol = 1.e-10
 
 # Regularized flag
 regularizedFlag = True
+lawFlag = "slip"
 
 # Generate target v
-targ_RSParams = torch.tensor([0.006, 0.010, 1. / 1., 0.58])
-targ_SpringSlider = MassFricParams(kmg, VT, targ_RSParams, y0)
+targ_RSParams = torch.tensor([0.006, 0.010, 1. / 1.e1, 0.58])
+targ_SpringSlider = MassFricParams(kmg, VT, targ_RSParams, y0, lawFlag=lawFlag)
 # targ_SpringSlider.print_info()
 targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag)
 v = targ_seq.default_y
@@ -55,9 +56,9 @@ v = targ_seq.default_y
 
 
 # A new set of RS params
-new_RSParams = torch.tensor([0.008, 0.012, 1. / 5., 0.3])
+new_RSParams = torch.tensor([0.008, 0.012, 1. / 5.e1, 0.3])
 # new_RSParams = torch.tensor([0.011, 0.016, 1.e-3, 0.58])
-new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0)
+new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0, lawFlag=lawFlag)
 new_seq = TimeSequenceGen(T, NofTPts, new_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag)
 # new_seq.plotY(new_seq.t, new_seq.default_y)
 
@@ -102,11 +103,11 @@ for i in range(len(new_RSParams)):
     
     # kmg, VT, targ_RSParams, y0
     # Calculate two observations
-    SpringSliderPlus = MassFricParams(kmg, VT, RSParamsPlus, y0)
+    SpringSliderPlus = MassFricParams(kmg, VT, RSParamsPlus, y0, lawFlag=lawFlag)
     seqPlus = TimeSequenceGen(T, NofTPts, SpringSliderPlus, Rtol, Atol, regularizedFlag=regularizedFlag)
     OPlus = O(seqPlus.default_y, v, seqPlus.t, SpringSliderPlus)
     
-    SpringSliderMinus = MassFricParams(kmg, VT, RSParamsMinus, y0)
+    SpringSliderMinus = MassFricParams(kmg, VT, RSParamsMinus, y0, lawFlag=lawFlag)
     seqMinus = TimeSequenceGen(T, NofTPts, SpringSliderMinus, Rtol, Atol, regularizedFlag=regularizedFlag)
     OMinus = O(seqMinus.default_y, v, seqMinus.t, SpringSliderMinus)
     

@@ -136,13 +136,13 @@ class GenerateVT:
         # Get tt and VV
         tt = self.kwgs['tt']
         VV = self.kwgs['VV']
-        T = torch.linspace(tt[0], tt[-1], self.kwgs['NofTpts']);
+        T = torch.linspace(tt[0], tt[-1], self.kwgs['NofTpts'])
         InterpFunc = interp1d(tt, VV)
         V = torch.tensor(InterpFunc(T), dtype = torch.float)
 
         # Update self.tt, self.VV
         self.tt = tt
         self.VV = VV
-        
+
         return torch.stack([V, T])
 

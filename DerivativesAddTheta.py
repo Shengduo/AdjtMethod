@@ -60,8 +60,15 @@ def DCDy(y, y_targ, t, MFParams):
     DCDy[1, 2, :] = MFParams.g * MFParams.RSParams[1] / y[2, :]
     # DCDy[2, 1, :] = y[2, :] / MFParams.RSParams[2]
     # DCDy[2, 2, :] = y[1, :] / MFParams.RSParams[2]
-    DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2]
-    DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2]
+    
+    # Switch between different laws
+    if MFParams.lawFlag == "slip":
+        DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2] * (1. + torch.log(y[1, :] * y[2, :] * MFParams.RSParams[2]))
+        DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2] * (1. + torch.log(y[1, :] * y[2, :] * MFParams.RSParams[2]))
+    else: # aging law
+        DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2]
+        DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2]
+    
     return DCDy
 
 # \partial C / \partial y, regularized
@@ -85,9 +92,14 @@ def DCDy_regularized(y, y_targ, t, MFParams):
     DCDy[1, 2, :] = MFParams.g * pfpy2
     # DCDy[2, 1, :] = y[2, :] / MFParams.RSParams[2]
     # DCDy[2, 2, :] = y[1, :] / MFParams.RSParams[2]
-    DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2]
-    DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2]
     
+    # Switch between different laws
+    if MFParams.lawFlag == "slip":
+        DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2] * (1. + torch.log(y[1, :] * y[2, :] * MFParams.RSParams[2]))
+        DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2] * (1. + torch.log(y[1, :] * y[2, :] * MFParams.RSParams[2]))
+    else: # aging law
+        DCDy[2, 1, :] = y[2, :] * MFParams.RSParams[2]
+        DCDy[2, 2, :] = y[1, :] * MFParams.RSParams[2]
 #     # DEBUG LINES
 #     print("DCDy: ", DCDy)
     
@@ -118,7 +130,12 @@ def DCDBeta(y, y_targ, t, MFParams):
 
     DCDBeta[1, 3, :] = MFParams.g
     # DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
-    DCDBeta[2, 2, :] = y[1, :] * y[2, :]
+    
+    # Switch between slip and aging law
+    if MFParams.lawFlag == "slip":
+        DCDBeta[2, 2, :] = y[1, :] * y[2, :] * (torch.log(y[1, :] * y[2, :] * MFParams.RSParams[2]) + 1.)
+    else:
+        DCDBeta[2, 2, :] = y[1, :] * y[2, :]
     return DCDBeta
 
 # \partial C / \partial \beta, regularized
@@ -148,7 +165,13 @@ def DCDBeta_regularized(y, y_targ, t, MFParams):
     DCDBeta[1, 2, :] = MFParams.g * pfpbeta2
     DCDBeta[1, 3, :] = MFParams.g * pfpbeta3
     # DCDBeta[2, 2, :] = -y[1, :] * y[2, :] / MFParams.RSParams[2] / MFParams.RSParams[2]
-    DCDBeta[2, 2, :] = y[1, :] * y[2, :]
+    
+     # Switch between slip and aging law
+    if MFParams.lawFlag == "slip":
+        DCDBeta[2, 2, :] = y[1, :] * y[2, :] * (torch.log(y[1, :] * y[2, :] * MFParams.RSParams[2]) + 1.)
+    else:
+        DCDBeta[2, 2, :] = y[1, :] * y[2, :]
+    return DCDBeta
 #     # DEBUG LINES
 #     print("DCDBeta: ", DCDBeta)
     
