@@ -28,14 +28,20 @@ torch.set_default_dtype(torch.float)
 # ----------------------------- Calculate gradients via Adjoint Method -----------------------------
 ## Fixed parameters
 # Parameters for the spring-slider
-k = 100.
-m = 1.
-VT = torch.tensor([[1., 1.], [0., 5.]])
+k = 50.
+m = 5.
+
+VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1.])
+VT_tts = torch.linspace(0., 20., 10)
+
+# VT = torch.tensor([[1., 1.], [0., 5.]])
+VT = torch.stack([VT_VVs, VT_tts])
+
 g = 9.8
 y0 = torch.tensor([0., 1.0, 1.0])
 kmg = torch.tensor([k, m, g])
 # Sequence specific parameters
-T = 5.
+T = 20.
 NofTPts = 1000
 
 # Tolerance parameters
@@ -47,7 +53,7 @@ regularizedFlag = True
 lawFlag = "slip"
 
 # Generate target v
-targ_RSParams = torch.tensor([0.006, 0.010, 1. / 1.e1, 0.58])
+targ_RSParams = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 targ_SpringSlider = MassFricParams(kmg, VT, targ_RSParams, y0, lawFlag=lawFlag)
 # targ_SpringSlider.print_info()
 targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag)
@@ -56,7 +62,7 @@ v = targ_seq.default_y
 
 
 # A new set of RS params
-new_RSParams = torch.tensor([0.008, 0.012, 1. / 5.e1, 0.3])
+new_RSParams = torch.tensor([0.009, 0.012, 1. / 5.e1, 0.58])
 # new_RSParams = torch.tensor([0.011, 0.016, 1.e-3, 0.58])
 new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0, lawFlag=lawFlag)
 new_seq = TimeSequenceGen(T, NofTPts, new_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag)

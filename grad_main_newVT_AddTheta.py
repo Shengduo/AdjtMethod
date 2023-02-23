@@ -29,27 +29,30 @@ torch.set_default_dtype(torch.float)
 # Gradient descent on fixed $\alpha = [k, m, g]$ and $V$ 
 # Set up the parameters
 plotsName = "LinearGen"
-alpha0 = torch.tensor([50., 5., 9.8])
+alpha0 = torch.tensor([100., 5., 9.8])
 # VT = torch.tensor([[1., 1.], [0., 5.]])
 
 # Generate VT series
 VT_Vrange = torch.tensor([5., 15.])
-VT_Trange = torch.tensor([0., 20.])
-VT_NofTpts = 1000
+# VT_NofTpts = 2000
 # VT_flag = "simple"
 # VT_flag = "prescribed_simple"
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-plt_save_path = "./plots/0221ABDRS_AddThetaVT_" + plotsName + ".png"
+plt_save_path = "./plots/0222ABDRSfStar_aging_AddThetaVT_" + plotsName + ".png"
 
 # # For prescribed VT
 # VT_tts = torch.linspace(VT_Trange[0], VT_Trange[1], VT_nOfTerms)
 # VT_VVs = torch.rand(VT_nOfTerms) * (VT_Vrange[1] - VT_Vrange[0]) + VT_Vrange[0]
 # VT_VVs = torch.tensor([11.8879, 12.3702,  7.9328, 13.7866,  7.0897])
 # VT_tts = torch.tensor([ 0.0000,  5.3533,  8.8651, 13.6162, 20.0000])
-VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1.])
-VT_tts = torch.linspace(0., 20., 10)
+# VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.])
+# VT_tts = torch.linspace(0., 40., 20)
+VT_NofTpts = 1500
+VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.])
+VT_Trange = torch.tensor([0., 30.])
+VT_tts = torch.linspace(0., 30., 15)
 
 # Initialize VT_kwgs
 VT_kwgs = {
@@ -78,18 +81,18 @@ y0 = torch.tensor([0., VT[0, 0], 1.0])
 
 # Start beta
 # beta0 = torch.tensor([0.005, 0.005, 1. / 2.e0, 0.2])
-beta0 = torch.tensor([0.009, 0.012, 1. / 5.e1, 0.58])
+beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.28])
 
 # Target beta
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
-beta_low = torch.tensor([0.001, 0.001, 1. / 1.e3, 0.58])
+beta_low = torch.tensor([-1., -1., 1. / 1.e3, 0.1])
 # beta_low = torch.tensor([0.001, 0.001, 1. / 1.e0, 0.58])
 
 # beta_high = torch.tensor([0.021, 0.026, 1. / 0.5e-3, 0.8])
-beta_high = torch.tensor([100., 100., 1. / 1.e-1, 0.58])
+beta_high = torch.tensor([1., 1., 1. / 1.e-1, 0.9])
 # beta_high = torch.tensor([100., 100., 1. / 1.e0, 0.58])
 
 scaling = torch.tensor([1., 1., 1., 1.])
@@ -115,6 +118,10 @@ this_atol = 1.e-9
 solver = 'rk4'
 # solver = 'dopri5'
 
+# LawFlag
+# lawFlag = "slip"
+lawFlag = "aging"
+
 # Store the keywords for optAlpha
 kwgs = {
     'y0' : y0, 
@@ -138,15 +145,17 @@ kwgs = {
     'this_rtol': this_rtol, 
     'this_atol' : this_atol, 
     'solver' : solver, 
+    'lawFlag' : lawFlag, 
 }
 
 # Function to get target v
-def generate_target_v(alpha, VT, beta, y0, this_rtol, this_atol, regularizedFlag, solver):
+def generate_target_v(alpha, VTs, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
     # y0[1] = alpha[2]
-    targ_SpringSlider = MassFricParams(alpha, VT, beta, y0)
-    # targ_SpringSlider.print_info()
-    targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, 
-                               rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
+    for idx, VT in enumerate(VTs):
+        targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag)
+        # targ_SpringSlider.print_info()
+        targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, 
+                                   rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
     # v = targ_seq.default_y[1, :], 
     t = targ_seq.t
     return targ_seq.default_y, t
@@ -175,7 +184,7 @@ for i in range(N_AllIters):
     # Generate target v
     v, t = generate_target_v(this_alpha, kwgs['VT'], kwgs['beta_targ'], kwgs['y0'], 
                              kwgs['this_rtol'], kwgs['this_atol'], kwgs['regularizedFlag'], 
-                             kwgs['solver'])
+                             kwgs['solver'], kwgs['lawFlag'])
     
     # Run gradient descent
     myGradBB = GradDescent(this_alpha, kwgs['alp_low'], kwgs['alp_high'], kwgs['VT'], 
@@ -185,7 +194,7 @@ for i in range(N_AllIters):
                            max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
                            regularizedFlag = kwgs['regularizedFlag'], 
                            T = kwgs['T'], NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'], 
-                           solver = kwgs['solver'])
+                           solver = kwgs['solver'], lawFlag = kwgs['lawFlag'])
     
     myGradBB.run()
     
@@ -201,7 +210,7 @@ print("beta0: ", beta0)
 print("this_beta: ", this_beta)
 print("stepping: ", stepping)
 print("solver: ", solver)
-
+print("lawFlag: ", lawFlag)
 betas = [beta_targ, beta0, this_beta]
 betas_legend = ["True", "Init", "Finl"]
-plot_differences(kwgs, betas, betas_legend, "./plots/0221ABDRS_AddThetaRes_" + plotsName + ".png")
+plot_differences(kwgs, betas, betas_legend, "./plots/0222ABDRSfStar_aging_AddThetaRes_" + plotsName + ".png")

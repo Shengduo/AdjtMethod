@@ -133,16 +133,33 @@ class GenerateVT:
 
     # Prescribed linear function series
     def VTPrescribedLinear(self):
-        # Get tt and VV
-        tt = self.kwgs['tt']
-        VV = self.kwgs['VV']
-        T = torch.linspace(tt[0], tt[-1], self.kwgs['NofTpts'])
-        InterpFunc = interp1d(tt, VV)
-        V = torch.tensor(InterpFunc(T), dtype = torch.float)
+        # # Get tt and VV
+        # tt = self.kwgs['tt']
+        # VV = self.kwgs['VV']
+        # T = torch.linspace(tt[0], tt[-1], self.kwgs['NofTpts'])
+        # InterpFunc = interp1d(tt, VV)
+        # V = torch.tensor(InterpFunc(T), dtype = torch.float)
 
+        # # Update self.tt, self.VV
+        # self.tt = tt
+        # self.VV = VV
+
+        # Allocate memory
+        tts = self.kwgs['tts']
+        VVs = self.kwgs['VVs']
+        res = torch.zeros(len(tts), 2, self.kwgs['NofTpts'])
+
+        # Loop through all tt and vvs
+        for idx, (tt, VV) in enumerate(zip(tts, VVs)):
+            T = torch.linspace(tt[0], tt[-1], self.kwgs['NofTpts'])
+            InterpFunc = interp1d(tt, VV)
+            V = torch.tensor(InterpFunc(T), dtype = torch.float)
+            res[idx, 1, :] = V
+            res[idx, 0, :] = T
+            
         # Update self.tt, self.VV
-        self.tt = tt
-        self.VV = VV
+        self.tts = tts
+        self.VVs = VVs
 
-        return torch.stack([V, T])
+        return res
 
