@@ -150,15 +150,21 @@ kwgs = {
 
 # Function to get target v
 def generate_target_v(alpha, VTs, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
-    # y0[1] = alpha[2]
+    ts = []
+    ys = []
+
     for idx, VT in enumerate(VTs):
         targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag)
         # targ_SpringSlider.print_info()
         targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, 
                                    rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
-    # v = targ_seq.default_y[1, :], 
-    t = targ_seq.t
-    return targ_seq.default_y, t
+        
+        ts.append(targ_seq.t)
+        ys.append(targ_seq.default_y)
+
+    # v = targ_seq.default_y[1, :]
+    # t = targ_seq.t
+    return torch.stack(ts), torch.stack(ys)
 
 
 ## Number of total alpha-beta iterations
