@@ -6,6 +6,7 @@ import time
 import torch.nn as nn
 import scipy.optimize as opt
 import numpy as np
+# import os
 
 from torchdiffeq import odeint
 from xitorch.interpolate import Interp1D
@@ -86,56 +87,64 @@ def main_setParams():
     return kwgs
 
 ## Function to plot the diagrams of a given set of sequences
-def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit.png'):
+def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit/'):
+    # Create the directory to save plots
+    # os.mkdir(savePath)
+
     # Store all sequeces as a list
     ys = []
     ts = []
     lwidths = np.linspace(2., 1., len(betas))
 
     # Generate the sequences
-    for beta in betas:
-        targ_SpringSlider = MassFricParams(kwgs['alpha0'], kwgs['VT'], beta, kwgs['y0'])
-        # targ_SpringSlider.print_info()
-        targ_seq = TimeSequenceGen(kwgs['T'], kwgs['NofTPts'], targ_SpringSlider, 
-                                   rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
-        
-        # Append the sequences into the list
-        ys.append(targ_seq.default_y)
-        ts.append(targ_seq.t)
+    VTs = kwgs['VTs']
+    for idx, VT in enumerate(VTs):
+        for beta in betas:
+            targ_SpringSlider = MassFricParams(kwgs['alpha0'], VT, beta, kwgs['y0'])
+            # targ_SpringSlider.print_info()
+            targ_seq = TimeSequenceGen(VT[1, -1], kwgs['NofTPts'], targ_SpringSlider, 
+                                    rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
+            
+            # Append the sequences into the list
+            ys.append(targ_seq.default_y)
+            ts.append(targ_seq.t)
 
-    # Plot all (2) sequences
-    # Plot Sequence of V(t) and theta(t) given sample-index
-    f, axs = plt.subplots(2, 2, figsize = (15, 15))
+        # Plot all (2) sequences
+        # Plot Sequence of V(t) and theta(t) given sample-index
+        f, axs = plt.subplots(2, 2, figsize = (15, 15))
 
-    # Plot x_1(t)
-    for (t, y, lw) in zip(ts, ys, lwidths):
-        axs[0][0].plot(t, y[0, :], linewidth=lw)
-    axs[0][0].legend(betas_legend, loc='best', fontsize=20)
-    axs[0][0].set_xlabel('Time [s]', fontsize=20)
-    axs[0][0].set_ylabel('Slip $x_1(t)\  \mathrm{[m]}$', fontsize=20)
-    # axs[0][0].set_ylim([1e-15, 1e2])
-    axs[0][0].grid()
+        # Plot x_1(t)
+        for (t, y, lw) in zip(ts, ys, lwidths):
+            axs[0][0].plot(t, y[0, :], linewidth=lw)
+        axs[0][0].legend(betas_legend, loc='best', fontsize=20)
+        axs[0][0].set_xlabel('Time [s]', fontsize=20)
+        axs[0][0].set_ylabel('Slip $x_1(t)\  \mathrm{[m]}$', fontsize=20)
+        # axs[0][0].set_ylim([1e-15, 1e2])
+        axs[0][0].grid()
 
-    # Plot v_1(t)
-    for (t, y, lw) in zip(ts, ys, lwidths):
-        axs[0][1].semilogy(t, y[1, :], linewidth=lw)
-    axs[0][1].legend(betas_legend, loc='best', fontsize=20)
-    axs[0][1].set_xlabel('Time [s]', fontsize=20)
-    axs[0][1].set_ylabel('Slip rate $v_1(t)\ \mathrm{[m/s]}$', fontsize=20)
-    # axs[0][1].set_ylim([0, 15])
-    axs[0][1].grid()
+        # Plot v_1(t)
+        for (t, y, lw) in zip(ts, ys, lwidths):
+            axs[0][1].semilogy(t, y[1, :], linewidth=lw)
+        axs[0][1].legend(betas_legend, loc='best', fontsize=20)
+        axs[0][1].set_xlabel('Time [s]', fontsize=20)
+        axs[0][1].set_ylabel('Slip rate $v_1(t)\ \mathrm{[m/s]}$', fontsize=20)
+        # axs[0][1].set_ylim([0, 15])
+        axs[0][1].grid()
 
-    # Plot theta(t)
-    for (t, y, lw) in zip(ts, ys, lwidths):
-        axs[1][0].semilogy(t, y[2, :], linewidth=lw)
-    axs[1][0].semilogy(t, 1. / betas[0][2] / ys[0][1, :], '--', linewidth=0.5)
-    # axs[1][0].semilogy(1e6 * t, self.MFParams.RSParams[2] / y[1, :], linewidth=2.0)
-    axs[1][0].set_xlabel('Time [$\mu$ s]', fontsize=20)
-    axs[1][0].set_ylabel('State Variable $\\theta(t)\ \mathrm{[s]}$', fontsize=20)
-    betas_legend.append("S-S")
-    axs[1][0].legend(betas_legend, loc='best', fontsize=20)
-    axs[1][0].grid()
-    f.savefig(savePath, dpi=500.)
+        # Plot theta(t)
+        for (t, y, lw) in zip(ts, ys, lwidths):
+            axs[1][0].semilogy(t, y[2, :], linewidth=lw)
+        axs[1][0].semilogy(t, 1. / betas[0][2] / ys[0][1, :], '--', linewidth=0.5)
+        # axs[1][0].semilogy(1e6 * t, self.MFParams.RSParams[2] / y[1, :], linewidth=2.0)
+        axs[1][0].set_xlabel('Time [$\mu$ s]', fontsize=20)
+        axs[1][0].set_ylabel('State Variable $\\theta(t)\ \mathrm{[s]}$', fontsize=20)
+        betas_legend.append("S-S")
+        axs[1][0].legend(betas_legend, loc='best', fontsize=20)
+        axs[1][0].grid()
+
+        # Save the figure
+        f.suptitle("Sequence " + str(idx), fontsize=20)
+        f.savefig(savePath + str(idx) + ".png", dpi=300.)
 
 
 ## Main executions 

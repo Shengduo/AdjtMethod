@@ -9,6 +9,7 @@ import time
 import torch.nn as nn
 import scipy.optimize as opt
 import numpy as np
+from pathlib import Path
 
 from torchdiffeq import odeint
 from xitorch.interpolate import Interp1D
@@ -40,19 +41,19 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-plt_save_path = "./plots/0222ABDRSfStar_aging_AddThetaVT_" + plotsName + ".png"
+res_path = "./plots/0303ABDRS_aging_AddThetaVTs/"
+Path(res_path).mkdir(parents=True, exist_ok=True)
+gen_plt_save_path = res_path + plotsName + ".png"
 
 # # For prescribed VT
-# VT_tts = torch.linspace(VT_Trange[0], VT_Trange[1], VT_nOfTerms)
-# VT_VVs = torch.rand(VT_nOfTerms) * (VT_Vrange[1] - VT_Vrange[0]) + VT_Vrange[0]
-# VT_VVs = torch.tensor([11.8879, 12.3702,  7.9328, 13.7866,  7.0897])
-# VT_tts = torch.tensor([ 0.0000,  5.3533,  8.8651, 13.6162, 20.0000])
-# VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.])
-# VT_tts = torch.linspace(0., 40., 20)
 VT_NofTpts = 1500
-VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.])
+VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10, 10.]])
 VT_Trange = torch.tensor([0., 30.])
-VT_tts = torch.linspace(0., 30., 15)
+VT_tts = torch.stack([torch.linspace(0., 30., 15), 
+                      torch.linspace(0., 30., 15)])
+
+
 
 # Initialize VT_kwgs
 VT_kwgs = {
@@ -62,14 +63,16 @@ VT_kwgs = {
     "Vrange" : VT_Vrange, 
     "flag" : VT_flag, 
     "NofTpts" : VT_NofTpts, 
-    "VV" : VT_VVs, 
-    "tt" : VT_tts, 
-    "plt_save_path" : plt_save_path, 
+    "VVs" : VT_VVs, 
+    "tts" : VT_tts, 
+    "plt_save_path" : gen_plt_save_path, 
 }
 
 # Get the series
 VT_instance = GenerateVT(VT_kwgs)
-VT = VT_instance.VT
+print("Shit!")
+
+VTs = VT_instance.VT
 
 # Plot VT (optional)
 VT_instance.plotVT()
@@ -77,23 +80,19 @@ VT_instance.plotVT()
 # Alpha range
 alp_low = torch.tensor([50., 0.5, 1., 9.])
 alp_hi = torch.tensor([100., 2., 10., 10.])
-y0 = torch.tensor([0., VT[0, 0], 1.0])
+y0 = torch.tensor([0., 1.0, 1.0])
 
 # Start beta
-# beta0 = torch.tensor([0.005, 0.005, 1. / 2.e0, 0.2])
-beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.28])
+beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.58])
 
 # Target beta
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
-beta_low = torch.tensor([-1., -1., 1. / 1.e3, 0.1])
-# beta_low = torch.tensor([0.001, 0.001, 1. / 1.e0, 0.58])
+beta_low = torch.tensor([-1., -1., 1. / 1.e3, 0.58])
 
-# beta_high = torch.tensor([0.021, 0.026, 1. / 0.5e-3, 0.8])
-beta_high = torch.tensor([1., 1., 1. / 1.e-1, 0.9])
-# beta_high = torch.tensor([100., 100., 1. / 1.e0, 0.58])
+beta_high = torch.tensor([1., 1., 1. / 1.e-1, 0.58])
 
 scaling = torch.tensor([1., 1., 1., 1.])
 
@@ -107,7 +106,7 @@ stepping = 'lsrh'
 lsrh_steps = 50
 
 # Sequence specific parameters
-T = VT_Trange[1]
+# T = VT_Trange[1]
 NofTPts = VT_NofTpts
 
 # Tolerance parameters
@@ -126,7 +125,7 @@ lawFlag = "aging"
 kwgs = {
     'y0' : y0, 
     'alpha0' : alpha0, 
-    'VT' : VT,
+    'VTs' : VTs,
     'alp_low' : alp_low, 
     'alp_high' : alp_hi, 
     'max_iters' : max_iters, 
@@ -140,7 +139,6 @@ kwgs = {
     'noLocalSearch' : noLocalSearch, 
     'stepping' : stepping, 
     'lsrh_steps' : lsrh_steps, 
-    'T' : T, 
     'NofTPts' : NofTPts, 
     'this_rtol': this_rtol, 
     'this_atol' : this_atol, 
@@ -156,7 +154,7 @@ def generate_target_v(alpha, VTs, beta, y0, this_rtol, this_atol, regularizedFla
     for idx, VT in enumerate(VTs):
         targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag)
         # targ_SpringSlider.print_info()
-        targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, 
+        targ_seq = TimeSequenceGen(VT[1, -1], NofTPts, targ_SpringSlider, 
                                    rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
         
         ts.append(targ_seq.t)
@@ -188,18 +186,18 @@ for i in range(N_AllIters):
     
     ## Run grad descent on beta
     # Generate target v
-    v, t = generate_target_v(this_alpha, kwgs['VT'], kwgs['beta_targ'], kwgs['y0'], 
+    ts, vs = generate_target_v(this_alpha, kwgs['VTs'], kwgs['beta_targ'], kwgs['y0'], 
                              kwgs['this_rtol'], kwgs['this_atol'], kwgs['regularizedFlag'], 
                              kwgs['solver'], kwgs['lawFlag'])
-    
+
     # Run gradient descent
-    myGradBB = GradDescent(this_alpha, kwgs['alp_low'], kwgs['alp_high'], kwgs['VT'], 
+    myGradBB = GradDescent(this_alpha, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
                            this_beta, kwgs['beta_low'], kwgs['beta_high'], 
-                           kwgs['y0'], v, t, 
+                           kwgs['y0'], vs, ts, 
                            objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
                            max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
                            regularizedFlag = kwgs['regularizedFlag'], 
-                           T = kwgs['T'], NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'], 
+                           NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'], 
                            solver = kwgs['solver'], lawFlag = kwgs['lawFlag'])
     
     myGradBB.run()
@@ -207,10 +205,10 @@ for i in range(N_AllIters):
     # Update parameters
     this_beta = myGradBB.beta_optimal
     print("Optimal beta: ", this_beta)
-
+ 
 # Plot sequences
-print("VV: ", VT_instance.VV)
-print("tt: ", VT_instance.tt)
+print("VV: ", VT_VVs)
+print("tt: ", VT_tts)
 print("beta_targ: ", beta_targ)
 print("beta0: ", beta0)
 print("this_beta: ", this_beta)
@@ -219,4 +217,4 @@ print("solver: ", solver)
 print("lawFlag: ", lawFlag)
 betas = [beta_targ, beta0, this_beta]
 betas_legend = ["True", "Init", "Finl"]
-plot_differences(kwgs, betas, betas_legend, "./plots/0222ABDRSfStar_aging_AddThetaRes_" + plotsName + ".png")
+plot_differences(kwgs, betas, betas_legend, res_path)

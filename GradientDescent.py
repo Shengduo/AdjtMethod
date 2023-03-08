@@ -1,5 +1,4 @@
 ## Import standard librarys
-from re import sub
 import torch
 import torchdiffeq
 import pickle
@@ -72,10 +71,10 @@ class GradDescent:
                  alpha0, alpha_low, alpha_high, 
                  VTs, # Temperarily fix the VTs relation now
                  beta0, beta_low, beta_high, 
-                 y0, targ_ys, t, 
+                 y0, targ_ys, ts, 
                  objGrad_func, max_steps, scaling = torch.tensor([1., 1., 1., 1.]), 
                  stepping = 'BB', obs_rtol = 1e-5, grad_atol = 1.e-10, lsrh_steps = 10, 
-                 regularizedFlag = False, T = 5., NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
+                 regularizedFlag = False, NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
                  solver = 'dopri5', lawFlag = "aging"):
         # Initial parameters, and their lower and upper bound
         # Alpha contains the non-gradient-able parameters
@@ -100,10 +99,16 @@ class GradDescent:
         
         # Target sequence
         self.targ_ys = targ_ys
-        
+
         # Time at which targ_y was observed
-        self.t = t
-        
+        self.ts = ts
+
+        # Compute L2(t) norm of targ_ys
+        self.targ_ys_norm = 0.
+        for t, y in zip(self.ts, self.targ_ys):
+            # V and theta
+            self.targ_ys_norm += torch.trapz(t, y[1, :] * y[1, :] + y[2, :] * y[2, :])
+
         # Objective and gradient function
         self.objGrad_func = objGrad_func
         
@@ -127,7 +132,7 @@ class GradDescent:
 
         # Time sequence parameters
         self.regularizedFlag = regularizedFlag
-        self.T = T
+        # self.T = T
         self.NofTPts = NofTPts
         self.this_rtol = this_rtol
         self.this_atol = this_atol
@@ -140,9 +145,10 @@ class GradDescent:
     # First descent, cannot use Barzilai–Borwein stepping, using linesearch
     def firstDescent(self):
         # Compute obj and grad
+        # print("self.targ_ys.shape: ", self.targ_ys.shape )
         obj, grad = self.objGrad_func(self.alpha0, self.VTs, self.betas[-1], self.y0, self.targ_ys, self.scaling, 
                                       self.regularizedFlag, False, 
-                                      self.T, self.NofTPts, self.this_rtol, self.this_atol, 
+                                      self.NofTPts, self.this_rtol, self.this_atol, 
                                       self.solver, self.lawFlag)
         self.objs = [obj]
         self.grads = [grad]
@@ -171,7 +177,7 @@ class GradDescent:
             # Append the betas and objs
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, 
                                                       self.scaling, self.regularizedFlag, False, 
-                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol, 
+                                                      self.NofTPts, self.this_rtol, self.this_atol, 
                                                       self.solver, self.lawFlag)
             self.betas.append(beta_trial)
             self.objs.append(obj_trial)
@@ -195,7 +201,7 @@ class GradDescent:
         print("Observation: ", self.objs[-1])
         print("Gradient (scaled): ", self.grads[-1])
         print("beta: ", self.betas[-1])
-        print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / torch.linalg.norm(self.targ_y))
+        print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm)
         
         if torch.min(self.grad_norms) < self.grad_atol:
             print("The final predicted parameters: ", self.betas[torch.argmin(self.grad_norms)])
@@ -209,7 +215,7 @@ class GradDescent:
 #             print("Observation: ", self.objs[-1])
             print("Gradient (scaled): ", self.grads[-1])
             print("beta: ", self.betas[-1])
-            print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / torch.linalg.norm(self.targ_y))
+            print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm)
             
             # Check if the gradient is small enough
             if torch.min(self.grad_norms) < self.grad_atol:
@@ -243,7 +249,7 @@ class GradDescent:
             beta_trial = self.project(self.betas[-1], stepSize * self.grads[-1])
             obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, 
                                                       self.scaling, self.regularizedFlag, True, 
-                                                      self.T, self.NofTPts, self.this_rtol, self.this_atol, 
+                                                      self.NofTPts, self.this_rtol, self.this_atol, 
                                                       self.solver, self.lawFlag)
             # # DEBUG LINES
             # # print("shit")
@@ -275,7 +281,7 @@ class GradDescent:
         # Append the betas and objs
         obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, 
                                                   self.scaling, self.regularizedFlag, False, 
-                                                  self.T, self.NofTPts, self.this_rtol, self.this_atol, 
+                                                  self.NofTPts, self.this_rtol, self.this_atol, 
                                                   self.solver, self.lawFlag)
         
         # # DEBUG LINES

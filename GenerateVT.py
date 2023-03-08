@@ -99,7 +99,15 @@ class GenerateVT:
     def plotVT(self):
         # Plot V at t
         plt.figure(figsize=[15, 10])
-        plt.plot(self.VT[1, :], self.VT[0, :], linewidth = 2.0)
+        if len(self.VT.size()) == 3:
+            lgd = []
+            for idx, vt in enumerate(self.VT):
+                 plt.plot(vt[1, :], vt[0, :], linewidth = 2.0)
+                 lgd.append("seq " + str(idx))
+            plt.legend(lgd, fontsize=20, loc='best')
+        else:
+            plt.plot(self.VT[1, :], self.VT[0, :], linewidth = 2.0)
+
         plt.xlabel('Time [s]', fontsize = 20)
         plt.ylabel('V [m/s]', fontsize = 20)
         plt.savefig(self.kwgs['plt_save_path'], dpi = 300.)
@@ -154,8 +162,8 @@ class GenerateVT:
             T = torch.linspace(tt[0], tt[-1], self.kwgs['NofTpts'])
             InterpFunc = interp1d(tt, VV)
             V = torch.tensor(InterpFunc(T), dtype = torch.float)
-            res[idx, 1, :] = V
-            res[idx, 0, :] = T
+            res[idx, 0, :] = V
+            res[idx, 1, :] = T
             
         # Update self.tt, self.VV
         self.tts = tts

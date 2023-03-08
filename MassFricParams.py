@@ -41,6 +41,8 @@ class MassFricParams:
         
         self.RSParams = RSParams
         self.y0 = y0
+        self.y0[1] = VT[0, 0]
+        
         self.lawFlag = lawFlag
 
         # Get the function of V, S at T
