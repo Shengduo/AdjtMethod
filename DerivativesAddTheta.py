@@ -19,7 +19,7 @@ from matplotlib import pyplot as plt
 
 # ------------------------ Calculate the derivative: Do / D\beta -------------------------
 # Observation
-def O(y, y_targ, t, MFParams, MFParams_targ, normalization=True):
+def O(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
     ff_targ = computeF(y_targ, MFParams_targ)
     ff = computeF(y, MFParams)
 
@@ -46,7 +46,7 @@ def O(y, y_targ, t, MFParams, MFParams_targ, normalization=True):
     return O
 
 # \partial o(y, yDot, t; \beta) / \partial y
-def DoDy(y, y_targ, t, MFParams, MFParams_targ, normalization=True):
+def DoDy(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
     DoDy = torch.zeros(y.shape)
 
     if normalization == True:
@@ -76,7 +76,7 @@ def DDoDyDotDt(y, y_targ, t, MFParams):
     return torch.zeros(y.shape)
 
 # \partial o / \partial \beta
-def DoDBeta(y, y_targ, t, MFParams, MFParams_targ, normalization=True):
+def DoDBeta(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
     DoDbeta = torch.zeros([MFParams.RSParams.shape[0], y.shape[1]])
 
     # # Add the f terms
