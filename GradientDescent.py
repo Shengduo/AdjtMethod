@@ -215,7 +215,7 @@ class GradDescent:
             success = self.oneDescent()
             print("=" * 40)
             print("The {0}th descent succeeds: ".format(i + 1), success)
-#             print("Observation: ", self.objs[-1])
+            print("Observation: ", self.objs[-1])
             print("Gradient (scaled): ", self.grads[-1])
             print("beta: ", self.betas[-1])
             print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm)

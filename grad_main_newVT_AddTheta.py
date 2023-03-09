@@ -41,7 +41,7 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0309ABDRS_aging_AddThetaFricVTs/"
+res_path = "./plots/0309ABDRS_aging_AddThetaFricVTs_Normed/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
@@ -97,7 +97,7 @@ beta_high = torch.tensor([1., 1., 1. / 1.e-1, 0.58])
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
-max_iters = 100
+max_iters = 1
 maxFuncCalls = 200
 regularizedFlag = True
 noLocalSearch = True
