@@ -41,7 +41,7 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0303ABDRS_aging_AddThetaVTs/"
+res_path = "./plots/0309ABDRS_aging_AddThetaFricVTs/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
@@ -150,19 +150,20 @@ kwgs = {
 def generate_target_v(alpha, VTs, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
     ts = []
     ys = []
-
+    MFParams_targs = []
     for idx, VT in enumerate(VTs):
-        targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag)
+        targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag, regularizedFlag)
         # targ_SpringSlider.print_info()
         targ_seq = TimeSequenceGen(VT[1, -1], NofTPts, targ_SpringSlider, 
                                    rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
         
         ts.append(targ_seq.t)
         ys.append(targ_seq.default_y)
+        MFParams_targs.append(targ_SpringSlider)
 
     # v = targ_seq.default_y[1, :]
     # t = targ_seq.t
-    return torch.stack(ts), torch.stack(ys)
+    return torch.stack(ts), torch.stack(ys), MFParams_targs
 
 
 ## Number of total alpha-beta iterations
@@ -186,14 +187,14 @@ for i in range(N_AllIters):
     
     ## Run grad descent on beta
     # Generate target v
-    ts, vs = generate_target_v(this_alpha, kwgs['VTs'], kwgs['beta_targ'], kwgs['y0'], 
-                             kwgs['this_rtol'], kwgs['this_atol'], kwgs['regularizedFlag'], 
-                             kwgs['solver'], kwgs['lawFlag'])
+    ts, vs, MFParams_targs = generate_target_v(this_alpha, kwgs['VTs'], kwgs['beta_targ'], kwgs['y0'], 
+                                               kwgs['this_rtol'], kwgs['this_atol'], kwgs['regularizedFlag'], 
+                                               kwgs['solver'], kwgs['lawFlag'])
 
     # Run gradient descent
     myGradBB = GradDescent(this_alpha, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
                            this_beta, kwgs['beta_low'], kwgs['beta_high'], 
-                           kwgs['y0'], vs, ts, 
+                           kwgs['y0'], vs, ts, MFParams_targs, 
                            objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
                            max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
                            regularizedFlag = kwgs['regularizedFlag'], 

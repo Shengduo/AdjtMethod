@@ -19,12 +19,16 @@ from matplotlib import pyplot as plt
 
 # ------------------------ Calculate the derivative: Do / D\beta -------------------------
 # Observation
-def O(y, y_targ, t, MFParams):
+def O(y, y_targ, t, MFParams, MFParams_targ):
+    ff_targ = computeF(y_targ, MFParams_targ)
+    ff = computeF(y, MFParams)
+
     # Least square error
     O = torch.trapezoid(
-        torch.square(y[1, :] - y_targ[1, :]) + torch.square(y[2, :] - y_targ[2, :]) 
+        torch.square(y[1, :] - y_targ[1, :]) + torch.square(y[2, :] - y_targ[2, :])  
         + torch.square(torch.log(y[1, :]) - torch.log(y_targ[1, :]))
-        + torch.square(torch.log(y[2, :]) - torch.log(y_targ[2, :])), 
+        + torch.square(torch.log(y[2, :]) - torch.log(y_targ[2, :])) 
+        + torch.square(ff - ff_targ), 
         t
     )
     
@@ -32,10 +36,17 @@ def O(y, y_targ, t, MFParams):
     return O
 
 # \partial o(y, yDot, t; \beta) / \partial y
-def DoDy(y, y_targ, t, MFParams):
+def DoDy(y, y_targ, t, MFParams, MFParams_targ):
+
     DoDy = torch.zeros(y.shape)
     DoDy[1, :] = 2. * (y[1, :] - y_targ[1, :]) + 2. * (torch.log(y[1, :]) - torch.log(y_targ[1, :])) / y[1, :]
     DoDy[2, :] = 2. * (y[2, :] - y_targ[2, :]) + 2. * (torch.log(y[2, :]) - torch.log(y_targ[2, :])) / y[2, :]
+    
+    # # Add the f terms
+    ff_targ = computeF(y_targ, MFParams_targ)
+    ff = computeF(y, MFParams)
+    dfdy = computeDFdy(y, MFParams)
+    DoDy += 2. * (ff - ff_targ) * dfdy 
     return DoDy
 
 # \partial o / \partial yDot
@@ -47,8 +58,16 @@ def DDoDyDotDt(y, y_targ, t, MFParams):
     return torch.zeros(y.shape)
 
 # \partial o / \partial \beta
-def DoDBeta(y, y_targ, t, MFParams):
-    return torch.zeros([MFParams.RSParams.shape[0], y.shape[1]])
+def DoDBeta(y, y_targ, t, MFParams, MFParams_targ):
+    DoDbeta = torch.zeros([MFParams.RSParams.shape[0], y.shape[1]])
+
+    # # Add the f terms
+    ff_targ = computeF(y_targ, MFParams_targ)
+    ff = computeF(y, MFParams)
+    dfdbeta = computeDFDBeta(y, MFParams)
+    DoDbeta += 2. * (ff - ff_targ) * dfdbeta 
+
+    return DoDbeta
 
 # ------------------------ Calculate the derivative: DC / D\beta -------------------------
 # \partial C / \partial y, unregularized
@@ -176,5 +195,68 @@ def DCDBeta_regularized(y, y_targ, t, MFParams):
 #     print("DCDBeta: ", DCDBeta)
     
     return DCDBeta
+
+def computeF(y, MFParams):
+    a = MFParams.RSParams[0]
+    b = MFParams.RSParams[1]
+    DRSInv = MFParams.RSParams[2]
+    fStar = MFParams.RSParams[3]
+
+    if MFParams.regularizedFlag == True:
+        res = a * torch.asinh(y[1, :] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2, :] * DRSInv)) / a))
+    else:
+        res = fStar + a * torch.log(y[1, :] / 1.e-6) + b * torch.log(1.e-6 * y[2, :] * DRSInv)
+    
+    return res
+
+def computeDFdy(y, MFParams):
+    a = MFParams.RSParams[0]
+    b = MFParams.RSParams[1]
+    DRSInv = MFParams.RSParams[2]
+    fStar = MFParams.RSParams[3]
+    dfdy = torch.zeros(y.shape)
+
+    if MFParams.regularizedFlag == True:
+        Q1 = fStar + b * torch.log(1.e-6 * y[2, :] * DRSInv) 
+        Q1 = Q1 / a
+        Q2 = y[1, :] / 2 / 1.e-6 * torch.exp(Q1)
+        Q2_cliped = torch.clamp(Q2, min = -1.e10, max = 1.e10)
+        Q2Term = Q2_cliped / torch.sqrt(Q2_cliped**2 + 1.)
+
+        dfdy[1, :] = a * Q2Term / y[1, :]
+        dfdy[2, :] = b * Q2Term / y[2, :] 
+    
+    else:
+        dfdy[1, :] = a / y[1, :]
+        dfdy[2, :] = b / y[2, :]
+    
+    return dfdy
+
+def computeDFDBeta(y, MFParams):
+    a = MFParams.RSParams[0]
+    b = MFParams.RSParams[1]
+    DRSInv = MFParams.RSParams[2]
+    fStar = MFParams.RSParams[3]
+    dfdBeta = torch.zeros([len(MFParams.RSParams), y.shape[1]])
+
+    if MFParams.regularizedFlag == True:
+        Q1 = fStar + b * torch.log(1.e-6 * y[2, :] * DRSInv) 
+        Q1 = Q1 / a
+        Q2 = y[1, :] / 2 / 1.e-6 * torch.exp(Q1)
+        Q2_cliped = torch.clamp(Q2, min = -1.e10, max = 1.e10)
+        Q2Term = Q2_cliped / torch.sqrt(Q2_cliped**2 + 1.)
+
+        dfdBeta[0, :] = torch.asinh(Q2Term) - Q1 * Q2Term
+        dfdBeta[1, :] = Q2Term * torch.log(1.e-6 * y[2, :] * DRSInv)
+        dfdBeta[2, :] = Q2Term * b / DRSInv
+        dfdBeta[3, :] = Q2Term
+    
+    else:
+        dfdBeta[0, :] = torch.log(y[1, :] / 1.e-6)
+        dfdBeta[1, :] = torch.log(1.e-6 * y[2, :] * DRSInv)
+        dfdBeta[2, :] = b / DRSInv
+        dfdBeta[3, :] = 1.
+
+    return dfdBeta
 
     

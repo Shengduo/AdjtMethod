@@ -138,9 +138,29 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit/'):
         # axs[1][0].semilogy(1e6 * t, self.MFParams.RSParams[2] / y[1, :], linewidth=2.0)
         axs[1][0].set_xlabel('Time [$\mu$ s]', fontsize=20)
         axs[1][0].set_ylabel('State Variable $\\theta(t)\ \mathrm{[s]}$', fontsize=20)
-        betas_legend.append("S-S")
-        axs[1][0].legend(betas_legend, loc='best', fontsize=20)
+        this_legend = betas_legend.copy();
+        this_legend.append("S-S")
+        axs[1][0].legend(this_legend, loc='best', fontsize=20)
         axs[1][0].grid()
+        
+        # Plot friction
+        for (t, y, beta, lw) in zip(ts, ys, betas, lwidths):
+            a = beta[0]
+            b = beta[1]
+            DRSInv = beta[2]
+            fStar = beta[3]
+
+            if kwgs["regularizedFlag"] == True:
+                ff = a * torch.asinh(y[1, :] / 2.e-6 * torch.exp((fStar + b * torch.log(1.e-6 * y[2, :] * DRSInv)) / a))
+            else:
+                ff = fStar + a * torch.log(y[1, :] / 1.e-6) + b * torch.log(1.e-6 * y[2, :] * DRSInv)
+
+            axs[1][1].plot(t, ff, linewidth=lw)
+        axs[1][1].set_xlabel('Time [$\mu$ s]', fontsize=20)
+        axs[1][1].set_ylabel('Friction coefficient', fontsize=20)
+        
+        axs[1][1].legend(betas_legend, loc='best', fontsize=20)
+        axs[1][1].grid()
 
         # Save the figure
         f.suptitle("Sequence " + str(idx), fontsize=20)

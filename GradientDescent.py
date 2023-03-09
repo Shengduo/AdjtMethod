@@ -28,7 +28,7 @@ from DerivativesAddTheta import *
 # this_atol = 1.e-10
 
 # Function observation function
-def objGradFunc(alpha, VTs, beta, y0, targ_ys, scaling, regularizedFlag, objOnly = False, 
+def objGradFunc(alpha, VTs, beta, y0, targ_ys, MFParams_targs, scaling, regularizedFlag, objOnly = False, 
                 NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
                 solver = 'dopri5', lawFlag = "aging"):
     # Initialize objective and gradient
@@ -36,16 +36,16 @@ def objGradFunc(alpha, VTs, beta, y0, targ_ys, scaling, regularizedFlag, objOnly
     grad = torch.zeros(beta.shape)
 
     # Generate target v
-    for (VT, targ_y) in zip(VTs, targ_ys):
+    for (VT, targ_y, MFParams_targ) in zip(VTs, targ_ys, MFParams_targs):
         this_RSParams = beta * scaling
-        this_SpringSlider = MassFricParams(alpha, VT, this_RSParams, y0, lawFlag)
+        this_SpringSlider = MassFricParams(alpha, VT, this_RSParams, y0, lawFlag, regularizedFlag)
         
         this_seq = TimeSequenceGen(VT[1, -1], NofTPts, this_SpringSlider, 
                                    rtol = this_rtol, atol = this_atol, regularizedFlag = regularizedFlag, 
                                    solver = solver)
         
         # Compute the value of objective function
-        obj = obj + O(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider)
+        obj = obj + O(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider, MFParams_targ)
         
     #     # DEBUG LINES
     #     print("-"*30)
@@ -57,7 +57,7 @@ def objGradFunc(alpha, VTs, beta, y0, targ_ys, scaling, regularizedFlag, objOnly
         if objOnly:
             grad = 0.
         else:
-            myAdj = AdjDerivs(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider, 
+            myAdj = AdjDerivs(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider, MFParams_targ, 
                               rtol = this_rtol, atol = this_atol, regularizedFlag = regularizedFlag, solver = solver)
             grad = grad + myAdj.dOdBeta / scaling
         
@@ -71,7 +71,7 @@ class GradDescent:
                  alpha0, alpha_low, alpha_high, 
                  VTs, # Temperarily fix the VTs relation now
                  beta0, beta_low, beta_high, 
-                 y0, targ_ys, ts, 
+                 y0, targ_ys, ts, MFParams_targs, 
                  objGrad_func, max_steps, scaling = torch.tensor([1., 1., 1., 1.]), 
                  stepping = 'BB', obs_rtol = 1e-5, grad_atol = 1.e-10, lsrh_steps = 10, 
                  regularizedFlag = False, NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
@@ -102,6 +102,9 @@ class GradDescent:
 
         # Time at which targ_y was observed
         self.ts = ts
+
+        # Spring sliders for target generation
+        self.MFParams_targs = MFParams_targs
 
         # Compute L2(t) norm of targ_ys
         self.targ_ys_norm = 0.
@@ -146,7 +149,7 @@ class GradDescent:
     def firstDescent(self):
         # Compute obj and grad
         # print("self.targ_ys.shape: ", self.targ_ys.shape )
-        obj, grad = self.objGrad_func(self.alpha0, self.VTs, self.betas[-1], self.y0, self.targ_ys, self.scaling, 
+        obj, grad = self.objGrad_func(self.alpha0, self.VTs, self.betas[-1], self.y0, self.targ_ys, self.MFParams_targs, self.scaling, 
                                       self.regularizedFlag, False, 
                                       self.NofTPts, self.this_rtol, self.this_atol, 
                                       self.solver, self.lawFlag)
@@ -175,7 +178,7 @@ class GradDescent:
             beta_trial = self.project(self.betas[-1], stepSize * self.grads[-1])
 
             # Append the betas and objs
-            obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, 
+            obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, self.MFParams_targs, 
                                                       self.scaling, self.regularizedFlag, False, 
                                                       self.NofTPts, self.this_rtol, self.this_atol, 
                                                       self.solver, self.lawFlag)
@@ -247,7 +250,7 @@ class GradDescent:
 
         for i in range(self.lsrh_steps):
             beta_trial = self.project(self.betas[-1], stepSize * self.grads[-1])
-            obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, 
+            obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, self.MFParams_targs, 
                                                       self.scaling, self.regularizedFlag, True, 
                                                       self.NofTPts, self.this_rtol, self.this_atol, 
                                                       self.solver, self.lawFlag)
@@ -279,7 +282,7 @@ class GradDescent:
         
 
         # Append the betas and objs
-        obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, 
+        obj_trial, grad_trial = self.objGrad_func(self.alpha0, self.VTs, beta_trial, self.y0, self.targ_ys, self.MFParams_targs, 
                                                   self.scaling, self.regularizedFlag, False, 
                                                   self.NofTPts, self.this_rtol, self.this_atol, 
                                                   self.solver, self.lawFlag)

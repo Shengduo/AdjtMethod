@@ -16,7 +16,7 @@ from DerivativesAddTheta import *
 
 class AdjDerivs:
     # Constructor
-    def __init__(self, y, y_targ, t, MFParams, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8, solver = 'dopri5'):
+    def __init__(self, y, y_targ, t, MFParams, MFParams_targ, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8, solver = 'dopri5'):
         self.y = y
         self.y_targ = y_targ
         self.t = t
@@ -27,6 +27,7 @@ class AdjDerivs:
         
         # self.tau = torch.flip(self.T - self.t, [0])
         self.MFParams = MFParams
+        self.MFParams_targ = MFParams_targ
         self.regularizedFlag = regularizedFlag
         self.rtol = rtol
         self.atol = atol
@@ -40,12 +41,12 @@ class AdjDerivs:
             self.dCdy = DCDy(y, y_targ, t, MFParams)
             self.dCdBeta = DCDBeta(y, y_targ, t, MFParams)
         
-        self.dody = DoDy(y, y_targ, t, MFParams)
+        self.dody = DoDy(y, y_targ, t, MFParams, MFParams_targ)
         self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         self.ddCdyDotdt = DDCDyDotDt(y, y_targ, t, MFParams)
         self.dodyDot = DoDyDot(y, y_targ, t, MFParams)
         self.ddodyDotdt = DDoDyDotDt(y, y_targ, t, MFParams)
-        self.dodBeta = DoDBeta(y, y_targ, t, MFParams)
+        self.dodBeta = DoDBeta(y, y_targ, t, MFParams, MFParams_targ)
         self.dodyDot = DoDyDot(y, y_targ, t, MFParams)
         self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         

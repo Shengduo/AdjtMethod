@@ -28,11 +28,13 @@ torch.set_default_dtype(torch.float)
 # ----------------------------- Calculate gradients via Adjoint Method -----------------------------
 ## Fixed parameters
 # Parameters for the spring-slider
-k = 50.
+k = 100.
 m = 5.
 
-VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1.])
-VT_tts = torch.linspace(0., 20., 10)
+# VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.])
+# VT_tts = torch.linspace(0., 30., 15)
+VT_VVs = torch.tensor([10., 10.])
+VT_tts = torch.linspace(0., 30., 2)
 
 # VT = torch.tensor([[1., 1.], [0., 5.]])
 VT = torch.stack([VT_VVs, VT_tts])
@@ -41,45 +43,46 @@ g = 9.8
 y0 = torch.tensor([0., 1.0, 1.0])
 kmg = torch.tensor([k, m, g])
 # Sequence specific parameters
-T = 20.
+T = 30.
 NofTPts = 1000
 
 # Tolerance parameters
-this_rtol = 1.e-8
-this_atol = 1.e-10
+this_rtol = 1.e-7
+this_atol = 1.e-9
 
 # Regularized flag
 regularizedFlag = True
-lawFlag = "slip"
+lawFlag = "aging"
+solver = "rk4"
 
 # Generate target v
 targ_RSParams = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
-targ_SpringSlider = MassFricParams(kmg, VT, targ_RSParams, y0, lawFlag=lawFlag)
+targ_SpringSlider = MassFricParams(kmg, VT, targ_RSParams, y0, lawFlag=lawFlag, regularizedFlag=regularizedFlag)
 # targ_SpringSlider.print_info()
-targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag)
+targ_seq = TimeSequenceGen(T, NofTPts, targ_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
 v = targ_seq.default_y
 # targ_seq.plotY(targ_seq.t, targ_seq.default_y)
 
 
 # A new set of RS params
-new_RSParams = torch.tensor([0.009, 0.012, 1. / 5.e1, 0.58])
-# new_RSParams = torch.tensor([0.011, 0.016, 1.e-3, 0.58])
-new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0, lawFlag=lawFlag)
-new_seq = TimeSequenceGen(T, NofTPts, new_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag)
+# new_RSParams = torch.tensor([0.009, 0.012, 1. / 5.e1, 0.58])
+new_RSParams = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0, lawFlag=lawFlag, regularizedFlag=regularizedFlag)
+new_seq = TimeSequenceGen(T, NofTPts, new_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag, solver=solver)
 # new_seq.plotY(new_seq.t, new_seq.default_y)
 
 
 # Report observation:
-Obs = O(new_seq.default_y, v, new_seq.t, new_SpringSlider)
+Obs = O(new_seq.default_y, v, new_seq.t, new_SpringSlider, targ_SpringSlider)
 print('Objective value: ', Obs)
 
 
 # Calculate DoDBeta
-myRegADJ = AdjDerivs(new_seq.default_y, v, new_seq.t, new_SpringSlider, regularizedFlag = regularizedFlag, 
-                     rtol = 1.e-8, atol = 1.e-10)
+myRegADJ = AdjDerivs(new_seq.default_y, v, new_seq.t, new_SpringSlider, targ_SpringSlider, regularizedFlag = regularizedFlag, 
+                     rtol = this_rtol, atol = this_atol, solver=solver)
 # Calculate DoDBeta
-myUnRegADJ = AdjDerivs(new_seq.default_y, v, new_seq.t, new_SpringSlider, regularizedFlag = not regularizedFlag, 
-                       rtol = 1.e-8, atol = 1.e-10)
+myUnRegADJ = AdjDerivs(new_seq.default_y, v, new_seq.t, new_SpringSlider, targ_SpringSlider, regularizedFlag = not regularizedFlag, 
+                       rtol = this_rtol, atol = this_atol, solver=solver)
 
 # Report gradients
 print('='*20, ' Gradient via Adjoint method ', '='*20)
@@ -91,8 +94,6 @@ print('\n')
 print('='*20, ' Gradient via Finite Difference ', '='*20)
 perturbRatio = 0.01
 numericalGrad = torch.zeros(new_RSParams.shape)
-Rtol = 1.e-8
-Atol = 1.e-10
 
 
 # Loop through all beta's components
@@ -109,13 +110,13 @@ for i in range(len(new_RSParams)):
     
     # kmg, VT, targ_RSParams, y0
     # Calculate two observations
-    SpringSliderPlus = MassFricParams(kmg, VT, RSParamsPlus, y0, lawFlag=lawFlag)
-    seqPlus = TimeSequenceGen(T, NofTPts, SpringSliderPlus, Rtol, Atol, regularizedFlag=regularizedFlag)
-    OPlus = O(seqPlus.default_y, v, seqPlus.t, SpringSliderPlus)
+    SpringSliderPlus = MassFricParams(kmg, VT, RSParamsPlus, y0, lawFlag=lawFlag, regularizedFlag=regularizedFlag)
+    seqPlus = TimeSequenceGen(T, NofTPts, SpringSliderPlus, this_rtol, this_atol, regularizedFlag=regularizedFlag, solver=solver)
+    OPlus = O(seqPlus.default_y, v, seqPlus.t, SpringSliderPlus, targ_SpringSlider)
     
-    SpringSliderMinus = MassFricParams(kmg, VT, RSParamsMinus, y0, lawFlag=lawFlag)
-    seqMinus = TimeSequenceGen(T, NofTPts, SpringSliderMinus, Rtol, Atol, regularizedFlag=regularizedFlag)
-    OMinus = O(seqMinus.default_y, v, seqMinus.t, SpringSliderMinus)
+    SpringSliderMinus = MassFricParams(kmg, VT, RSParamsMinus, y0, lawFlag=lawFlag, regularizedFlag=regularizedFlag)
+    seqMinus = TimeSequenceGen(T, NofTPts, SpringSliderMinus, this_rtol, this_atol, regularizedFlag=regularizedFlag, solver=solver)
+    OMinus = O(seqMinus.default_y, v, seqMinus.t, SpringSliderMinus, targ_SpringSlider)
     
     numericalGrad[i] = (OPlus - OMinus) / (RSParamsPlus[i] - RSParamsMinus[i])
 
