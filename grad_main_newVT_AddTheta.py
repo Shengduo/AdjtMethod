@@ -41,16 +41,16 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0309ABDRS_aging_AddThetaFricVTs_UnNormed/"
+res_path = "./plots/0309ABDRSfStar_aging_AddThetaFricVTs_Normed/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
 # # For prescribed VT
 VT_NofTpts = 1500
-# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10, 10.]])
 VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-                       [1.e-3, 1.e-3, 10.e-3, 10.e-3, 100.e-3, 100.e-3, 1000.e-3, 1000.e-3, 100.e-3, 100.e-3, 10.e-3, 10.e-3, 1.e-3, 1.e-3, 1.e-3]])
+                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
+# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+#                        [1.e-3, 1.e-3, 10.e-3, 10.e-3, 100.e-3, 100.e-3, 1000.e-3, 1000.e-3, 100.e-3, 100.e-3, 10.e-3, 10.e-3, 1.e-3, 1.e-3, 1.e-3]])
 VT_Trange = torch.tensor([0., 30.])
 VT_tts = torch.stack([torch.linspace(0., 30., 15), 
                       torch.linspace(0., 30., 15)])
@@ -99,7 +99,7 @@ beta_high = torch.tensor([1., 1., 1. / 1.e-1, 0.8])
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
-max_iters = 1
+max_iters = 100
 maxFuncCalls = 200
 regularizedFlag = True
 noLocalSearch = True
