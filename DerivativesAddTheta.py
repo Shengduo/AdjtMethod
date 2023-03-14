@@ -22,6 +22,15 @@ from matplotlib import pyplot as plt
 def O(y, y_targ, t, MFParams, MFParams_targ, normalization=True):
     ff_targ = computeF(y_targ, MFParams_targ)
     ff = computeF(y, MFParams)
+    
+    # DEBUG LINES
+    print("~"*80)
+    print("torch.mean(y_targ[1, :]): ", torch.mean(y_targ[1, :]))
+    print("torch.mean(y_targ[2, :]): ", torch.mean(y_targ[2, :]))
+    print("torch.mean(torch.log(y_targ[1, :])): ", torch.mean(torch.log(y_targ[1, :])))
+    print("torch.mean(torch.log(y_targ[2, :])): ", torch.mean(torch.log(y_targ[2, :])))
+    print("torch.mean(ff_targ): ", torch.mean(ff_targ))
+    print("~"*80, "\n")
 
     # Least square error
     if normalization == True:
