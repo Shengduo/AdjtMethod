@@ -33,8 +33,10 @@ m = 5.
 
 # VT_VVs = torch.tensor([1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.])
 # VT_tts = torch.linspace(0., 30., 15)
-VT_VVs = torch.tensor([10., 10.])
-VT_tts = torch.linspace(0., 30., 2)
+# VT_VVs = torch.tensor([10., 10.])
+# VT_tts = torch.linspace(0., 30., 2)
+VT_VVs = torch.tensor([1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.])
+VT_tts = torch.linspace(0., 30., 15)
 
 # VT = torch.tensor([[1., 1.], [0., 5.]])
 VT = torch.stack([VT_VVs, VT_tts])
@@ -65,8 +67,8 @@ v = targ_seq.default_y
 
 
 # A new set of RS params
-# new_RSParams = torch.tensor([0.009, 0.012, 1. / 5.e1, 0.58])
-new_RSParams = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+new_RSParams = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.3])
+# new_RSParams = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 new_SpringSlider = MassFricParams(kmg, VT, new_RSParams, y0, lawFlag=lawFlag, regularizedFlag=regularizedFlag)
 new_seq = TimeSequenceGen(T, NofTPts, new_SpringSlider, rtol=this_rtol, atol=this_atol, regularizedFlag = regularizedFlag, solver=solver)
 # new_seq.plotY(new_seq.t, new_seq.default_y)

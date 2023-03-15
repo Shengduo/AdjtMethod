@@ -41,7 +41,7 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0314ABDRSfStar_aging_AddThetaFricVTs_Normed/"
+res_path = "./plots/0315ABDRSfStar_f3_aging_AddThetaFricVTs_UnNormed/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 

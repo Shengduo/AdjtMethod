@@ -19,7 +19,7 @@ from matplotlib import pyplot as plt
 
 # ------------------------ Calculate the derivative: Do / D\beta -------------------------
 # Observation
-def O(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
+def O(y, y_targ, t, MFParams, MFParams_targ, f_coef=10., normalization=False):
     ff_targ = computeF(y_targ, MFParams_targ)
     ff = computeF(y, MFParams)
     
@@ -47,7 +47,7 @@ def O(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
             torch.square(y[1, :] - y_targ[1, :]) + torch.square(y[2, :] - y_targ[2, :])  
             + torch.square(torch.log(y[1, :]) - torch.log(y_targ[1, :]))
             + torch.square(torch.log(y[2, :]) - torch.log(y_targ[2, :])) 
-            + torch.square(ff - ff_targ), 
+            + torch.square((ff - ff_targ) * f_coef), 
             t
         )
     
@@ -55,7 +55,7 @@ def O(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
     return O
 
 # \partial o(y, yDot, t; \beta) / \partial y
-def DoDy(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
+def DoDy(y, y_targ, t, MFParams, MFParams_targ, f_coef=10., normalization=False):
     DoDy = torch.zeros(y.shape)
 
     if normalization == True:
@@ -76,7 +76,7 @@ def DoDy(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
     if normalization == True: 
         DoDy += 2. * (ff - ff_targ) / (torch.mean(ff_targ)**2) * dfdy 
     else:
-        DoDy += 2. * (ff - ff_targ) * dfdy 
+        DoDy += 2. * f_coef * f_coef * (ff - ff_targ) * dfdy 
     return DoDy
 
 # \partial o / \partial yDot
@@ -88,7 +88,7 @@ def DDoDyDotDt(y, y_targ, t, MFParams):
     return torch.zeros(y.shape)
 
 # \partial o / \partial \beta
-def DoDBeta(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
+def DoDBeta(y, y_targ, t, MFParams, MFParams_targ, f_coef=10., normalization=False):
     DoDbeta = torch.zeros([MFParams.RSParams.shape[0], y.shape[1]])
 
     # # Add the f terms
@@ -98,7 +98,7 @@ def DoDBeta(y, y_targ, t, MFParams, MFParams_targ, normalization=False):
     if normalization == True:
         DoDbeta += 2. * (ff - ff_targ) / (torch.mean(ff_targ)**2) * dfdbeta 
     else:
-        DoDbeta += 2. * (ff - ff_targ) * dfdbeta 
+        DoDbeta += 2. * f_coef * f_coef * (ff - ff_targ) * dfdbeta 
     return DoDbeta
 
 # ------------------------ Calculate the derivative: DC / D\beta -------------------------
