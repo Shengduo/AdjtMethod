@@ -110,12 +110,13 @@ class GradDescent:
         self.targ_ys_norm = 0.
         for t, y in zip(self.ts, self.targ_ys):
             # V and theta
-            self.targ_ys_norm += torch.trapz(t, y[1, :] * y[1, :] + y[2, :] * y[2, :])
+            self.targ_ys_norm += torch.trapz(y[1, :] * y[1, :] + y[2, :] * y[2, :], t)
 
-            # DEBUG LINE
-            print("minimum y[1, :] * y[1, :]: ", torch.min(y[1, :] * y[1, :]))
-            print("minimum y[2, :] * y[2, :]: ", torch.min(y[2, :] * y[2, :]))
-            print("Added to targ_ys: ", torch.trapz(t, y[1, :] * y[1, :] + y[2, :] * y[2, :]))
+            # # DEBUG LINE
+            # print("minimum y[1, :] * y[1, :]: ", torch.min(y[1, :] * y[1, :]))
+            # print("minimum y[2, :] * y[2, :]: ", torch.min(y[2, :] * y[2, :]))
+            # print("Added to targ_ys: ", torch.trapz(y[1, :] * y[1, :] + y[2, :] * y[2, :], t))
+            
         # Objective and gradient function
         self.objGrad_func = objGrad_func
         
