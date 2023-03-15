@@ -112,6 +112,10 @@ class GradDescent:
             # V and theta
             self.targ_ys_norm += torch.trapz(t, y[1, :] * y[1, :] + y[2, :] * y[2, :])
 
+            # DEBUG LINE
+            print("minimum y[1, :] * y[1, :]: ", torch.min(y[1, :] * y[1, :]))
+            print("minimum y[2, :] * y[2, :]: ", torch.min(y[2, :] * y[2, :]))
+            print("Added to targ_ys: ", torch.trapz(t, y[1, :] * y[1, :] + y[2, :] * y[2, :]))
         # Objective and gradient function
         self.objGrad_func = objGrad_func
         
@@ -204,6 +208,8 @@ class GradDescent:
         print("Observation: ", self.objs[-1])
         print("Gradient (scaled): ", self.grads[-1])
         print("beta: ", self.betas[-1])
+        print("torch.sqrt(self.objs[-1]): ", torch.sqrt(self.objs[-1]))
+        print("self.targ_ys_norm: ", self.targ_ys_norm)
         print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm)
         
         if torch.min(self.grad_norms) < self.grad_atol:
@@ -218,8 +224,8 @@ class GradDescent:
             print("Observation: ", self.objs[-1])
             print("Gradient (scaled): ", self.grads[-1])
             print("beta: ", self.betas[-1])
-            print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm)
-            
+            print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm, flush=True)
+
             # Check if the gradient is small enough
             if torch.min(self.grad_norms) < self.grad_atol:
                 break
