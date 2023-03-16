@@ -29,6 +29,8 @@ class AdjDerivs:
         self.MFParams = MFParams
         self.MFParams_targ = MFParams_targ
         self.regularizedFlag = regularizedFlag
+        self.MFParams.regularizedFlag = regularizedFlag
+        self.MFParams_targ.regularizedFlag = regularizedFlag
         self.rtol = rtol
         self.atol = atol
         self.solver = solver
@@ -50,6 +52,10 @@ class AdjDerivs:
         self.dodyDot = DoDyDot(y, y_targ, t, MFParams)
         self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         
+        # # DEBUG LINES
+        # print("self.dodBeta: ", self.dodBeta)
+        # print("self.dody: ", self.dody)
+
         # Calculate A_z and u_z
         self.Az = self.A_z()
         self.uz = self.u_z()
@@ -192,6 +198,10 @@ class AdjDerivs:
         
         L = L.reshape([L.shape[0], 1, L.shape[1]])
         L = torch.flip(L, [0])
+
+        # # DEBUG LINES
+        # print("L: ", L)
+        
         LDCDBeta = torch.movedim(self.dCdBeta, 2, 0)
         LDCDBeta = torch.matmul(L, LDCDBeta)
         LDCDBeta = LDCDBeta.reshape([LDCDBeta.shape[0], LDCDBeta.shape[2]])

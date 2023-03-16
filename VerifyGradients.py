@@ -123,3 +123,5 @@ for i in range(len(new_RSParams)):
     numericalGrad[i] = (OPlus - OMinus) / (RSParamsPlus[i] - RSParamsMinus[i])
 
 print('Numerical gradient via Finite Difference: ', numericalGrad)
+
+print("arcsinh(1e10): ", torch.asinh(torch.tensor(1.e10)))

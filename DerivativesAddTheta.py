@@ -278,7 +278,10 @@ def computeDFDBeta(y, MFParams):
         Q2_cliped = torch.clamp(Q2, min = -1.e10, max = 1.e10)
         Q2Term = Q2_cliped / torch.sqrt(Q2_cliped**2 + 1.)
 
-        dfdBeta[0, :] = torch.asinh(Q2Term) - Q1 * Q2Term
+        # DEBUG LINES:
+        # print("Q2, Q2_cliped, Q2Term: ", Q2, Q2_cliped, Q2Term)
+
+        dfdBeta[0, :] = (torch.asinh(Q2) - Q1 * Q2Term)
         dfdBeta[1, :] = Q2Term * torch.log(1.e-6 * y[2, :] * DRSInv)
         dfdBeta[2, :] = Q2Term * b / DRSInv
         dfdBeta[3, :] = Q2Term
