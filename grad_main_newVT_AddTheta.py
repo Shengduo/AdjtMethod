@@ -30,8 +30,6 @@ torch.set_default_dtype(torch.float)
 # Gradient descent on fixed $\alpha = [k, m, g]$ and $V$ 
 # Set up the parameters
 plotsName = "LinearGen"
-alpha0 = torch.tensor([100., 5., 9.8])
-# VT = torch.tensor([[1., 1.], [0., 5.]])
 
 # Generate VT series
 VT_Vrange = torch.tensor([5., 15.])
@@ -41,7 +39,7 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0315ABDRSfStar_f3_aging_AddThetaFricVTs_UnNormed/"
+res_path = "./plots/0320ABDRSfStar_f1_aging_AddFricVTs_Normed_data4/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
@@ -49,13 +47,41 @@ gen_plt_save_path = res_path + plotsName + ".png"
 VT_NofTpts = 1500
 # VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
 #                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
+
 # VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [1.e-3, 1.e-3, 10.e-3, 10.e-3, 100.e-3, 100.e-3, 1000.e-3, 1000.e-3, 100.e-3, 100.e-3, 10.e-3, 10.e-3, 1.e-3, 1.e-3, 1.e-3]])
+#                        [1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1]])
+
+# # Data 3
+# alphas = torch.tensor([[100., 5., 9.8], 
+#                        [100., 5., 9.8], 
+#                        [100., 5., 9.8], 
+#                        [100., 5., 9.8]])
+
+# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
+#                        [1., 1., 1., 1., 1., 1. ,1., 1., 1., 1., 1., 1., 1., 1., 1.], 
+#                        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]])
+
+# Data 4
+alphas = torch.tensor([[100., 5., 9.8], 
+                       [100, 5., 9.8], 
+                       [1.e5, 5., 9.8], 
+                       [1.e5, 5., 9.8]])
+
+VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
+                       [1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
+
+
 VT_Trange = torch.tensor([0., 30.])
-# VT_tts = torch.stack([torch.linspace(0., 30., 15), 
-#                       torch.linspace(0., 30., 15)])
-VT_VVs = torch.tensor([[1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
-VT_tts = torch.linspace(0., 30., 15).reshape([1, -1])
+VT_tts = torch.stack([torch.linspace(0., 30., 15), 
+                      torch.linspace(0., 30., 15), 
+                      torch.linspace(0., 30., 15), 
+                      torch.linspace(0., 30., 15)])
+
+# VT_VVs = torch.tensor([[1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
+# VT_tts = torch.linspace(0., 30., 15).reshape([1, -1])
 
 # Initialize VT_kwgs
 VT_kwgs = {
@@ -126,7 +152,7 @@ lawFlag = "aging"
 # Store the keywords for optAlpha
 kwgs = {
     'y0' : y0, 
-    'alpha0' : alpha0, 
+    'alphas' : alphas, 
     'VTs' : VTs,
     'alp_low' : alp_low, 
     'alp_high' : alp_hi, 
@@ -149,11 +175,11 @@ kwgs = {
 }
 
 # Function to get target v
-def generate_target_v(alpha, VTs, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
+def generate_target_v(alphas, VTs, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
     ts = []
     ys = []
     MFParams_targs = []
-    for idx, VT in enumerate(VTs):
+    for idx, (alpha, VT) in enumerate(zip(alphas, VTs)):
         targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag, regularizedFlag)
         # targ_SpringSlider.print_info()
         targ_seq = TimeSequenceGen(VT[1, -1], NofTPts, targ_SpringSlider, 
@@ -170,7 +196,7 @@ def generate_target_v(alpha, VTs, beta, y0, this_rtol, this_atol, regularizedFla
 
 ## Number of total alpha-beta iterations
 N_AllIters = 1
-this_alpha = alpha0
+this_alphas = alphas
 this_beta = beta0
 
 ## Run alpha-beta iterations
@@ -179,7 +205,7 @@ for i in range(N_AllIters):
     print("#" * 40, " Total Iteration {0} ".format(i) + "#" * 40)
     
     ## First optimize alpha
-    kwgs['alpha0'] = this_alpha
+    kwgs['alphas'] = this_alphas
     kwgs['beta_this'] = this_beta
     
     # Timing alpha
@@ -189,12 +215,12 @@ for i in range(N_AllIters):
     
     ## Run grad descent on beta
     # Generate target v
-    ts, vs, MFParams_targs = generate_target_v(this_alpha, kwgs['VTs'], kwgs['beta_targ'], kwgs['y0'], 
+    ts, vs, MFParams_targs = generate_target_v(this_alphas, kwgs['VTs'], kwgs['beta_targ'], kwgs['y0'], 
                                                kwgs['this_rtol'], kwgs['this_atol'], kwgs['regularizedFlag'], 
                                                kwgs['solver'], kwgs['lawFlag'])
 
     # Run gradient descent
-    myGradBB = GradDescent(this_alpha, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
+    myGradBB = GradDescent(this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
                            this_beta, kwgs['beta_low'], kwgs['beta_high'], 
                            kwgs['y0'], vs, ts, MFParams_targs, 
                            objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
@@ -208,8 +234,9 @@ for i in range(N_AllIters):
     # Update parameters
     this_beta = myGradBB.beta_optimal
     print("Optimal beta: ", this_beta)
- 
+
 # Plot sequences
+print("[k, m, g]: ", alphas)
 print("VV: ", VT_VVs)
 print("tt: ", VT_tts)
 print("beta_targ: ", beta_targ)

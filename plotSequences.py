@@ -91,16 +91,18 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit/'):
     # Create the directory to save plots
     # os.mkdir(savePath)
 
-    # Store all sequeces as a list
-    ys = []
-    ts = []
-    lwidths = np.linspace(2., 1., len(betas))
-
     # Generate the sequences
     VTs = kwgs['VTs']
-    for idx, VT in enumerate(VTs):
+    alphas = kwgs['alphas']
+
+    for idx, (alpha, VT) in enumerate(zip(alphas, VTs)):
+        # Store all sequeces as a list
+        ys = []
+        ts = []
+        lwidths = np.linspace(2., 1., len(betas))
+        
         for beta in betas:
-            targ_SpringSlider = MassFricParams(kwgs['alpha0'], VT, beta, kwgs['y0'])
+            targ_SpringSlider = MassFricParams(alpha, VT, beta, kwgs['y0'])
             # targ_SpringSlider.print_info()
             targ_seq = TimeSequenceGen(VT[1, -1], kwgs['NofTPts'], targ_SpringSlider, 
                                     rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
