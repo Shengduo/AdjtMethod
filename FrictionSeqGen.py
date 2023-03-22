@@ -84,6 +84,28 @@ def grad(beta, t, V, theta, f, f_targ, kwgs):
     
     return res
 
+# Plot sequences of friction coefficient
+def plotSequences(beta, beta_targ, kwgs, pwd):
+    V, theta, f = cal_f(beta, kwgs)
+    V_targ, theta_targ, f_targ = cal_f(beta_targ, kwgs)
+    plt.figure(figsize=[15, 10])
+    plt.plot(t, f_targ, linewidth=2.0)
+    plt.plot(t, f, linewidth=1.5)
+    plt.legend(["Target", "Optimized"], fontsize=20, loc='best')
+    plt.xlabel("t [s]", fontsize=20)
+    plt.ylabel("Friction coefficient", fontsize=20)
+    plt.savefig(pwd + "Fric_0322.png", dpi = 300.)
+    plt.close()
+
+    plt.figure(figsize=[15, 10])
+    plt.plot(kwgs['tt'], kwgs['VV'], linewidth=2.0)
+    plt.xlabel("t [s]", fontsize=20)
+    plt.ylabel("V [m/s]", fontsize=20)
+    plt.savefig(pwd + "VProfile_0322.png", dpi = 300.)
+    plt.close()
+
+
+## Invert on an problem
 t = torch.linspace(tt[0], tt[-1], NofTpts)
 
 V_targ, theta_targ, f_targ = cal_f(beta_targ, kwgs)
@@ -133,7 +155,10 @@ for i in range(max_iters):
     print("Optimized beta: ", beta_this)
     print("O: ", O_this)
     print("Gradient: ", grad_this, flush=True)
-    
+
+# Save a figure of the result
+pwd="./plots/FricSeqGen/"
+plotSequences(beta_this, beta_targ, kwgs, pwd)
 # grad0 = grad(beta0, t, V0, theta0, f0, f_targ, kwgs)
 # print("grad0: ", grad0)
 
