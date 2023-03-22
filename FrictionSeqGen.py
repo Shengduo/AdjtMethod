@@ -16,16 +16,37 @@ from matplotlib import pyplot as plt
 
 # Target Rate and state properties
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
-beta0 = torch.tensor([0.009, 0.012, 1. / 2.e1, 0.3]) 
+
+# # Start beta
+# beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.3])
+
+# Different start beta, closer to target
+beta0 = torch.tensor([0.010, 0.017, 2. / 1.e1, 0.6])
 
 # VV_tt history
 NofTpts = 1500
 theta0 = torch.tensor(1.)
 
-VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
-tts = torch.stack([torch.linspace(0., 30., 15),
-                   torch.linspace(0., 30., 15)])
+# Multi data2
+ones = 10 * [1.]
+tens = 10 * [10.]
+VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
+                    ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
+                    ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
+                    tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
+
+# Multi data3
+
+# # Multi data1
+# VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+#                     [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
+#                     [1., 1., 1., 1., 1., 1. ,1., 1., 1., 1., 1., 1., 1., 1., 1.], 
+#                     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]])
+
+tts = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
+                   torch.linspace(0., 30., VVs.shape[1]),
+                   torch.linspace(0., 30., VVs.shape[1]),
+                   torch.linspace(0., 30., VVs.shape[1])])
 VtFuncs = []
 
 # Functions
@@ -146,8 +167,9 @@ V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
 # print('f_targ: ', f_targ)
 
 ## Gradient descent:
-max_iters = 1
-max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
+max_iters = 6
+# max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
+max_step = torch.tensor([1., 1., 1., 1.])
 
 # Gradient descent
 beta_this = beta0
@@ -158,7 +180,7 @@ grad_this = torch.zeros(4)
 for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
     O_this += O(f_this, f_targ, t)
     grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
-max_eta = torch.min(torch.abs(max_step / grad_this))
+
 print("=" * 40, " Iteration ", str(0), " ", "=" * 40)
 print("Initial beta: ", beta_this)
 print("O: ", O_this)
@@ -196,27 +218,47 @@ for i in range(max_iters):
     print("Gradient: ", grad_this, flush=True)
 
 # Save a figure of the result
-pwd ="./plots/FricSeqGen0322/"
+pwd ="./plots/FricSeqGen0322_multi2_closerBeta/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 plotSequences(beta_this, beta_targ, kwgs, pwd)
-# grad0 = grad(beta0, t, V0, theta0, f0, f_targ, kwgs)
-# print("grad0: ", grad0)
 
-# # Numerical gradients
-# inc = 0.01
-# numerical_grad0 = torch.zeros(beta0.shape)
-# for i in range(len(beta0)):
-#     beta_plus = torch.clone(beta0)
-#     beta_plus[i] *= (1 + inc)
-#     print("beta_plus: ", beta_plus)
-#     Vp, thetap, fp = cal_f(beta_plus, kwgs)
-#     Op = O(fp, f_targ, t)
 
-#     beta_minus = torch.clone(beta0)
-#     beta_minus[i] *= (1 - inc)
-#     print("beta_minus: ", beta_minus)
-#     Vm, thetam, fm = cal_f(beta_minus, kwgs)
-#     Om = O(fm, f_targ, t)
-#     numerical_grad0[i] = (Op - Om) / (2 * inc * beta0[i])
+## Check numerical derivatives
+beta0=torch.tensor([0.0103, 0.0168, 0.2000, 0.6000])
+# Gradient descent
+beta_this = beta0
+V_thiss, theta_thiss, f_thiss = cal_f(beta_this, kwgs)
 
-# print("Numerical_grad0: ", numerical_grad0)
+O_this = 0.
+grad_this = torch.zeros(4)
+for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
+    O_this += O(f_this, f_targ, t)
+    grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
+
+print("Grad by Adjoint: ", grad_this)
+
+# Numerical gradients
+inc = 0.01
+numerical_grad0 = torch.zeros(beta0.shape)
+for i in range(len(beta0)):
+    beta_plus = torch.clone(beta0)
+    beta_plus[i] *= (1 + inc)
+    print("beta_plus: ", beta_plus)
+    Vps, thetasp, fps = cal_f(beta_plus, kwgs)
+
+    Op = 0.
+    for f_targ, fp in zip(f_targs, fps):
+        Op += O(fp, f_targ, t)
+
+    beta_minus = torch.clone(beta0)
+    beta_minus[i] *= (1 - inc)
+    print("beta_minus: ", beta_minus)
+    Vms, thetams, fms = cal_f(beta_minus, kwgs)
+    
+    Om = 0.
+    for f_targ, fm in zip(f_targs, fms):
+        Om += O(fm, f_targ, t)
+
+    numerical_grad0[i] = (Op - Om) / (2 * inc * beta0[i])
+
+print("Grad by finite difference: ", numerical_grad0)

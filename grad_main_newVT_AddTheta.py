@@ -113,6 +113,9 @@ y0 = torch.tensor([0., 1.0, 1.0])
 # Start beta
 beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.3])
 
+# # Different start beta, closer to target
+# beta0 = torch.tensor([0.010, 0.017, 2. / 1.e1, 0.6])
+
 # Target beta
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
