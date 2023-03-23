@@ -198,7 +198,7 @@ for i in range(max_iters):
         
         for V_trial, theta_trial, f_trial, f_targ in zip(V_trials, theta_trials, f_trials, f_targs):
             O_trial += O(f_trial, f_targ, t)
-        
+        print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
         iter += 1
 
     beta_this = beta_trial
@@ -218,13 +218,15 @@ for i in range(max_iters):
     print("Gradient: ", grad_this, flush=True)
 
 # Save a figure of the result
-pwd ="./plots/FricSeqGen0322_multi2_closerBeta/"
+pwd ="./plots/FricSeqGen0323_multi2_closerBeta/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 plotSequences(beta_this, beta_targ, kwgs, pwd)
 
 
 ## Check numerical derivatives
 beta0=torch.tensor([0.0103, 0.0168, 0.2000, 0.6000])
+beta_fixed = torch.tensor([0, 0, 0, 1], dtype=torch.bool)
+
 # Gradient descent
 beta_this = beta0
 V_thiss, theta_thiss, f_thiss = cal_f(beta_this, kwgs)
