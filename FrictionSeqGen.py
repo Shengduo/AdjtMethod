@@ -21,7 +21,8 @@ beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 # beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.3])
 
 # Different start beta, closer to target
-beta0 = torch.tensor([0.010, 0.017, 2. / 1.e1, 0.6])
+beta0 = torch.tensor([0.010, 0.017, 2. / 1.e1, 0.58])
+beta_fixed = torch.tensor([0, 0, 0, 1], dtype=torch.bool)
 
 # VV_tt history
 NofTpts = 1500
@@ -60,6 +61,8 @@ kwgs = {
     'VtFuncs' : VtFuncs, 
     'NofTpts' : NofTpts,
     'theta0' : theta0, 
+    'beta_fixed' : beta_fixed,
+    'beta0' : beta0, 
 }
 
 # Compute f history based on VtFunc and beta
@@ -170,6 +173,7 @@ V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
 max_iters = 6
 # max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
 max_step = torch.tensor([1., 1., 1., 1.])
+max_step[beta_fixed] = 1.e30
 
 # Gradient descent
 beta_this = beta0
@@ -193,6 +197,8 @@ for i in range(max_iters):
     O_trial = O_this
     while (iter <= 20 and O_trial >= O_this):
         beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
+        beta_trial[beta_fixed] = beta0[beta_fixed]
+
         V_trials, theta_trials, f_trials = cal_f(beta_trial, kwgs)
         O_trial = 0.
         
@@ -225,7 +231,6 @@ plotSequences(beta_this, beta_targ, kwgs, pwd)
 
 ## Check numerical derivatives
 beta0=torch.tensor([0.0103, 0.0168, 0.2000, 0.6000])
-beta_fixed = torch.tensor([0, 0, 0, 1], dtype=torch.bool)
 
 # Gradient descent
 beta_this = beta0
