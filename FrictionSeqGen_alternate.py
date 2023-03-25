@@ -1,4 +1,5 @@
 ## Import standard librarys
+import grp
 import torch
 import torchdiffeq
 import pickle
@@ -24,8 +25,17 @@ beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 beta_low = torch.tensor([0.001, 0.001, 0.001, 0.1])
 beta_high = torch.tensor([1., 1., 1.e6, 0.9])
 
-beta0 = torch.tensor([0.011, 0.016, 1. / 2.e1, 0.58])
-beta_fixed = torch.tensor([1, 1, 0, 1], dtype=torch.bool)
+# # For 0323 alternating drs fstar
+# beta0 = torch.tensor([0.011, 0.016, 1. / 2.e1, 0.7])
+# beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
+
+# For 0323 alternating a b drs fstar
+beta0 = torch.tensor([0.009, 0.012, 1. / 2.e1, 0.7])
+beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
+
+# Document the unfixed groups
+beta_unfixed_groups = [[0, 1], [2], [3], [2], [3], [2], [3], [2], [3], [2], [3], [2], [3], [2], [3]]
+beta_unfixed_NofIters = torch.tensor([5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
 # VV_tt history
 NofTpts = 1500
@@ -65,6 +75,8 @@ kwgs = {
     'NofTpts' : NofTpts,
     'theta0' : theta0, 
     'beta_fixed' : beta_fixed,
+    'beta_unfixed_groups' : beta_unfixed_groups, 
+    'beta_unfixed_NofIters' : beta_unfixed_NofIters, 
     'beta0' : beta0, 
     'beta_low' : beta_low, 
     'beta_high' : beta_high, 
@@ -174,62 +186,81 @@ V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
 # print('theta_targ: ', theta_targ)
 # print('f_targ: ', f_targ)
 
-## Gradient descent:
-max_iters = 6
-# max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
-max_step = torch.tensor([1., 1., 1., 1.])
-max_step[beta_fixed] = 1.e30
+## ------------------------------------ Gradient descent ------------------------------------ 
+# Maximum alternative iterations
+max_iters = 10
 
-# Gradient descent
+
+# Start the outer loop of iterations
 beta_this = beta0
-V_thiss, theta_thiss, f_thiss = cal_f(beta_this, kwgs)
+for alt_iter in range(max_iters):
+    # Print out section
+    print("*" * 100)
+    print("*", " "*40, "Outer Iteration ", str(alt_iter), " " * 40, "*")
+    print("*" * 100)
 
-O_this = 0.
-grad_this = torch.zeros(4)
-for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
-    O_this += O(f_this, f_targ, t)
-    grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
-
-print("=" * 40, " Iteration ", str(0), " ", "=" * 40)
-print("Initial beta: ", beta_this)
-print("O: ", O_this)
-print("Gradient: ", grad_this, flush=True)
-
-for i in range(max_iters):
-    max_eta = torch.min(torch.abs(max_step / grad_this))
-    # Line search
-    iter = 0
-    O_trial = O_this
-    while (iter <= 20 and O_trial >= O_this):
-        beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
-        beta_trial[beta_fixed] = beta0[beta_fixed]
-        beta_trial = torch.clip(beta_trial, kwgs['beta_low'], kwgs['beta_high'])
-        V_trials, theta_trials, f_trials = cal_f(beta_trial, kwgs)
-        O_trial = 0.
+    for grp_idx, release_idx in enumerate(kwgs['beta_unfixed_groups']):
+        beta_fixed_this = torch.ones(len(kwgs['beta0']), dtype=torch.bool)
+        beta_fixed_this[release_idx] = False
         
-        for V_trial, theta_trial, f_trial, f_targ in zip(V_trials, theta_trials, f_trials, f_targs):
-            O_trial += O(f_trial, f_targ, t)
-        print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
-        iter += 1
+        # Print out which values are fixed
+        print("~" * 20, "beta_fixed: ", beta_fixed_this, "~"*20)
 
-    beta_this = beta_trial
-    V_thiss = V_trials
-    theta_thiss = theta_trials
-    f_thiss = f_trials
-    O_this = O_trial
 
-    # Get new grad
-    grad_this = torch.zeros(4)
-    for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
-        grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
-    
-    print("=" * 40, " Iteration ", str(i + 1), " ", "=" * 40)
-    print("Optimized beta: ", beta_this)
-    print("O: ", O_this)
-    print("Gradient: ", grad_this, flush=True)
+        # max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
+        max_step = torch.tensor([1., 1., 1., 1.])
+        max_step[beta_fixed_this] = 1.e30
+        beta0_this = beta_this
+        V_thiss, theta_thiss, f_thiss = cal_f(beta_this, kwgs)
+
+        O_this = 0.
+        grad_this = torch.zeros(4)
+        for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
+            O_this += O(f_this, f_targ, t)
+            grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
+
+        print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
+        print("Initial beta: ", beta_this)
+        print("O: ", O_this)
+        print("Gradient: ", grad_this, flush=True)
+
+        for i in range(kwgs['beta_unfixed_NofIters'][grp_idx]):
+            max_eta = torch.min(torch.abs(max_step / grad_this))
+            # Line search
+            iter = 0
+            O_trial = O_this
+            while (iter <= 10 and O_trial >= O_this):
+                beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
+                beta_trial[beta_fixed_this] = beta0_this[beta_fixed_this]
+                beta_trial = torch.clip(beta_trial, kwgs['beta_low'], kwgs['beta_high'])
+                V_trials, theta_trials, f_trials = cal_f(beta_trial, kwgs)
+                O_trial = 0.
+                
+                for V_trial, theta_trial, f_trial, f_targ in zip(V_trials, theta_trials, f_trials, f_targs):
+                    O_trial += O(f_trial, f_targ, t)
+                # print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
+                iter += 1
+
+            beta_this = beta_trial
+            V_thiss = V_trials
+            theta_thiss = theta_trials
+            f_thiss = f_trials
+            O_this = O_trial
+
+            # Get new grad
+            grad_this = torch.zeros(4)
+            for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
+                grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
+            
+            print("=" * 40, " Inner Iteration ", str(i + 1), " ", "=" * 40)
+            print("Optimized beta: ", beta_this)
+            print("O: ", O_this)
+            print("Gradient: ", grad_this, flush=True)
+
 
 # Save a figure of the result
-pwd ="./plots/FricSeqGen0323_multi2_closerBeta/"
+# pwd ="./plots/FricSeqGen0323_alternating_DrsFStar/"
+pwd ="./plots/FricSeqGen0324_alternating_All4/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 plotSequences(beta_this, beta_targ, kwgs, pwd)
 
