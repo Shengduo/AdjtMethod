@@ -18,24 +18,17 @@ from random import shuffle
 # Target Rate and state properties
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
-# # Start beta
-# beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.3])
-
+## For April 3, show the un-convexness of the last two dimensions
 # Different start beta, closer to target
-beta_low = torch.tensor([0.001, 0.001, 0.001, 0.1])
-beta_high = torch.tensor([1., 1., 1.e6, 0.9])
+DRS_low = -3
+DRS_high = 7
+beta_low = torch.tensor([0.011, 0.016, torch.pow(10., DRS_low), 0.1])
+beta_high = torch.tensor([0.011, 0.016, torch.pow(10., DRS_high), 0.9])
+beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
+beta0 = torch.tensor([0.011, 0.016, 1.e1, 0.58])
 
-# # For 0323 alternating drs fstar
-# beta0 = torch.tensor([0.011, 0.016, 1. / 2.e1, 0.7])
-# beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
-
-# For 0323 alternating a b drs fstar
-beta0 = torch.tensor([0.009, 0.012, 1. / 2.e1, 0.7])
-beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
-
-# Document the unfixed groups
-beta_unfixed_groups = [[0], [1], [2], [3]]
-beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+# Number of grid points per dimension in the parameter space
+NofGridPts = 20
 
 # VV_tt history
 NofTpts = 1500
@@ -67,6 +60,7 @@ VtFuncs = []
 for VV, tt in zip(VVs, tts):
     VtFuncs.append(interp1d(tt, VV))
 
+
 # Store all keyword arguments
 kwgs = {
     'VVs' : VVs, 
@@ -75,12 +69,11 @@ kwgs = {
     'NofTpts' : NofTpts,
     'theta0' : theta0, 
     'beta_fixed' : beta_fixed,
-    'beta_unfixed_groups' : beta_unfixed_groups, 
-    'beta_unfixed_NofIters' : beta_unfixed_NofIters, 
-    'beta0' : beta0, 
     'beta_low' : beta_low, 
     'beta_high' : beta_high, 
+    'NofGridPts' : NofGridPts, 
 }
+
 
 # Compute f history based on VtFunc and beta
 def cal_f(beta, kwgs):
@@ -178,10 +171,27 @@ def plotSequences(beta, beta_targ, kwgs, pwd):
     plt.close()
 
 
-## Invert on an problem
+## Investigate the 2 parameters
 t = torch.linspace(tt[0], tt[-1], NofTpts)
+AllOs = torch.zeros([kwgs['NofGridPts'], kwgs['NofGridPts']])
 
-V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
+# DRS grid
+param1s = torch.ones([kwgs['NofGridPts'], kwgs['NofGridPts']]) \
+          * (torch.logspace(DRS_low, DRS_high, kwgs['NofGridPts']).reshape([-1, 1]))
+
+# fStar grid
+param2s = torch.ones([kwgs['NofGridPts'], kwgs['NofGridPts']]) \
+          * (torch.linspace(kwgs['beta_low'][3], kwgs['beta_high'][3], kwgs['NofGridPts']))
+
+
+# Get all values for the grid
+for i in range(kwgs['NofGridPts']):
+    for j in range(kwgs['NofGridPts']):
+        beta_this = torch.clone(beta0)
+        beta_this[2] = param1s[i, j]
+        beta_this[3] = param2s[i, j]
+        
+        V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
 # print('V_targ: ', V_targ)
 # print('theta_targ: ', theta_targ)
 # print('f_targ: ', f_targ)
