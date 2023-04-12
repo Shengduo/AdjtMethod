@@ -1,4 +1,6 @@
 ## Import standard librarys
+from random import shuffle
+import re
 import torch
 import torchdiffeq
 import pickle
@@ -68,6 +70,7 @@ def objGradFunc(alphas, VTs, beta, y0, targ_ys, MFParams_targs, scaling, regular
 class GradDescent:
     # Constructor, initial value position
     def __init__(self, 
+                 kwgs, 
                  alphas, alpha_low, alpha_high, 
                  VTs, # Temperarily fix the VTs relation now
                  beta0, beta_low, beta_high, 
@@ -75,9 +78,10 @@ class GradDescent:
                  objGrad_func, max_steps, scaling = torch.tensor([1., 1., 1., 1.]), 
                  stepping = 'BB', obs_rtol = 1e-5, grad_atol = 1.e-10, lsrh_steps = 10, 
                  regularizedFlag = False, NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
-                 solver = 'dopri5', lawFlag = "aging"):
+                 solver = 'dopri5', lawFlag = "aging", alter_grad_flag = False):
         # Initial parameters, and their lower and upper bound
         # Alpha contains the non-gradient-able parameters
+        self.kwgs = kwgs
         self.alphas = alphas
         self.alpha_low = alpha_low
         self.alpha_high = alpha_high
@@ -146,26 +150,73 @@ class GradDescent:
         self.this_atol = this_atol
         self.solver = solver
         self.lawFlag = lawFlag
+        self.alter_grad_flag = alter_grad_flag
 
         # Get Initial observations
         self.objs = []
-    
+        
+        # Record the success
+        self.innerIterSuccess = []
+
+
     # First descent, cannot use Barzilai–Borwein stepping, using linesearch
     def firstDescent(self):
         # Compute obj and grad
         # print("self.targ_ys.shape: ", self.targ_ys.shape )
+        
         obj, grad = self.objGrad_func(self.alphas, self.VTs, self.betas[-1], self.y0, self.targ_ys, self.MFParams_targs, self.scaling, 
-                                      self.regularizedFlag, False, 
-                                      self.NofTPts, self.this_rtol, self.this_atol, 
-                                      self.solver, self.lawFlag)
+                                    self.regularizedFlag, False, 
+                                    self.NofTPts, self.this_rtol, self.this_atol, 
+                                    self.solver, self.lawFlag)
         self.objs = [obj]
         self.grads = [grad]
         
         # Norm of gradients
         self.grad_norms = torch.linalg.norm(grad).reshape([-1])
         
-        # Perform linesearch
-        return self.lineSearch()
+        # Print initial beta
+        print("=" * 30, " Initial Outer Iteration ", "=" * 30)
+        print("Initial objective: ", self.objs[-1])
+        print("Initial grad: ", self.grads[-1])
+        print("Initial beta: ", self.betas[-1], flush=True)
+        
+        if self.alter_grad_flag == False:
+            # Perform linesearch
+            return self.lineSearch()
+        
+        # If alternating the gradients
+        else:
+            ## Inner iteration, get fixed randomly
+            inner_groups = []
+            for idx, NofIters in enumerate(self.kwgs['beta_unfixed_NofIters']):
+                inner_groups = inner_groups + [self.kwgs['beta_unfixed_groups'][idx] for i in range(NofIters)]
+            
+            # Permute it 
+            shuffle(inner_groups)
+            print("Inner groups: ", inner_groups)
+            
+            # Record the success
+            self.innerIterSuccess.clear()
+            
+            # Iterate through the inner groups
+            for (grp_idx, release_idx) in enumerate(inner_groups):
+                # for grp_idx, release_idx in enumerate(kwgs['beta_unfixed_groups']):
+                self.beta_matters = torch.zeros(len(self.kwgs['beta_this']), dtype=torch.bool)
+                self.beta_matters[release_idx] = True
+                
+                # Print out which values are fixed
+                print("~" * 20, " Inner iteration ", grp_idx, " ", "~" * 20, flush=True)
+                print("beta_active: ", self.beta_matters)
+
+                # Do one step line search
+                self.innerIterSuccess.append(self.lineSearch())
+                print("Obj: ", self.objs[-1])
+                print("Grad: ", self.grads[-1])
+                print("Beta: ", self.betas[-1], flush=True)
+            return True
+                
+
+
     
     # Run one descent using either Barzilai–Borwein stepping or linesearch
     def oneDescent(self):
@@ -197,39 +248,88 @@ class GradDescent:
         
         # Line search mechanism
         elif self.stepping == 'lsrh':
-            return self.lineSearch(BBStepSize)
+            # If no grad alternating
+            if self.alter_grad_flag == False:
+                return self.lineSearch(BBStepSize)
+            
+            # If alter the gradients
+            else:
+
+                ## Inner iteration, get fixed randomly
+                inner_groups = []
+                for idx, NofIters in enumerate(self.kwgs['beta_unfixed_NofIters']):
+                    inner_groups = inner_groups + [self.kwgs['beta_unfixed_groups'][idx] for i in range(NofIters)]
+                
+                # Permute it 
+                shuffle(inner_groups)
+                print("Inner groups: ", inner_groups)
+                
+                # Record the success
+                self.innerIterSuccess.clear()
+                
+                # Iterate through the inner groups
+                for (grp_idx, release_idx) in enumerate(inner_groups):
+                    # for grp_idx, release_idx in enumerate(kwgs['beta_unfixed_groups']):
+                    self.beta_matters = torch.zeros(len(self.kwgs['beta_this']), dtype=torch.bool)
+                    self.beta_matters[release_idx] = True
+                    
+                    # Print out which values are fixed
+                    print("~" * 20, " Inner iteration ", grp_idx, flush=True)
+                    print("beta_active: ", self.beta_matters)
+
+                    # Do one step line search
+                    self.innerIterSuccess.append(self.lineSearch())
+                    print("Obj: ", self.objs[-1])
+                    print("Grad: ", self.grads[-1])
+                    print("Beta: ", self.betas[-1], flush=True)
+                
+                return True
+
         
     
     # Run gradient descent
     def run(self):
-        # Run initial descent
-        success = self.firstDescent()
-        print("=" * 40)
-        print("Initial descent succeeds: ", success)
-        print("Observation: ", self.objs[-1])
-        print("Gradient (scaled): ", self.grads[-1])
-        print("beta: ", self.betas[-1])
-        print("torch.sqrt(self.objs[-1]): ", torch.sqrt(self.objs[-1]))
-        print("self.targ_ys_norm: ", self.targ_ys_norm)
-        print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm)
-        
-        if torch.min(self.grad_norms) < self.grad_atol:
-            print("The final predicted parameters: ", self.betas[torch.argmin(self.grad_norms)])
-            return
-        
-        # Run max_iters number of iterations
-        for i in range(self.max_steps):
-            success = self.oneDescent()
+        # If doing typical gradient descent
+        if self.alter_grad_flag == False:
+            # Run initial descent
+            success = self.firstDescent()
             print("=" * 40)
-            print("The {0}th descent succeeds: ".format(i + 1), success)
+            print("Initial descent succeeds: ", success)
             print("Observation: ", self.objs[-1])
             print("Gradient (scaled): ", self.grads[-1])
             print("beta: ", self.betas[-1])
-            print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm, flush=True)
-
-            # Check if the gradient is small enough
+            print("torch.sqrt(self.objs[-1]): ", torch.sqrt(self.objs[-1]))
+            print("self.targ_ys_norm: ", self.targ_ys_norm)
+            print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm)
+            
             if torch.min(self.grad_norms) < self.grad_atol:
-                break
+                print("The final predicted parameters: ", self.betas[torch.argmin(self.grad_norms)])
+                return
+        else:
+            # Run initial descent
+            success = self.firstDescent()
+        
+
+        ## Run max_iters number of (outer) iterations
+        for i in range(self.max_steps):
+            # If doing typical gradient descent
+            if self.alter_grad_flag == False:
+                success = self.oneDescent()
+                print("=" * 40)
+                print("The {0}th descent succeeds: ".format(i + 1), success)
+                print("Observation: ", self.objs[-1])
+                print("Gradient (scaled): ", self.grads[-1])
+                print("beta: ", self.betas[-1])
+                print("Relative error of observation: ", torch.sqrt(self.objs[-1]) / self.targ_ys_norm, flush=True)
+
+                # Check if the gradient is small enough
+                if torch.min(self.grad_norms) < self.grad_atol:
+                    break
+            # If doing stochastic grad descent
+            else:
+                # Print initial beta
+                print("=" * 30, " Outer Iteration " + str(i + 1), "=" * 30, flush=True)
+                success = self.oneDescent()
         
         # Return
         print("The final predicted parameters: ", self.betas[torch.argmin(self.grad_norms)] * self.scaling)
@@ -242,7 +342,8 @@ class GradDescent:
         # maxStepSize = 1.0 * min(abs(self.betas[-1] / self.grads[-1]))
 
         # Consider a only
-        maxStepSize = 0.2 * min(abs(self.betas[-1][self.beta_matters] / self.grads[-1][self.beta_matters]))
+        maxStepSize = 0.1 * min(abs((self.beta_high[self.beta_matters] - self.betas[-1][self.beta_matters]) / self.grads[-1][self.beta_matters]), 
+                                abs((self.beta_low[self.beta_matters] - self.betas[-1][self.beta_matters]) / self.grads[-1][self.beta_matters]))
         
         # maxStepSize = 1.
             
@@ -314,7 +415,8 @@ class GradDescent:
     def project(self, pt, subtraction):
         # First calculate the subtraction
         prjted = torch.clone(pt)
-        prjted[~self.beta_matters] = self.beta0[~self.beta_matters]
+        last_beta = self.betas[-1]
+        prjted[~self.beta_matters] = last_beta[~self.beta_matters]
         prjted[self.beta_matters] -= subtraction[self.beta_matters]
 
         # Project on the dimensions that matter

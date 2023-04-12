@@ -22,9 +22,13 @@ beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 # Different start beta, closer to target
 DRS_low = -3.
 DRS_high = 1.
-beta_low = torch.tensor([0.011, 0.016, pow(10., DRS_low), 0.2])
-beta_high = torch.tensor([0.011, 0.016, pow(10., DRS_high), 0.8])
-beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
+# beta_low = torch.tensor([0.011, 0.016, pow(10., DRS_low), 0.2])
+# beta_high = torch.tensor([0.011, 0.016, pow(10., DRS_high), 0.8])
+
+beta_low = torch.tensor([0.001, 0.001, 1.e-1, 0.58])
+beta_high = torch.tensor([0.021, 0.021, 1.e-1, 0.58])
+
+beta_fixed = torch.tensor([0, 0, 1, 1], dtype=torch.bool)
 beta0 = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
@@ -145,11 +149,11 @@ AllOs = torch.zeros([kwgs['NofGridPts'], kwgs['NofGridPts']])
 
 # DRS grid
 param1s = torch.ones([kwgs['NofGridPts'], kwgs['NofGridPts']]) \
-          * (torch.logspace(DRS_low, DRS_high, kwgs['NofGridPts']).reshape([-1, 1]))
+          * (torch.linspace(kwgs['beta_low'][0], kwgs['beta_high'][0], kwgs['NofGridPts']).reshape([-1, 1]))
 
 # fStar grid
 param2s = torch.ones([kwgs['NofGridPts'], kwgs['NofGridPts']]) \
-          * (torch.linspace(kwgs['beta_low'][3], kwgs['beta_high'][3], kwgs['NofGridPts']))
+          * (torch.linspace(kwgs['beta_low'][1], kwgs['beta_high'][1], kwgs['NofGridPts']))
 
 # Get target fs
 V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
@@ -158,10 +162,10 @@ V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
 for i in range(kwgs['NofGridPts']):
     for j in range(kwgs['NofGridPts']):
         beta_this = torch.clone(beta0)
-        beta_this[2] = param1s[i, j]
-        beta_this[3] = param2s[i, j]
+        beta_this[0] = param1s[i, j]
+        beta_this[1] = param2s[i, j]
         V_thiss, theta_thiss, f_thiss = cal_f(beta_this, kwgs)
-        print("Solved for beta_this = ", beta_this)
+        print("Solved for beta_this = ", beta_this, flush=True)
         for f_this, f_targ in zip(f_thiss, f_targs):
             AllOs[i, j] += O(f_this, f_targ, t)
 
@@ -170,7 +174,7 @@ kwgs['param1s'] = param1s
 kwgs['param2s'] = param2s
 
 # Save the results
-pwd ="./plots/FricSeqGen_Plot2Params/"
+pwd ="./plots/FricSeqGen_Plot2Params_ab/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 plotSequences(param1s, param2s, AllOs, pwd)
 

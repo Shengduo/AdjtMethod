@@ -14,17 +14,17 @@ from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 
 
-# Target Rate and state properties
-beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+# Target Rate and state properties [a, b, log10(DRSInv), fStar]
+beta_targ = torch.tensor([0.011, 0.016, -1., 0.58])
 
 # # Start beta
 # beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.3])
 
 # Different start beta, closer to target
-beta_low = torch.tensor([0.001, 0.001, 1.e-3, 0.2])
-beta_high = torch.tensor([1., 1., 1.e1, 0.8])
+beta_low = torch.tensor([0.001, 0.001, -3., 0.2])
+beta_high = torch.tensor([1., 1., 1., 0.8])
 
-beta0 = torch.tensor([0.011, 0.016, pow(10., 0), 0.2])
+beta0 = torch.tensor([0.011, 0.016, 0., 0.2])
 beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
 
 # VV_tt history
@@ -91,10 +91,10 @@ def cal_f(beta, kwgs):
         b = beta[1]
         DRSInv = beta[2]
         fStar = beta[3]
-        thetaFunc = lambda t, theta: 1. - torch.tensor(VtFunc(torch.clip(t, tt[0], tt[-1])), dtype=torch.float) * theta * DRSInv
+        thetaFunc = lambda t, theta: 1. - torch.tensor(VtFunc(torch.clip(t, tt[0], tt[-1])), dtype=torch.float) * theta * torch.pow(10., DRSInv)
         theta = odeint(thetaFunc, theta0, t, atol = 1.e-10, rtol = 1.e-8)
         
-        f = fStar + a * torch.log(V / 1.e-6) + b * torch.log(1.e-6 * theta * DRSInv)
+        f = fStar + a * torch.log(V / 1.e-6) + b * torch.log(1.e-6 * theta * torch.pow(10., DRSInv))
         Vs.append(V)
         thetas.append(theta)
         fs.append(f)
@@ -113,12 +113,12 @@ def O(f, f_targ, t):
 def grad(beta, t, V, theta, f, f_targ, kwgs):
     integrand = torch.zeros([len(beta), len(t)])
     integrand[0, :] = torch.log(V / 1.e-6)
-    integrand[1, :] = torch.log(1.e-6 * theta * beta[2])
-    integrand[2, :] = beta[1] / beta[2]
+    integrand[1, :] = torch.log(1.e-6 * theta * torch.pow(10., beta[2]))
+    integrand[2, :] = beta[1] * torch.log(torch.tensor(10.))
     integrand[3, :] = 1.
     integrand = 2 * (f - f_targ) * integrand
     dodTheta = interp1d(t, 2. * (f - f_targ) * beta[1] / theta)
-    dCdTheta = interp1d(t, V * beta[2])
+    dCdTheta = interp1d(t, V * torch.pow(10., beta[2]))
 
     # Adjoint
     # print(torch.flip(t[-1] - t, [0]))
@@ -229,7 +229,7 @@ for i in range(max_iters):
     print("Gradient: ", grad_this, flush=True)
 
 # Save a figure of the result
-pwd ="./plots/FricSeqGen0404_DRSfStar_2/"
+pwd ="./plots/FricSeqGen0404_log10DRSfStar_2/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 plotSequences(beta_this, beta_targ, kwgs, pwd)
 
