@@ -179,7 +179,12 @@ class GradDescent:
         print("Initial objective: ", self.objs[-1])
         print("Initial grad: ", self.grads[-1])
         print("Initial beta: ", self.betas[-1], flush=True)
-        
+
+        # Detect NaN
+        if torch.any(torch.isnan(self.objs[-1])):
+            print("NaN detected in objectives, you are fucked.")
+            return False
+
         if self.alter_grad_flag == False:
             # Perform linesearch
             return self.lineSearch()
@@ -213,6 +218,11 @@ class GradDescent:
                 print("Obj: ", self.objs[-1])
                 print("Grad: ", self.grads[-1])
                 print("Beta: ", self.betas[-1], flush=True)
+                # print("torch.any(torch.isnan(self.objs[-1])): ", torch.any(torch.isnan(self.objs[-1])))
+                if torch.any(torch.isnan(self.objs[-1])):
+                    print("NaN detected in objectives, you are fucked.")
+                    break
+
             return True
                 
 
@@ -282,7 +292,9 @@ class GradDescent:
                     print("Obj: ", self.objs[-1])
                     print("Grad: ", self.grads[-1])
                     print("Beta: ", self.betas[-1], flush=True)
-                
+                    if torch.any(torch.isnan(self.objs[-1])):
+                        print("NaN detected in objectives, you are fucked.")
+                        break
                 return True
 
         
@@ -315,6 +327,8 @@ class GradDescent:
             # If doing typical gradient descent
             if self.alter_grad_flag == False:
                 success = self.oneDescent()
+                if torch.any(torch.isnan(self.objs[-1])):
+                    break
                 print("=" * 40)
                 print("The {0}th descent succeeds: ".format(i + 1), success)
                 print("Observation: ", self.objs[-1])
@@ -327,6 +341,9 @@ class GradDescent:
                     break
             # If doing stochastic grad descent
             else:
+                if torch.any(torch.isnan(self.objs[-1])):
+                    print("NaN detected in objectives, you are fucked.")
+                    break
                 # Print initial beta
                 print("=" * 30, " Outer Iteration " + str(i + 1), "=" * 30, flush=True)
                 success = self.oneDescent()
