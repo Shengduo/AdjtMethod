@@ -39,7 +39,7 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0417DRSfStar_f1_aging_AddFricVTs_Normed_data4/"
+res_path = "./plots/0420DRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
@@ -154,8 +154,8 @@ beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
 # Document the unfixed groups
 # beta_unfixed_groups = [[0], [1], [2], [3]]
 # beta_unfixed_NofIters = torch.tensor([1, 1, 1, 1])
-beta_unfixed_groups = [[2], [3]]
-beta_unfixed_NofIters = torch.tensor([1, 1])
+beta_unfixed_groups = [[2, 3]]
+beta_unfixed_NofIters = torch.tensor([1])
 
 scaling = torch.tensor([1., 1., 1., 1.])
 
