@@ -359,9 +359,14 @@ class GradDescent:
         # maxStepSize = 1.0 * min(abs(self.betas[-1] / self.grads[-1]))
 
         # Consider a only
-        print("self.beta_matters: ", self.beta_matters)
-        maxStepSize = 0.1 * min(abs((self.beta_high[self.beta_matters] - self.betas[-1][self.beta_matters]) / self.grads[-1][self.beta_matters]), 
-                                abs((self.beta_low[self.beta_matters] - self.betas[-1][self.beta_matters]) / self.grads[-1][self.beta_matters]))
+        # print("self.beta_matters: ", self.beta_matters)
+        # print("self.beta_high[self.beta_matters]: ", self.beta_high[self.beta_matters])
+        maxStepSize = 0.1 * torch.min(
+            torch.concat(
+                [abs((self.beta_high[self.beta_matters] - self.betas[-1][self.beta_matters]) / self.grads[-1][self.beta_matters]), 
+                 abs((self.beta_low[self.beta_matters] - self.betas[-1][self.beta_matters]) / self.grads[-1][self.beta_matters])]
+                        )
+        )
         
         # maxStepSize = 1.
             
