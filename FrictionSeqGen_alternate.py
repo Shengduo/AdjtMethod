@@ -34,8 +34,10 @@ beta0 = torch.tensor([0.009, 0.012, 1. / 2.e1, 0.7])
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Document the unfixed groups
-beta_unfixed_groups = [[0], [1], [2], [3]]
-beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+# beta_unfixed_groups = [[0], [1], [2], [3]]
+# beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+beta_unfixed_groups = [[0, 1, 2, 3]]
+beta_unfixed_NofIters = torch.tensor([3])
 
 # VV_tt history
 NofTpts = 1500
@@ -287,7 +289,7 @@ for alt_iter in range(max_iters):
 
 # Save a figure of the result
 # pwd ="./plots/FricSeqGen0323_alternating_DrsFStar/"
-pwd ="./plots/FricSeqGen0329_alternating_All4/"
+pwd ="./plots/FricSeqGen0329_Unalternating_All4/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments
