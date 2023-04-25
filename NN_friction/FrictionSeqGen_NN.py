@@ -13,19 +13,34 @@ from xitorch.interpolate import Interp1D
 from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 
+# ----------------------------------------- README ----------------------------------------------
+# Here we try to approximate the rate-and-state friction model using the formulation below:
+# f(V, \xi) &= f_0 + NN1(V, \xi, log(V), log(\xi))
+# d\xi / dt &= NN2(V, \xi, log(V), log(\xi))
+# -----------------------------------------------------------------------------------------------
 
-# Target Rate and state properties
+# Define the class multi-layer perceptron for function NN1 and function NN2
+class PP(nn.Module):
+    # Constructor
+    def __init__(self, NNs, input_dim = 1, output_dim = 1):
+        super().__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(input_dim, NNs[0]), 
+            nn.ReLU(),
+        )
+        
+        for i in range(len(NNs) - 1):
+            self.fc.append(nn.Linear(NNs[i], NNs[i + 1]))
+            self.fc.append(nn.ReLU())
+        
+        self.fc.append(nn.Linear(NNs[-1], output_dim))
+    
+    # Forward function
+    def forward(self, x):
+        return self.fc(x)
+
+# Target Rate and state properties for the target data generation
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
-
-# # Start beta
-# beta0 = torch.tensor([0.009, 0.012, 1. / 1.e2, 0.3])
-
-# Different start beta, closer to target
-beta_low = torch.tensor([0.001, 0.001, 1.e-3, 0.2])
-beta_high = torch.tensor([1., 1., 1.e1, 0.8])
-
-beta0 = torch.tensor([0.011, 0.016, pow(10., 0), 0.2])
-beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
 
 # VV_tt history
 NofTpts = 1500
@@ -34,41 +49,54 @@ theta0 = torch.tensor(1.)
 # Multi data2
 ones = 10 * [1.]
 tens = 10 * [10.]
+
+# Prescribed velocities
 VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
                     ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
                     ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
                     tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
 
-# Multi data3
 
-# # Multi data1
-# VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                     [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
-#                     [1., 1., 1., 1., 1., 1. ,1., 1., 1., 1., 1., 1., 1., 1., 1.], 
-#                     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]])
-
+# Times at which the velocities are prescribed
 tts = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
                    torch.linspace(0., 30., VVs.shape[1]),
                    torch.linspace(0., 30., VVs.shape[1]),
                    torch.linspace(0., 30., VVs.shape[1])])
 VtFuncs = []
 
-# Functions
+
+# Functions for V-t interpolation
 for VV, tt in zip(VVs, tts):
     VtFuncs.append(interp1d(tt, VV))
 
-# Store all keyword arguments
+# Number of hidden variables, i.e. the dimension of xi
+DimXi = 1
+
+# NN parameters for f = NN1(V, \xi, log(V), log(\xi))
+NN1_input_dim = 2 + 2 * DimXi
+NN1s = [16, 64, 64, 16]
+NN1_output_dim = 1
+
+# NN parameters for \dot{\xi} = NN2(V, \xi, log(V), log(\xi))
+NN2_input_dim = 2 + 2 * DimXi
+NN2s = [16, 64, 64, 16]
+NN2_output_dim = DimXi
+
+# Store all the input parameters as a keyword dictionary
 kwgs = {
     'VVs' : VVs, 
     'tts' : tts, 
     'VtFuncs' : VtFuncs, 
     'NofTpts' : NofTpts,
     'theta0' : theta0, 
-    'beta_fixed' : beta_fixed,
-    'beta0' : beta0, 
-    'beta_low' : beta_low, 
-    'beta_high' : beta_high, 
+    'NN1_input_dim' : NN1_input_dim, 
+    'NN1s' : NN1s, 
+    'NN1_output_dim' : NN1_output_dim, 
+    'NN2_input_dim' : NN2_input_dim, 
+    'NN2s' : NN2s, 
+    'NN2_output_dim' : NN2_output_dim, 
 }
+
 
 # Compute f history based on VtFunc and beta
 def cal_f(beta, kwgs):
