@@ -71,13 +71,15 @@ for VV, tt in zip(VVs, tts):
 
 # Number of hidden variables, i.e. the dimension of xi
 DimXi = 1
+Xi0 = torch.ones(DimXi)
 
-# NN parameters for f = NN1(V, \xi, log(V), log(\xi))
+# NN parameters for f = fStar + NN1(V, log(V), \xi, log(\xi))
+f0 = 0.58
 NN1_input_dim = 2 + 2 * DimXi
 NN1s = [16, 64, 64, 16]
 NN1_output_dim = 1
 
-# NN parameters for \dot{\xi} = NN2(V, \xi, log(V), log(\xi))
+# NN parameters for \dot{\xi} = NN2(V, log(V), \xi, log(\xi))
 NN2_input_dim = 2 + 2 * DimXi
 NN2s = [16, 64, 64, 16]
 NN2_output_dim = DimXi
@@ -89,17 +91,19 @@ kwgs = {
     'VtFuncs' : VtFuncs, 
     'NofTpts' : NofTpts,
     'theta0' : theta0, 
+    'Xi0' : Xi0, 
     'NN1_input_dim' : NN1_input_dim, 
     'NN1s' : NN1s, 
     'NN1_output_dim' : NN1_output_dim, 
     'NN2_input_dim' : NN2_input_dim, 
     'NN2s' : NN2s, 
     'NN2_output_dim' : NN2_output_dim, 
+    'f0' : f0, 
 }
 
 
 # Compute f history based on VtFunc and beta
-def cal_f(beta, kwgs):
+def cal_f_beta(beta, kwgs):
     tts = kwgs['tts']
     NofTpts = kwgs['NofTpts']
     theta0 = kwgs['theta0']
@@ -133,39 +137,43 @@ def cal_f(beta, kwgs):
 
     return Vs, thetas, fs
 
+# Compute f history based on VtFunc and the two NNs
+def cal_f_NNs(NN1, NN2, kwgs):
+    tts = kwgs['tts']
+    NofTpts = kwgs['NofTpts']
+    theta0 = kwgs['theta0']
+    VtFuncs = kwgs['VtFuncs']
+
+    # Get all sequences
+    Vs = []
+    thetas = []
+    fs = []
+    for VtFunc in VtFuncs:
+        t = torch.linspace(tt[0], tt[-1], NofTpts)
+        V = torch.tensor(VtFunc(t), dtype=torch.float)
+
+        XiFunc = lambda t, Xi: NN2(torch.concat([VtFunc(t), torch.log(VtFunc(t)), Xi(t), torch.log(Xi(t))]))
+        Xi = odeint(XiFunc, Xi0, t, atol = 1.e-10, rtol = 1.e-8)
+        
+        f = f0 + NN1(torch.transpose(torch.stack([V, torch.log(V), Xi, torch.log(Xi)])))
+        Vs.append(V)
+        fs.append(f)
+    
+    Vs = torch.stack(Vs)
+    fs = torch.stack(fs)
+
+    return Vs, fs
+
 def O(f, f_targ, t):
     return torch.trapezoid(
         torch.square(f - f_targ), t
     )
 
-def grad(beta, t, V, theta, f, f_targ, kwgs):
-    integrand = torch.zeros([len(beta), len(t)])
-    integrand[0, :] = torch.log(V / 1.e-6)
-    integrand[1, :] = torch.log(1.e-6 * theta * beta[2])
-    integrand[2, :] = beta[1] / beta[2]
-    integrand[3, :] = 1.
-    integrand = 2 * (f - f_targ) * integrand
-    dodTheta = interp1d(t, 2. * (f - f_targ) * beta[1] / theta)
-    dCdTheta = interp1d(t, V * beta[2])
-
-    # Adjoint
-    # print(torch.flip(t[-1] - t, [0]))
-    laFunc = lambda tau, la: -torch.tensor(dodTheta(torch.clip(t[-1]-tau, t[0], t[-1])), dtype=torch.float) - la * torch.tensor(dCdTheta(torch.clip(t[-1]-tau, t[0], t[-1])), dtype=torch.float)
-    la = odeint(laFunc, torch.tensor(0.), torch.flip(t[-1] - t, [0]), atol = 1.e-10, rtol = 1.e-8)
-    la = torch.flip(la, [0])
-    # print("la: ", la)
-    integrand[2, :] += la * V * theta
-    res = torch.trapezoid(
-        integrand, t
-    )
-
-    
-    return res
 
 # Plot sequences of friction coefficient
-def plotSequences(beta, beta_targ, kwgs, pwd):
-    Vs, thetas, fs = cal_f(beta, kwgs)
-    V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
+def plotSequences(beta_targ, NN1, NN2, kwgs, pwd):
+    Vs, fs = cal_f_NNs(NN1, NN2, kwgs)
+    V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs)
     lws = torch.linspace(3.0, 1.0, len(Vs))
 
     for idx, (f_targ, f) in enumerate(zip(f_targs, fs)):
@@ -197,7 +205,7 @@ def plotSequences(beta, beta_targ, kwgs, pwd):
 ## Invert on an problem
 t = torch.linspace(tt[0], tt[-1], NofTpts)
 
-V_targs, theta_targs, f_targs = cal_f(beta_targ, kwgs)
+V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs)
 # print('V_targ: ', V_targ)
 # print('theta_targ: ', theta_targ)
 # print('f_targ: ', f_targ)
