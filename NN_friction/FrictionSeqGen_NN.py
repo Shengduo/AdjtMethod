@@ -4,6 +4,7 @@ import torchdiffeq
 import pickle
 import time
 import torch.nn as nn
+import torch.optim as optim
 import scipy.optimize as opt
 import numpy as np
 
@@ -18,6 +19,65 @@ from matplotlib import pyplot as plt
 # f(V, \xi) &= f_0 + NN1(V, \xi, log(V), log(\xi))
 # d\xi / dt &= NN2(V, \xi, log(V), log(\xi))
 # -----------------------------------------------------------------------------------------------
+# Class that computes f-sequence given V-sequence
+class NN_computeF(nn.Module):
+    # Constructor
+    def __init__(self, kwgs):
+        super().__init__()
+
+        # Store the kwgs
+        self.kwgs = kwgs
+
+        # For f = NN1(V, log(V), Xi, log(Xi))
+        NN1s = kwgs['NN1s']
+        NN1_input_dim = kwgs['NN1_input_dim']
+        NN1_output_dim = kwgs['NN1_output_dim']
+
+        # \dot{\xi} = NN2(V, log(V), \xi, log(\xi))
+        NN2s = kwgs['NN2s']
+        NN2_input_dim = kwgs['NN2_input_dim']
+        NN2_output_dim = kwgs['NN2_output_dim']
+
+        # Define function NN1
+        self.NN1 = nn.Sequential(
+            nn.Linear(NN1_input_dim, NN1s[0]), 
+            nn.ReLU(),
+        )
+        
+        for i in range(len(NN1s) - 1):
+            self.NN1.append(nn.Linear(NN1s[i], NN1s[i + 1]))
+            self.NN1.append(nn.ReLU())
+        
+        self.NN1.append(nn.Linear(NN1s[-1], NN1_output_dim))
+
+        # Define function NN2
+        self.NN2 = nn.Sequential(
+            nn.Linear(NN2_input_dim, NN2s[0]), 
+            nn.ReLU(),
+        )
+        
+        for i in range(len(NN2s) - 1):
+            self.NN2.append(nn.Linear(NN2s[i], NN2s[i + 1]))
+            self.NN2.append(nn.ReLU())
+        
+        self.NN2.append(nn.Linear(NN2s[-1], NN2_output_dim))
+
+    def forward(self, VtFunc):
+        NofTpts = kwgs['NofTpts']
+
+        # Get all sequences
+        t = torch.linspace(tt[0], tt[-1], NofTpts)
+        V = torch.tensor(VtFunc(t), dtype=torch.float)
+
+        XiFunc = lambda t, Xi: self.NN2(torch.concat([VtFunc(t), torch.log(VtFunc(t)), Xi(t), torch.log(Xi(t))]))
+        Xi = odeint(XiFunc, Xi0, t, atol = 1.e-10, rtol = 1.e-8)
+        
+        f = f0 + self.NN1(torch.transpose(torch.stack([V, torch.log(V), Xi, torch.log(Xi)])))
+
+        return f
+
+
+
 
 # Define the class multi-layer perceptron for function NN1 and function NN2
 class PP(nn.Module):
@@ -212,52 +272,9 @@ V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs)
 
 ## Gradient descent:
 max_iters = 200
-# max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
-max_step = torch.tensor([1., 1., 1., 1.])
-max_step[beta_fixed] = 1.e30
 
 # Gradient descent
-beta_this = beta0
-V_thiss, theta_thiss, f_thiss = cal_f(beta_this, kwgs)
-
-O_this = 0.
-grad_this = torch.zeros(4)
-for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
-    O_this += O(f_this, f_targ, t)
-    grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
-
-print("=" * 40, " Iteration ", str(0), " ", "=" * 40)
-print("Initial beta: ", beta_this)
-print("O: ", O_this)
-print("Gradient: ", grad_this, flush=True)
-
-for i in range(max_iters):
-    max_eta = torch.min(torch.abs(max_step / grad_this))
-    # Line search
-    iter = 0
-    O_trial = O_this
-    while (iter <= 20 and O_trial >= O_this):
-        beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
-        beta_trial[beta_fixed] = beta0[beta_fixed]
-        beta_trial = torch.clip(beta_trial, kwgs['beta_low'], kwgs['beta_high'])
-        V_trials, theta_trials, f_trials = cal_f(beta_trial, kwgs)
-        O_trial = 0.
-        
-        for V_trial, theta_trial, f_trial, f_targ in zip(V_trials, theta_trials, f_trials, f_targs):
-            O_trial += O(f_trial, f_targ, t)
-        print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
-        iter += 1
-
-    beta_this = beta_trial
-    V_thiss = V_trials
-    theta_thiss = theta_trials
-    f_thiss = f_trials
-    O_this = O_trial
-
-    # Get new grad
-    grad_this = torch.zeros(4)
-    for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
-        grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
+for epoch in range(max_iters):
     
     print("=" * 40, " Iteration ", str(i + 1), " ", "=" * 40)
     print("Optimized beta: ", beta_this)
