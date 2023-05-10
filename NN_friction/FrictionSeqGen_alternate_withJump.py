@@ -89,20 +89,43 @@ tt_tests = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
 
 VtFuncs = []
 VtFunc_tests = []
+ts = []
+t_tests = []
+t_JumpIdxs = []
+t_JumpIdxs_test = []
 
 # Functions
 for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
+    VtFunc = []
+    t = torch.linspace(tt[0], tt[-1], NofTpts)
+    t_JumpIdx = [0]
+
+    for i in range(len(JumpIdx)):
+        this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_VV[1] = this_VV[0]
+        VtFunc.append(interp1d(this_tt, this_VV))
+
+        isIdx =  (t <= this_tt[-1])
+        for i in range(len(isIdx)):
+            if isIdx[i] == False:
+                t_JumpIdx.append(i - 1)
+                break
+        
+
+    ts.append(t)
+    VtFuncs.append(VtFunc)
+
+# Functions for V-t interpolation
+# Functions
+for JumpIdx, VV, tt in zip(JumpIdxs_test, VV_tests, tt_tests):
     VtFunc = []
     for i in range(len(JumpIdx)):
         this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
         this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
         this_VV[1] = this_VV[0]
         VtFunc.append(interp1d(this_tt, this_VV))
-    VtFuncs.append(VtFunc)
-
-# Functions for V-t interpolation
-for VV, tt in zip(VV_tests, tt_tests):
-    VtFunc_tests.append(interp1d(tt, VV))
+    VtFunc_tests.append(VtFunc)
 
 # Store all keyword arguments
 kwgs = {
@@ -110,13 +133,15 @@ kwgs = {
     'tts' : tts, 
     'VtFuncs' : VtFuncs, 
     'JumpIdxs' : JumpIdxs, 
-    'VV_tests' : VV_tests,
+    'VV_tests' : VV_tests, 
     'tt_tests' : tt_tests, 
     'VtFunc_tests' : VtFunc_tests, 
     'JumpIdxs_test' : JumpIdxs_test, 
-    'NofTpts' : NofTpts,
+    'NofTpts' : NofTpts, 
+    't' : t, 
+    't_Jump_idxs' : t_Jump_idxs, 
     'theta0' : theta0, 
-    'beta_fixed' : beta_fixed,
+    'beta_fixed' : beta_fixed, 
     'beta_unfixed_groups' : beta_unfixed_groups, 
     'beta_unfixed_NofIters' : beta_unfixed_NofIters, 
     'beta0' : beta0, 
@@ -143,6 +168,7 @@ def cal_f_beta(beta, kwgs, tts, VtFuncs, std_noise = 0.001):
         b = beta[1]
         DRSInv = beta[2]
         fStar = beta[3]
+
         thetaFunc = lambda t, theta: 1. - torch.tensor(VtFunc(torch.clip(t, tt[0], tt[-1])), dtype=torch.float) * theta * DRSInv
         theta = odeint(thetaFunc, theta0, t, atol = 1.e-10, rtol = 1.e-8)
         
