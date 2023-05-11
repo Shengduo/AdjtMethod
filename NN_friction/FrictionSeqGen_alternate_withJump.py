@@ -1,7 +1,4 @@
 ## Import standard librarys
-from curses.ascii import alt
-from ftplib import all_errors
-import grp
 import torch
 import torchdiffeq
 import pickle
@@ -92,7 +89,7 @@ VtFunc_tests = []
 ts = []
 t_tests = []
 t_JumpIdxs = []
-t_JumpIdxs_test = []
+t_JumpIdx_tests = []
 
 # Functions
 for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
@@ -103,16 +100,19 @@ for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
     for i in range(len(JumpIdx)):
         this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
         this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
-        this_VV[1] = this_VV[0]
+        this_VV[0] = this_VV[1]
         VtFunc.append(interp1d(this_tt, this_VV))
 
         isIdx =  (t <= this_tt[-1])
-        for i in range(len(isIdx)):
-            if isIdx[i] == False:
-                t_JumpIdx.append(i - 1)
-                break
-        
-
+        if isIdx[-1] == True:
+            t_JumpIdx.append(len(isIdx) - 1)
+        else:
+            for j in range(len(isIdx)):
+                if isIdx[j] == False:
+                    t_JumpIdx.append(j - 1)
+                    break
+    
+    t_JumpIdxs.append(t_JumpIdx)
     ts.append(t)
     VtFuncs.append(VtFunc)
 
@@ -120,11 +120,26 @@ for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
 # Functions
 for JumpIdx, VV, tt in zip(JumpIdxs_test, VV_tests, tt_tests):
     VtFunc = []
+    t = torch.linspace(tt[0], tt[-1], NofTpts)
+    t_JumpIdx = [0]
+
     for i in range(len(JumpIdx)):
         this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
         this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
         this_VV[1] = this_VV[0]
         VtFunc.append(interp1d(this_tt, this_VV))
+        
+        isIdx =  (t <= this_tt[-1])
+        if isIdx[-1] == True:
+            t_JumpIdx.append(len(isIdx) - 1)
+        else:
+            for j in range(len(isIdx)):
+                if isIdx[j] == False:
+                    t_JumpIdx.append(j - 1)
+                    break
+
+    t_JumpIdx_tests.append(t_JumpIdx)
+    t_tests.append(t)          
     VtFunc_tests.append(VtFunc)
 
 # Store all keyword arguments

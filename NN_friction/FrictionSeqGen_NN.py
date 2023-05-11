@@ -1,6 +1,4 @@
 ## Import standard librarys
-from re import L
-import this
 import torch
 import torchdiffeq
 import pickle
