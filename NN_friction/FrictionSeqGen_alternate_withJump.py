@@ -153,8 +153,10 @@ kwgs = {
     'VtFunc_tests' : VtFunc_tests, 
     'JumpIdxs_test' : JumpIdxs_test, 
     'NofTpts' : NofTpts, 
-    't' : t, 
-    't_Jump_idxs' : t_Jump_idxs, 
+    'ts' : ts, 
+    't_tests' : t_tests, 
+    't_JumpIdxs' : t_JumpIdxs, 
+    't_JumpIdx_tests' : t_JumpIdx_tests, 
     'theta0' : theta0, 
     'beta_fixed' : beta_fixed, 
     'beta_unfixed_groups' : beta_unfixed_groups, 
@@ -165,18 +167,15 @@ kwgs = {
 }
 
 # Compute f history based on VtFunc and beta
-def cal_f_beta(beta, kwgs, tts, VtFuncs, std_noise = 0.001):
-    NofTpts = kwgs['NofTpts']
+def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, VtFuncs, std_noise = 0.001):
     theta0 = kwgs['theta0']
 
     # Get all sequences
     Vs = []
     thetas = []
     fs = []
-    for tt, VtFunc in zip(tts, VtFuncs):
-        t = torch.linspace(tt[0], tt[-1], NofTpts)
+    for t, t_JumpIdx, VtFunc in zip(ts, t_JumpIdxs, VtFuncs):
         V = torch.tensor(VtFunc(t), dtype=torch.float)
-
         theta = torch.zeros(t.shape)
 
         a = beta[0]
