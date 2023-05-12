@@ -105,11 +105,11 @@ for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
 
         isIdx =  (t <= this_tt[-1])
         if isIdx[-1] == True:
-            t_JumpIdx.append(len(isIdx) - 1)
+            t_JumpIdx.append(len(isIdx))
         else:
             for j in range(len(isIdx)):
                 if isIdx[j] == False:
-                    t_JumpIdx.append(j - 1)
+                    t_JumpIdx.append(j)
                     break
     
     t_JumpIdxs.append(t_JumpIdx)
@@ -131,11 +131,11 @@ for JumpIdx, VV, tt in zip(JumpIdxs_test, VV_tests, tt_tests):
         
         isIdx =  (t <= this_tt[-1])
         if isIdx[-1] == True:
-            t_JumpIdx.append(len(isIdx) - 1)
+            t_JumpIdx.append(len(isIdx))
         else:
             for j in range(len(isIdx)):
                 if isIdx[j] == False:
-                    t_JumpIdx.append(j - 1)
+                    t_JumpIdx.append(j)
                     break
 
     t_JumpIdx_tests.append(t_JumpIdx)
@@ -188,8 +188,10 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
         # Loop thru all sections of VtFunc
         theta0_this = theta0
         for index, vtfunc in enumerate(VtFunc):
+            t_this_interval = t_this[t_JumpIdx[index] : t_JumpIdx[index + 1]] 
+            t_this_interval = torch.cat([torch.tensor(tt[JumpIdx[index]]), t_this_interval, tt[JumpIdx[index + 1]]])
             thetaFunc = lambda t, theta: 1. - torch.tensor(vtfunc(torch.clip(t, tt[JumpIdx[index]], tt[t_JumpIdx[index + 1]])), dtype=torch.float) * theta * DRSInv
-            theta_this = odeint(thetaFunc, theta0_this, t, atol = 1.e-10, rtol = 1.e-8)
+            theta_this = odeint(thetaFunc, theta0_this, t_this, atol = 1.e-10, rtol = 1.e-8)
         thetaFunc = lambda t, theta: 1. - torch.tensor(VtFunc(torch.clip(t, tt[0], tt[-1])), dtype=torch.float) * theta * DRSInv
         theta = odeint(thetaFunc, theta0, t, atol = 1.e-10, rtol = 1.e-8)
         
