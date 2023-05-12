@@ -167,22 +167,29 @@ kwgs = {
 }
 
 # Compute f history based on VtFunc and beta
-def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, VtFuncs, std_noise = 0.001):
+def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001):
     theta0 = kwgs['theta0']
 
     # Get all sequences
     Vs = []
     thetas = []
     fs = []
-    for t, t_JumpIdx, VtFunc in zip(ts, t_JumpIdxs, VtFuncs):
-        V = torch.tensor(VtFunc(t), dtype=torch.float)
-        theta = torch.zeros(t.shape)
+
+    for t_this, t_JumpIdx, VtFunc, tt, JumpIdx in zip(ts, t_JumpIdxs, VtFuncs, tts, JumpIdxs):
+        # V = torch.tensor(VtFunc(t), dtype=torch.float)
+        V = torch.zeros(t_this.shape)
+        theta = torch.zeros(t_this.shape)
 
         a = beta[0]
         b = beta[1]
         DRSInv = beta[2]
         fStar = beta[3]
 
+        # Loop thru all sections of VtFunc
+        theta0_this = theta0
+        for index, vtfunc in enumerate(VtFunc):
+            thetaFunc = lambda t, theta: 1. - torch.tensor(vtfunc(torch.clip(t, tt[JumpIdx[index]], tt[t_JumpIdx[index + 1]])), dtype=torch.float) * theta * DRSInv
+            theta_this = odeint(thetaFunc, theta0_this, t, atol = 1.e-10, rtol = 1.e-8)
         thetaFunc = lambda t, theta: 1. - torch.tensor(VtFunc(torch.clip(t, tt[0], tt[-1])), dtype=torch.float) * theta * DRSInv
         theta = odeint(thetaFunc, theta0, t, atol = 1.e-10, rtol = 1.e-8)
         
