@@ -54,10 +54,10 @@ VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones
 JumpIdxs = []
 for VV in VVs:
     JumpIdx = [0]
-    for i in range(len(VV) - 1):
-        if VV[i + 1] != VV[i]:
+    for i in range(1, len(VV)):
+        if VV[i] != VV[i - 1]:
             JumpIdx.append(i)
-    JumpIdx.append(len(VV) - 1)
+    JumpIdx.append(len(VV))
     JumpIdxs.append(JumpIdx)
 
 # Prescribed velocities - testing
@@ -65,14 +65,14 @@ VV_tests = torch.tensor([ones + tens + tens + ones + ones + tens + tens + tens +
                          ones + ones + tens + tens + tens + ones + ones + tens + tens + tens + tens + ones + ones + ones + ones])
 
 # Figure out the jump points of V-test-sequences
-JumpIdxs_test = []
+JumpIdx_tests = []
 for VV in VV_tests:
     JumpIdx = [0]
-    for i in range(len(VV) - 1):
-        if VV[i + 1] != VV[i]:
+    for i in range(1, len(VV)):
+        if VV[i] != VV[i - 1]:
             JumpIdx.append(i)
-    JumpIdx.append(len(VV) - 1)
-    JumpIdxs_test.append(JumpIdx)
+    JumpIdx.append(len(VV))
+    JumpIdx_tests.append(JumpIdx)
 
 
 tts = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
@@ -91,16 +91,20 @@ t_tests = []
 t_JumpIdxs = []
 t_JumpIdx_tests = []
 
-# Functions
+# Functions, ts and t_JumpIdxs
 for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
     VtFunc = []
     t = torch.linspace(tt[0], tt[-1], NofTpts)
     t_JumpIdx = [0]
 
-    for i in range(len(JumpIdx)):
-        this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
-        this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
-        this_VV[0] = this_VV[1]
+    for i in range(len(JumpIdx) - 1):
+        if i == len(JumpIdx) - 2:
+            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1]].clone()
+            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1]].clone()
+        else:
+            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_VV[-1] = this_VV[-2]
         VtFunc.append(interp1d(this_tt, this_VV))
 
         isIdx =  (t <= this_tt[-1])
@@ -116,19 +120,22 @@ for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
     ts.append(t)
     VtFuncs.append(VtFunc)
 
-# Functions for V-t interpolation
-# Functions
-for JumpIdx, VV, tt in zip(JumpIdxs_test, VV_tests, tt_tests):
+# Functions, ts and t_JumpIdxs
+for JumpIdx, VV, tt in zip(JumpIdx_tests, VV_tests, tt_tests):
     VtFunc = []
     t = torch.linspace(tt[0], tt[-1], NofTpts)
     t_JumpIdx = [0]
 
-    for i in range(len(JumpIdx)):
-        this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
-        this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
-        this_VV[1] = this_VV[0]
+    for i in range(len(JumpIdx) - 1):
+        if i == len(JumpIdx) - 2:
+            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1]].clone()
+            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1]].clone()
+        else:
+            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_VV[-1] = this_VV[-2]
         VtFunc.append(interp1d(this_tt, this_VV))
-        
+
         isIdx =  (t <= this_tt[-1])
         if isIdx[-1] == True:
             t_JumpIdx.append(len(isIdx))
@@ -137,9 +144,9 @@ for JumpIdx, VV, tt in zip(JumpIdxs_test, VV_tests, tt_tests):
                 if isIdx[j] == False:
                     t_JumpIdx.append(j)
                     break
-
+    
     t_JumpIdx_tests.append(t_JumpIdx)
-    t_tests.append(t)          
+    t_tests.append(t)
     VtFunc_tests.append(VtFunc)
 
 # Store all keyword arguments
@@ -151,7 +158,7 @@ kwgs = {
     'VV_tests' : VV_tests, 
     'tt_tests' : tt_tests, 
     'VtFunc_tests' : VtFunc_tests, 
-    'JumpIdxs_test' : JumpIdxs_test, 
+    'JumpIdxs_test' : JumpIdx_tests, 
     'NofTpts' : NofTpts, 
     'ts' : ts, 
     't_tests' : t_tests, 
@@ -189,11 +196,19 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
         theta0_this = theta0
         for index, vtfunc in enumerate(VtFunc):
             t_this_interval = t_this[t_JumpIdx[index] : t_JumpIdx[index + 1]] 
-            t_this_interval = torch.cat([torch.tensor(tt[JumpIdx[index]]), t_this_interval, tt[JumpIdx[index + 1]]])
+            t_this_interval = torch.cat([tt[JumpIdx[index]], t_this_interval, tt[JumpIdx[index + 1]]])
+            
+            # Update V
+            V[t_JumpIdx[index] : t_JumpIdx[index + 1]] = torch.tensor(vtfunc(t_this[t_JumpIdx[index] : t_JumpIdx[index + 1]]), dtype=torch.float)
+
+            # Compute theta
             thetaFunc = lambda t, theta: 1. - torch.tensor(vtfunc(torch.clip(t, tt[JumpIdx[index]], tt[t_JumpIdx[index + 1]])), dtype=torch.float) * theta * DRSInv
-            theta_this = odeint(thetaFunc, theta0_this, t_this, atol = 1.e-10, rtol = 1.e-8)
-        thetaFunc = lambda t, theta: 1. - torch.tensor(VtFunc(torch.clip(t, tt[0], tt[-1])), dtype=torch.float) * theta * DRSInv
-        theta = odeint(thetaFunc, theta0, t, atol = 1.e-10, rtol = 1.e-8)
+            theta_this = odeint(thetaFunc, theta0_this, t_this_interval, atol = 1.e-10, rtol = 1.e-8)
+
+            # Update theta
+            theta[t_JumpIdx[index] : t_JumpIdx[index + 1]] = theta_this[1 : -1]
+            theta0_this = theta_this[-1]
+
         
         f = fStar + a * torch.log(V / 1.e-6) + b * torch.log(1.e-6 * theta * DRSInv)
         mean_f = torch.mean(f);
