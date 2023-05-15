@@ -297,8 +297,8 @@ def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
         dodTheta = interp1d(t_this_interval, 2. * (f_this_interval - f_targ_this_interval) * beta[1] / theta_this_interval)
         dCdTheta = interp1d(t_this_interval, V_this_interval * beta[2])
 
-        laFunc = lambda tau, la: -torch.tensor(dodTheta(torch.clip(t_this_interval[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float) \
-                                - la * torch.tensor(dCdTheta(torch.clip(t_this_interval[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float)
+        laFunc = lambda tau, la: -torch.tensor(dodTheta(torch.clip(t[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float) \
+                                - la * torch.tensor(dCdTheta(torch.clip(t[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float)
         la_flipped = odeint(laFunc, la_this0, torch.flip(t[-1] - t_this_interval, [0]), atol = 1.e-10, rtol = 1.e-8)
         la_this_interval = torch.flip(la_flipped, [0])
         if i == 1:
@@ -316,7 +316,7 @@ def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
         la_this0 = la_this_interval[0]
 
     # print("la: ", la)
-    # integrand[2, :] += la * V * theta
+    integrand[2, :] += la * V * theta
     res = torch.trapezoid(
         integrand, t
     )
