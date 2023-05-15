@@ -57,7 +57,7 @@ for VV in VVs:
     for i in range(1, len(VV)):
         if VV[i] != VV[i - 1]:
             JumpIdx.append(i)
-    JumpIdx.append(len(VV))
+    JumpIdx.append(len(VV) - 1)
     JumpIdxs.append(JumpIdx)
 
 # Prescribed velocities - testing
@@ -196,19 +196,23 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
             V[t_JumpIdx[index] : t_JumpIdx[index + 1]] = torch.tensor(vtfunc(t_this[t_JumpIdx[index] : t_JumpIdx[index + 1]]), dtype=torch.float)
 
             # Compute theta
-            thetaFunc = lambda t, theta: 1. - torch.tensor(vtfunc(torch.clip(t, tt[JumpIdx[index]], tt[t_JumpIdx[index + 1]])), dtype=torch.float) * theta * DRSInv
+            thetaFunc = lambda t, theta: 1. - torch.tensor(vtfunc(torch.clip(t, tt[JumpIdx[index]], tt[JumpIdx[index + 1]])), dtype=torch.float) * theta * DRSInv
             i = 0
             j = len(t_this_interval)
             if (t_this_interval[0] == t_this_interval[1]):
                 i = i + 1
             if (t_this_interval[-1] == t_this_interval[-2]):
-                j = j - 1
+                j = -1
             theta_this = odeint(thetaFunc, theta0_this, t_this_interval[i : j], atol = 1.e-10, rtol = 1.e-8)
 
             # Update theta
             if i == 1:
                 i = 0
-            if j == len(t_this_interval):
+            else:
+                i = 1
+            if j == -1:
+                j = len(theta_this)
+            else:
                 j = -1
 
             theta[t_JumpIdx[index] : t_JumpIdx[index + 1]] = theta_this[i : j]
@@ -248,42 +252,65 @@ def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
     la = torch.zeros(t.shape)
 
     la_this0 = torch.tensor(0.)
-    for index in range(len(JumpIdx)):
-        idx_this = len(JumpIdx) - index
+    for index in range(len(JumpIdx) - 1):
+        idx_this = len(JumpIdx) - 1 - index
         t_this_interval = torch.cat(
-            [torch.tensor([tt[JumpIdx[idx_this] - 1]]), 
+            [torch.tensor([tt[JumpIdx[idx_this - 1]]]), 
             t[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]], 
             torch.tensor([tt[JumpIdx[idx_this]]])]
             )
         
-        f_this_interval = torch.zeros(t_this_interval.shape)
+        # Remove the duplicates
+        original_t_shape = t_this_interval.shape
+        i = 0
+        j = len(t_this_interval)
+        if t_this_interval[i] == t_this_interval[i + 1]:
+            i = i + 1
+        if t_this_interval[-1] == t_this_interval[-2]:
+            j = - 1
+        t_this_interval = t_this_interval[i : j]
+
+        f_this_interval = torch.zeros(original_t_shape)
         f_this_interval[1: -1] = f[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
         f_this_interval[0] = f_this_interval[1]
         f_this_interval[-1] = f_this_interval[-2]
-
-        f_targ_this_interval = torch.zeros(t_this_interval.shape)
+        f_this_interval = f_this_interval[i : j]
+        
+        f_targ_this_interval = torch.zeros(original_t_shape)
         f_targ_this_interval[1: -1] = f_targ[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
         f_targ_this_interval[0] = f_targ_this_interval[1]
         f_targ_this_interval[-1] = f_targ_this_interval[-2]
+        f_targ_this_interval = f_targ_this_interval[i : j]
 
-        theta_this_interval = torch.zeros(t_this_interval.shape)
+        theta_this_interval = torch.zeros(original_t_shape)
         theta_this_interval[1: -1] = theta[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
         theta_this_interval[0] = theta_this_interval[1]
         theta_this_interval[-1] = theta_this_interval[-2]
+        theta_this_interval = theta_this_interval[i : j]
 
-        V_this_interval = torch.zeros(t_this_interval.shape)
+        V_this_interval = torch.zeros(original_t_shape)
         V_this_interval[1: -1] = V[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
         V_this_interval[0] = V_this_interval[1]
         V_this_interval[-1] = V_this_interval[-2]
+        V_this_interval = V_this_interval[i : j]
 
-        dodTheta = interp1d(t_this_interval, 2. * (f_this_interval - f_targ_this_interval) * beta[1] / theta)
+        dodTheta = interp1d(t_this_interval, 2. * (f_this_interval - f_targ_this_interval) * beta[1] / theta_this_interval)
         dCdTheta = interp1d(t_this_interval, V_this_interval * beta[2])
 
         laFunc = lambda tau, la: -torch.tensor(dodTheta(torch.clip(t_this_interval[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float) \
                                 - la * torch.tensor(dCdTheta(torch.clip(t_this_interval[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float)
         la_flipped = odeint(laFunc, la_this0, torch.flip(t[-1] - t_this_interval, [0]), atol = 1.e-10, rtol = 1.e-8)
         la_this_interval = torch.flip(la_flipped, [0])
-        la[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]] = la_this_interval[1 : -1]
+        if i == 1:
+            i = 0
+        else:
+            i = 1
+        if j == -1:
+            j = len(la_this_interval)
+        else:
+            j = -1
+
+        la[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]] = la_this_interval[i : j]
 
         # Refresh la_this0
         la_this0 = la_this_interval[0]
@@ -525,7 +552,7 @@ for V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx in zip(V_this
 print("Grad by Adjoint: ", grad_this)
 
 # Numerical gradients
-inc = 0.01
+inc = 0.001
 numerical_grad0 = torch.zeros(beta0.shape)
 for i in range(len(beta0)):
     beta_plus = torch.clone(beta0)
