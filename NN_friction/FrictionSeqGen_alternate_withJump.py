@@ -36,7 +36,7 @@ beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 # beta_unfixed_groups = [[0], [1], [2], [3]]
 # beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
 beta_unfixed_groups = [[0, 1, 2, 3]]
-beta_unfixed_NofIters = torch.tensor([3])
+beta_unfixed_NofIters = torch.tensor([1])
 
 # VV_tt history
 NofTpts = 1500
@@ -58,9 +58,13 @@ tens = 10 * [10.]
 VVseeds = torch.tensor([[-10,  -9,  -2,  -1,  -4,   0,  -6,  -3,  -6,  -6, -10,   0,  -9,  -5,  -9],
                         [ -7,   2,  -3,  -3,  -6,   1,  -5,  -9,  -8,  -4, -10,  -9,   0,  -3,  -7],
                         [ -5,  -8,  -7,  -3,  -4,  -3,   0,  -9,  -1,   0,  -6,  -8,  -6,  -2,  -6],
-                        [ -5,  -6,   1,   1,  -2,   1,   2,  -8,  -6,   1,  -2,   2, -10,  -6,   1]])
+                        [ -5,  -6,   1,   1,  -2,   1,   2,  -8,  -6,   1,  -2,   2, -10,  -6,   1], 
+                        [-10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10], 
+                        [  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1], 
+                        [-10, -10, -10, -10, -10, -10, -10, -10,   1,   1,   1,   1,   1,   1,   1], 
+                        [  1,   1,   1,   1,   1,   1,   1, -10, -10, -10, -10, -10, -10, -10, -10]])
 
-VVs = torch.zeros([4, 150])
+VVs = torch.zeros([VVseeds.shape[0], 150])
 for idx, VVseed in enumerate(VVseeds):
     for j in range(len(VVseed)):
         VVs[idx, 10 * j : 10 * (j + 1)] = torch.pow(10., VVseed[j])
@@ -91,6 +95,10 @@ for VV in VV_tests:
 
 
 tts = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
+                   torch.linspace(0., 30., VVs.shape[1]),
+                   torch.linspace(0., 30., VVs.shape[1]),
+                   torch.linspace(0., 30., VVs.shape[1]),
+                   torch.linspace(0., 30., VVs.shape[1]),
                    torch.linspace(0., 30., VVs.shape[1]),
                    torch.linspace(0., 30., VVs.shape[1]),
                    torch.linspace(0., 30., VVs.shape[1])])
@@ -420,7 +428,7 @@ t = torch.linspace(tt[0], tt[-1], NofTpts)
 
 ## ------------------------------------ Gradient descent ------------------------------------ 
 # Maximum alternative iterations
-max_iters = 40
+max_iters = 10
 
 # Store all betas and all Os
 All_betas = []

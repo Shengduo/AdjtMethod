@@ -33,17 +33,17 @@ beta0 = torch.tensor([0.009, 0.012, 1. / 2.e1, 0.7])
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Document the unfixed groups
-beta_unfixed_groups = [[0], [1], [2], [3]]
-beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
-# beta_unfixed_groups = [[0, 1, 2, 3]]
-# beta_unfixed_NofIters = torch.tensor([3])
+# beta_unfixed_groups = [[0], [1], [2], [3]]
+# beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+beta_unfixed_groups = [[0, 1, 2, 3]]
+beta_unfixed_NofIters = torch.tensor([3])
 
 # VV_tt history
 NofTpts = 1500
 theta0 = torch.tensor(1.)
 
 # Multi data2
-ones = 10 * [1.]
+ones = 10 * [1.-2]
 tens = 10 * [10.]
 VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
                     ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
