@@ -71,7 +71,7 @@ for VV in VV_tests:
     for i in range(1, len(VV)):
         if VV[i] != VV[i - 1]:
             JumpIdx.append(i)
-    JumpIdx.append(len(VV))
+    JumpIdx.append(len(VV) - 1)
     JumpIdx_tests.append(JumpIdx)
 
 
@@ -98,12 +98,8 @@ for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
     t_JumpIdx = [0]
 
     for i in range(len(JumpIdx) - 1):
-        if i == len(JumpIdx) - 2:
-            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1]].clone()
-            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1]].clone()
-        else:
-            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
-            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
         this_VV[-1] = this_VV[-2]
         VtFunc.append(interp1d(this_tt, this_VV))
 
@@ -127,12 +123,8 @@ for JumpIdx, VV, tt in zip(JumpIdx_tests, VV_tests, tt_tests):
     t_JumpIdx = [0]
 
     for i in range(len(JumpIdx) - 1):
-        if i == len(JumpIdx) - 2:
-            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1]].clone()
-            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1]].clone()
-        else:
-            this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
-            this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_tt = tt[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
+        this_VV = VV[JumpIdx[i] : JumpIdx[i + 1] + 1].clone()
         this_VV[-1] = this_VV[-2]
         VtFunc.append(interp1d(this_tt, this_VV))
 
@@ -196,17 +188,30 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
         theta0_this = theta0
         for index, vtfunc in enumerate(VtFunc):
             t_this_interval = t_this[t_JumpIdx[index] : t_JumpIdx[index + 1]] 
-            t_this_interval = torch.cat([tt[JumpIdx[index]], t_this_interval, tt[JumpIdx[index + 1]]])
+
+            # Append with the first and last tt
+            t_this_interval = torch.cat([torch.tensor([tt[JumpIdx[index]]]), t_this_interval, torch.tensor([tt[JumpIdx[index + 1]]])])
             
             # Update V
             V[t_JumpIdx[index] : t_JumpIdx[index + 1]] = torch.tensor(vtfunc(t_this[t_JumpIdx[index] : t_JumpIdx[index + 1]]), dtype=torch.float)
 
             # Compute theta
             thetaFunc = lambda t, theta: 1. - torch.tensor(vtfunc(torch.clip(t, tt[JumpIdx[index]], tt[t_JumpIdx[index + 1]])), dtype=torch.float) * theta * DRSInv
-            theta_this = odeint(thetaFunc, theta0_this, t_this_interval, atol = 1.e-10, rtol = 1.e-8)
+            i = 0
+            j = len(t_this_interval)
+            if (t_this_interval[0] == t_this_interval[1]):
+                i = i + 1
+            if (t_this_interval[-1] == t_this_interval[-2]):
+                j = j - 1
+            theta_this = odeint(thetaFunc, theta0_this, t_this_interval[i : j], atol = 1.e-10, rtol = 1.e-8)
 
             # Update theta
-            theta[t_JumpIdx[index] : t_JumpIdx[index + 1]] = theta_this[1 : -1]
+            if i == 1:
+                i = 0
+            if j == len(t_this_interval):
+                j = -1
+
+            theta[t_JumpIdx[index] : t_JumpIdx[index + 1]] = theta_this[i : j]
             theta0_this = theta_this[-1]
 
         
@@ -228,7 +233,7 @@ def O(f, f_targ, t):
         torch.square(f - f_targ), t
     )
 
-def grad(beta, t, V, theta, f, f_targ, kwgs):
+def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
     integrand = torch.zeros([len(beta), len(t)])
     integrand[0, :] = torch.log(V / 1.e-6)
     integrand[1, :] = torch.log(1.e-6 * theta * beta[2])
@@ -240,9 +245,49 @@ def grad(beta, t, V, theta, f, f_targ, kwgs):
 
     # Adjoint
     # print(torch.flip(t[-1] - t, [0]))
-    laFunc = lambda tau, la: -torch.tensor(dodTheta(torch.clip(t[-1]-tau, t[0], t[-1])), dtype=torch.float) - la * torch.tensor(dCdTheta(torch.clip(t[-1]-tau, t[0], t[-1])), dtype=torch.float)
-    la = odeint(laFunc, torch.tensor(0.), torch.flip(t[-1] - t, [0]), atol = 1.e-10, rtol = 1.e-8)
-    la = torch.flip(la, [0])
+    la = torch.zeros(t.shape)
+
+    la_this0 = torch.tensor(0.)
+    for index in range(len(JumpIdx)):
+        idx_this = len(JumpIdx) - index
+        t_this_interval = torch.cat(
+            [torch.tensor([tt[JumpIdx[idx_this] - 1]]), 
+            t[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]], 
+            torch.tensor([tt[JumpIdx[idx_this]]])]
+            )
+        
+        f_this_interval = torch.zeros(t_this_interval.shape)
+        f_this_interval[1: -1] = f[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
+        f_this_interval[0] = f_this_interval[1]
+        f_this_interval[-1] = f_this_interval[-2]
+
+        f_targ_this_interval = torch.zeros(t_this_interval.shape)
+        f_targ_this_interval[1: -1] = f_targ[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
+        f_targ_this_interval[0] = f_targ_this_interval[1]
+        f_targ_this_interval[-1] = f_targ_this_interval[-2]
+
+        theta_this_interval = torch.zeros(t_this_interval.shape)
+        theta_this_interval[1: -1] = theta[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
+        theta_this_interval[0] = theta_this_interval[1]
+        theta_this_interval[-1] = theta_this_interval[-2]
+
+        V_this_interval = torch.zeros(t_this_interval.shape)
+        V_this_interval[1: -1] = V[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]]
+        V_this_interval[0] = V_this_interval[1]
+        V_this_interval[-1] = V_this_interval[-2]
+
+        dodTheta = interp1d(t_this_interval, 2. * (f_this_interval - f_targ_this_interval) * beta[1] / theta)
+        dCdTheta = interp1d(t_this_interval, V_this_interval * beta[2])
+
+        laFunc = lambda tau, la: -torch.tensor(dodTheta(torch.clip(t_this_interval[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float) \
+                                - la * torch.tensor(dCdTheta(torch.clip(t_this_interval[-1]-tau, t_this_interval[0], t_this_interval[-1])), dtype=torch.float)
+        la_flipped = odeint(laFunc, la_this0, torch.flip(t[-1] - t_this_interval, [0]), atol = 1.e-10, rtol = 1.e-8)
+        la_this_interval = torch.flip(la_flipped, [0])
+        la[t_JumpIdx[idx_this - 1] : t_JumpIdx[idx_this]] = la_this_interval[1 : -1]
+
+        # Refresh la_this0
+        la_this0 = la_this_interval[0]
+
     # print("la: ", la)
     integrand[2, :] += la * V * theta
     res = torch.trapezoid(
@@ -317,185 +362,190 @@ def plotSequences(beta, kwgs, pwd):
     plt.savefig(pwd + "TestSeqs.png", dpi = 300.)
     plt.close()
 
-# Load data
-shit =  torch.load('./data/RandnData1_std_1e-3_0504.pt')
-kwgs['f_targs'] = shit['f_targs']
-kwgs['f_targ_tests'] = shit['f_targ_tests']
+# Let's not load the data and calculate f_targs for now
+# # Load data
+# shit =  torch.load('./data/RandnData1_std_1e-3_0504.pt')
+
+V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0.)
+kwgs['f_targs'] = f_targs
+# kwgs['f_targ_tests'] = shit['f_targ_tests']
 
 ## Invert on an problem
 t = torch.linspace(tt[0], tt[-1], NofTpts)
 
-## ------------------------------------ Gradient descent ------------------------------------ 
-# Maximum alternative iterations
-max_iters = 50
+# ## ------------------------------------ Gradient descent ------------------------------------ 
+# # Maximum alternative iterations
+# max_iters = 50
 
-# Store all betas and all Os
-All_betas = []
-All_Os = []
-All_grads = []
+# # Store all betas and all Os
+# All_betas = []
+# All_Os = []
+# All_grads = []
 
-# Start the outer loop of iterations
-beta_this = beta0
-for alt_iter in range(max_iters):
-    # Print out section
-    print("*" * 100)
-    print("*", " "*40, "Outer Iteration ", str(alt_iter), " " * 40, "*")
-    print("*" * 100)
-
-    ## Inner iteration, get fixed randomly
-    inner_groups = []
-    for idx, NofIters in enumerate(kwgs['beta_unfixed_NofIters']):
-        inner_groups = inner_groups + [kwgs['beta_unfixed_groups'][idx] for i in range(NofIters)]
-    
-    # Permute it 
-    shuffle(inner_groups)
-    print("Inner groups: ", inner_groups)
-    
-    for (grp_idx, release_idx) in enumerate(inner_groups):
-    # for grp_idx, release_idx in enumerate(kwgs['beta_unfixed_groups']):
-        beta_fixed_this = torch.ones(len(kwgs['beta0']), dtype=torch.bool)
-        beta_fixed_this[release_idx] = False
-        
-        # Print out which values are fixed
-        print("~" * 20, "beta_fixed: ", beta_fixed_this, "~"*20)
-
-
-        # max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
-        max_step = torch.tensor([1., 1., 1., 1.])
-        max_step[beta_fixed_this] = 1.e30
-        beta0_this = beta_this
-        V_thiss, theta_thiss, f_thiss = cal_f_beta(beta_this, kwgs, kwgs['tts'], kwgs['VtFuncs'], 0.)
-
-        O_this = 0.
-        grad_this = torch.zeros(4)
-        for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, kwgs['f_targs']):
-            O_this += O(f_this, f_targ, t)
-            grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
-
-        # print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
-        # print("Initial beta: ", beta_this)
-        # print("O: ", O_this)
-        # print("Gradient: ", grad_this, flush=True)
-        
-        # Store the first O and grad if both the outside and inside iteration number is 0
-        if alt_iter == 0 and grp_idx == 0:
-            print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
-            print("Initial beta: ", beta_this)
-            print("O: ", O_this)
-            print("Gradient: ", grad_this, flush=True)
-            All_betas.append(beta_this)
-            All_Os.append(O_this)
-            All_grads.append(grad_this)
-        
-        for i in range(1):
-        # for i in range(kwgs['beta_unfixed_NofIters'][grp_idx]):
-            max_eta = torch.min(torch.abs(max_step / grad_this))
-            # Line search
-            iter = 0
-            O_trial = O_this
-            while (iter <= 12 and O_trial >= O_this):
-                beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
-                beta_trial[beta_fixed_this] = beta0_this[beta_fixed_this]
-                beta_trial = torch.clip(beta_trial, kwgs['beta_low'], kwgs['beta_high'])
-                V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['tts'], kwgs['VtFuncs'], 0.)
-                O_trial = 0.
-                
-                for V_trial, theta_trial, f_trial, f_targ in zip(V_trials, theta_trials, f_trials, kwgs['f_targs']):
-                    O_trial += O(f_trial, f_targ, t)
-                # print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
-                iter += 1
-
-            beta_this = beta_trial
-            V_thiss = V_trials
-            theta_thiss = theta_trials
-            f_thiss = f_trials
-            O_this = O_trial
-
-            # Get new grad
-            grad_this = torch.zeros(4)
-            for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, kwgs['f_targs']):
-                grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
-            
-            print("=" * 40, " Inner Iteration ", str(i + 1), " ", "=" * 40)
-            print("Optimized beta: ", beta_this)
-            print("Training data O: ", O_this)
-            print("Gradient: ", grad_this, flush=True)
-            All_betas.append(beta_this)
-            All_Os.append(O_this)
-            All_grads.append(grad_this)
-    if alt_iter % 10 == 0:
-        O_test = 0.
-        V_tests, theta_tests, f_tests = cal_f_beta(beta_this, kwgs, kwgs['tt_tests'], kwgs['VtFunc_tests'], 0.)
-        for V_test, theta_test, f_test, f_targ in zip(V_tests, theta_tests, f_tests, kwgs['f_targs']):
-            O_test += O(f_trial, f_targ, t)
-        print("-!" * 40)
-        print("Testing O: ", O_test), 
-        print("-!" * 40)
-
-
-# Save a figure of the result
-# pwd ="./plots/FricSeqGen0323_alternating_DrsFStar/"
-pwd ="./plots/Test0504_std_1e-3_AdjMtd/"
-Path(pwd).mkdir(parents=True, exist_ok=True)
-
-# Append to the keywords arguments
-kwgs['All_betas'] = All_betas
-kwgs['All_Os'] = All_Os
-kwgs['All_grads'] = All_grads
-torch.save(kwgs, pwd + "kwgs.pt")
-
-# Print out best performance and plot sequences
-best_idx = All_Os.index(min(All_Os))
-best_grad = All_grads[best_idx]
-best_O = All_Os[best_idx]
-best_beta = All_betas[best_idx]
-
-# Print results
-print("~" * 40, " Final Optimization Answer ", "~" * 40)
-print("Optimized beta: ", best_beta)
-print("O: ", best_O)
-print("Gradient: ", best_grad, flush=True)
-
-plotSequences(best_beta, kwgs, pwd)
-
-
-# ## Check numerical derivatives
-# beta0=torch.tensor([0.0109, 0.0161, 0.2000, 0.5800])
-
-# # Gradient descent
+# # Start the outer loop of iterations
 # beta_this = beta0
-# V_thiss, theta_thiss, f_thiss = cal_f(beta_this, kwgs)
+# for alt_iter in range(max_iters):
+#     # Print out section
+#     print("*" * 100)
+#     print("*", " "*40, "Outer Iteration ", str(alt_iter), " " * 40, "*")
+#     print("*" * 100)
 
-# O_this = 0.
-# grad_this = torch.zeros(4)
-# for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, f_targs):
-#     O_this += O(f_this, f_targ, t)
-#     grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
-
-# print("Grad by Adjoint: ", grad_this)
-
-# # Numerical gradients
-# inc = 0.01
-# numerical_grad0 = torch.zeros(beta0.shape)
-# for i in range(len(beta0)):
-#     beta_plus = torch.clone(beta0)
-#     beta_plus[i] *= (1 + inc)
-#     print("beta_plus: ", beta_plus)
-#     Vps, thetasp, fps = cal_f(beta_plus, kwgs)
-
-#     Op = 0.
-#     for f_targ, fp in zip(f_targs, fps):
-#         Op += O(fp, f_targ, t)
-
-#     beta_minus = torch.clone(beta0)
-#     beta_minus[i] *= (1 - inc)
-#     print("beta_minus: ", beta_minus)
-#     Vms, thetams, fms = cal_f(beta_minus, kwgs)
+#     ## Inner iteration, get fixed randomly
+#     inner_groups = []
+#     for idx, NofIters in enumerate(kwgs['beta_unfixed_NofIters']):
+#         inner_groups = inner_groups + [kwgs['beta_unfixed_groups'][idx] for i in range(NofIters)]
     
-#     Om = 0.
-#     for f_targ, fm in zip(f_targs, fms):
-#         Om += O(fm, f_targ, t)
+#     # Permute it 
+#     shuffle(inner_groups)
+#     print("Inner groups: ", inner_groups)
+    
+#     for (grp_idx, release_idx) in enumerate(inner_groups):
+#     # for grp_idx, release_idx in enumerate(kwgs['beta_unfixed_groups']):
+#         beta_fixed_this = torch.ones(len(kwgs['beta0']), dtype=torch.bool)
+#         beta_fixed_this[release_idx] = False
+        
+#         # Print out which values are fixed
+#         print("~" * 20, "beta_fixed: ", beta_fixed_this, "~"*20)
 
-#     numerical_grad0[i] = (Op - Om) / (2 * inc * beta0[i])
 
-# print("Grad by finite difference: ", numerical_grad0)
+#         # max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
+#         max_step = torch.tensor([1., 1., 1., 1.])
+#         max_step[beta_fixed_this] = 1.e30
+#         beta0_this = beta_this
+#         V_thiss, theta_thiss, f_thiss = cal_f_beta(beta_this, kwgs, kwgs['tts'], kwgs['VtFuncs'], 0.)
+
+#         O_this = 0.
+#         grad_this = torch.zeros(4)
+#         for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, kwgs['f_targs']):
+#             O_this += O(f_this, f_targ, t)
+#             grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
+
+#         # print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
+#         # print("Initial beta: ", beta_this)
+#         # print("O: ", O_this)
+#         # print("Gradient: ", grad_this, flush=True)
+        
+#         # Store the first O and grad if both the outside and inside iteration number is 0
+#         if alt_iter == 0 and grp_idx == 0:
+#             print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
+#             print("Initial beta: ", beta_this)
+#             print("O: ", O_this)
+#             print("Gradient: ", grad_this, flush=True)
+#             All_betas.append(beta_this)
+#             All_Os.append(O_this)
+#             All_grads.append(grad_this)
+        
+#         for i in range(1):
+#         # for i in range(kwgs['beta_unfixed_NofIters'][grp_idx]):
+#             max_eta = torch.min(torch.abs(max_step / grad_this))
+#             # Line search
+#             iter = 0
+#             O_trial = O_this
+#             while (iter <= 12 and O_trial >= O_this):
+#                 beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
+#                 beta_trial[beta_fixed_this] = beta0_this[beta_fixed_this]
+#                 beta_trial = torch.clip(beta_trial, kwgs['beta_low'], kwgs['beta_high'])
+#                 V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['tts'], kwgs['VtFuncs'], 0.)
+#                 O_trial = 0.
+                
+#                 for V_trial, theta_trial, f_trial, f_targ in zip(V_trials, theta_trials, f_trials, kwgs['f_targs']):
+#                     O_trial += O(f_trial, f_targ, t)
+#                 # print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
+#                 iter += 1
+
+#             beta_this = beta_trial
+#             V_thiss = V_trials
+#             theta_thiss = theta_trials
+#             f_thiss = f_trials
+#             O_this = O_trial
+
+#             # Get new grad
+#             grad_this = torch.zeros(4)
+#             for V_this, theta_this, f_this, f_targ in zip(V_thiss, theta_thiss, f_thiss, kwgs['f_targs']):
+#                 grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, kwgs)
+            
+#             print("=" * 40, " Inner Iteration ", str(i + 1), " ", "=" * 40)
+#             print("Optimized beta: ", beta_this)
+#             print("Training data O: ", O_this)
+#             print("Gradient: ", grad_this, flush=True)
+#             All_betas.append(beta_this)
+#             All_Os.append(O_this)
+#             All_grads.append(grad_this)
+#     if alt_iter % 10 == 0:
+#         O_test = 0.
+#         V_tests, theta_tests, f_tests = cal_f_beta(beta_this, kwgs, kwgs['tt_tests'], kwgs['VtFunc_tests'], 0.)
+#         for V_test, theta_test, f_test, f_targ in zip(V_tests, theta_tests, f_tests, kwgs['f_targs']):
+#             O_test += O(f_trial, f_targ, t)
+#         print("-!" * 40)
+#         print("Testing O: ", O_test), 
+#         print("-!" * 40)
+
+
+# # Save a figure of the result
+# # pwd ="./plots/FricSeqGen0323_alternating_DrsFStar/"
+# pwd ="./plots/Test0504_std_1e-3_AdjMtd/"
+# Path(pwd).mkdir(parents=True, exist_ok=True)
+
+# # Append to the keywords arguments
+# kwgs['All_betas'] = All_betas
+# kwgs['All_Os'] = All_Os
+# kwgs['All_grads'] = All_grads
+# torch.save(kwgs, pwd + "kwgs.pt")
+
+# # Print out best performance and plot sequences
+# best_idx = All_Os.index(min(All_Os))
+# best_grad = All_grads[best_idx]
+# best_O = All_Os[best_idx]
+# best_beta = All_betas[best_idx]
+
+# # Print results
+# print("~" * 40, " Final Optimization Answer ", "~" * 40)
+# print("Optimized beta: ", best_beta)
+# print("O: ", best_O)
+# print("Gradient: ", best_grad, flush=True)
+
+# plotSequences(best_beta, kwgs, pwd)
+
+
+## Check numerical derivatives
+# beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001
+beta0=torch.tensor([0.0109, 0.0161, 0.2000, 0.5800])
+
+# Gradient descent
+beta_this = beta0
+V_thiss, theta_thiss, f_thiss = cal_f_beta(beta_this, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0.)
+
+O_this = 0.
+grad_this = torch.zeros(4)
+for V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx in zip(V_thiss, theta_thiss, f_thiss, f_targs, t_JumpIdxs, tts, VVs, JumpIdxs):
+    O_this += O(f_this, f_targ, t)
+    # beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
+    grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs)
+
+print("Grad by Adjoint: ", grad_this)
+
+# Numerical gradients
+inc = 0.01
+numerical_grad0 = torch.zeros(beta0.shape)
+for i in range(len(beta0)):
+    beta_plus = torch.clone(beta0)
+    beta_plus[i] *= (1 + inc)
+    print("beta_plus: ", beta_plus)
+    Vps, thetasp, fps = cal_f_beta(beta_plus, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0.)
+
+    Op = 0.
+    for f_targ, fp in zip(f_targs, fps):
+        Op += O(fp, f_targ, t)
+
+    beta_minus = torch.clone(beta0)
+    beta_minus[i] *= (1 - inc)
+    print("beta_minus: ", beta_minus)
+    Vms, thetams, fms = cal_f_beta(beta_minus, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0.)
+    
+    Om = 0.
+    for f_targ, fm in zip(f_targs, fms):
+        Om += O(fm, f_targ, t)
+
+    numerical_grad0[i] = (Op - Om) / (2 * inc * beta0[i])
+
+print("Grad by finite difference: ", numerical_grad0)
