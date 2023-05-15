@@ -244,8 +244,8 @@ def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
     integrand[2, :] = beta[1] / beta[2]
     integrand[3, :] = 1.
     integrand = 2 * (f - f_targ) * integrand
-    dodTheta = interp1d(t, 2. * (f - f_targ) * beta[1] / theta)
-    dCdTheta = interp1d(t, V * beta[2])
+    # dodTheta = interp1d(t, 2. * (f - f_targ) * beta[1] / theta)
+    # dCdTheta = interp1d(t, V * beta[2])
 
     # Adjoint
     # print(torch.flip(t[-1] - t, [0]))
@@ -316,7 +316,7 @@ def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
         la_this0 = la_this_interval[0]
 
     # print("la: ", la)
-    integrand[2, :] += la * V * theta
+    # integrand[2, :] += la * V * theta
     res = torch.trapezoid(
         integrand, t
     )
