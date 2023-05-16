@@ -33,10 +33,10 @@ beta0 = torch.tensor([0.009, 0.012, 1. / 2.e1, 0.7])
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Document the unfixed groups
-# beta_unfixed_groups = [[0], [1], [2], [3]]
-# beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
-beta_unfixed_groups = [[0, 1, 2, 3]]
-beta_unfixed_NofIters = torch.tensor([1])
+beta_unfixed_groups = [[0], [1], [2], [3]]
+beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+# beta_unfixed_groups = [[0, 1, 2, 3]]
+# beta_unfixed_NofIters = torch.tensor([1])
 
 # VV_tt history
 NofTpts = 1500
@@ -64,10 +64,18 @@ VVseeds = torch.tensor([[-10,  -9,  -2,  -1,  -4,   0,  -6,  -3,  -6,  -6, -10, 
                         [-10, -10, -10, -10, -10, -10, -10, -10,   1,   1,   1,   1,   1,   1,   1], 
                         [  1,   1,   1,   1,   1,   1,   1, -10, -10, -10, -10, -10, -10, -10, -10]])
 
-VVs = torch.zeros([VVseeds.shape[0], 150])
+VV_seeds_len = [10, 10, 10, 10, 100, 100, 100, 100]
+VVs = []
+tts = []
+
+# Generate VVs and tts
 for idx, VVseed in enumerate(VVseeds):
+    VV = torch.zeros(len(VVseed) * VV_seeds_len[idx])
     for j in range(len(VVseed)):
-        VVs[idx, 10 * j : 10 * (j + 1)] = torch.pow(10., VVseed[j])
+        VV[VV_seeds_len[idx] * j : VV_seeds_len[idx] * (j + 1)] = torch.pow(10., VVseed[j])
+    VVs.append(VV)
+    tt = torch.linspace(0., 0.2 * len(VV), len(VV))
+    tts.append(tt)
 
 # Figure out the jump points of V-sequences
 JumpIdxs = []
@@ -94,18 +102,11 @@ for VV in VV_tests:
     JumpIdx_tests.append(JumpIdx)
 
 
-tts = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1])])
+
 
 # Times at which the velocities are prescribed - testing
-tt_tests = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
-                        torch.linspace(0., 30., VVs.shape[1])])
+tt_tests = torch.stack([torch.linspace(0., 30., VV_tests.shape[1]),
+                        torch.linspace(0., 30., VV_tests.shape[1])])
 
 VtFuncs = []
 VtFunc_tests = []
@@ -115,9 +116,10 @@ t_JumpIdxs = []
 t_JumpIdx_tests = []
 
 # Functions, ts and t_JumpIdxs
-for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
+t_tt_times = [10, 10, 10, 10, 3, 3, 3, 3]
+for JumpIdx, VV, tt, t_tt_time in zip(JumpIdxs, VVs, tts, t_tt_times):
     VtFunc = []
-    t = torch.linspace(tt[0], tt[-1], NofTpts)
+    t = torch.linspace(tt[0], tt[-1], t_tt_time * len(tt))
     t_JumpIdx = [0]
 
     for i in range(len(JumpIdx) - 1):
@@ -142,7 +144,7 @@ for JumpIdx, VV, tt in zip(JumpIdxs, VVs, tts):
 # Functions, ts and t_JumpIdxs
 for JumpIdx, VV, tt in zip(JumpIdx_tests, VV_tests, tt_tests):
     VtFunc = []
-    t = torch.linspace(tt[0], tt[-1], NofTpts)
+    t = torch.linspace(tt[0], tt[-1], 10 * len(tt))
     t_JumpIdx = [0]
 
     for i in range(len(JumpIdx) - 1):
@@ -249,16 +251,16 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
         thetas.append(theta)
         fs.append(f)
     
-    Vs = torch.stack(Vs)
-    thetas = torch.stack(thetas)
-    fs = torch.stack(fs)
+    # Vs = torch.stack(Vs)
+    # thetas = torch.stack(thetas)
+    # fs = torch.stack(fs)
 
     return Vs, thetas, fs
 
 def O(f, f_targ, t):
     return torch.trapezoid(
         torch.square(f - f_targ), t
-    )
+    ) / (t[-1] - t[0])
 
 def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
     integrand = torch.zeros([len(beta), len(t)])
@@ -342,7 +344,7 @@ def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs):
     integrand[2, :] += la * V * theta
     res = torch.trapezoid(
         integrand, t
-    )
+    ) / (t[-1] - t[0])
 
     
     return res
@@ -353,9 +355,7 @@ def plotSequences(beta, kwgs, pwd):
                                 kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
     f_targs = kwgs['f_targs']
     lws = torch.linspace(3.0, 1.0, len(Vs))
-    NofTpts = kwgs['NofTpts']
-    for idx, (tt, f_targ, f) in enumerate(zip(kwgs['tts'], f_targs, fs)):
-        t = torch.linspace(tt[0], tt[-1], NofTpts)
+    for idx, (tt, t, f_targ, f) in enumerate(zip(kwgs['tts'], kwgs['ts'], f_targs, fs)):
         plt.figure(figsize=[15, 10])
         plt.plot(t, f_targ, linewidth=2.0)
         plt.plot(t, f, linewidth=1.5)
@@ -370,9 +370,8 @@ def plotSequences(beta, kwgs, pwd):
     plt.figure(figsize=[15, 10])
     lgd = []
 
-    for idx, (tt, V) in enumerate(zip(kwgs['tts'], Vs)):
-        t = torch.linspace(tt[0], tt[-1], NofTpts)
-        plt.plot(t, V, linewidth=lws[idx])
+    for idx, (tt, t, V) in enumerate(zip(kwgs['tts'], kwgs['ts'], Vs)):
+        plt.semilogy(t, V, linewidth=lws[idx])
         lgd.append("Train Seq " + str(idx))
     
     plt.legend(lgd, fontsize=20, loc='best')
@@ -387,8 +386,7 @@ def plotSequences(beta, kwgs, pwd):
     f_targs = kwgs['f_targ_tests']
     lws = torch.linspace(3.0, 1.0, len(Vs))
 
-    for idx, (tt, f_targ, f) in enumerate(zip(kwgs['tt_tests'], f_targs, fs)):
-        t = torch.linspace(tt[0], tt[-1], NofTpts)
+    for idx, (tt, t, f_targ, f) in enumerate(zip(kwgs['tt_tests'], kwgs['t_tests'], f_targs, fs)):
         plt.figure(figsize=[15, 10])
         plt.plot(t, f_targ, linewidth=2.0)
         plt.plot(t, f, linewidth=1.5)
@@ -403,9 +401,8 @@ def plotSequences(beta, kwgs, pwd):
     plt.figure(figsize=[15, 10])
     lgd = []
 
-    for idx, (tt, V) in enumerate(zip(kwgs['tt_tests'], Vs)):
-        t = torch.linspace(tt[0], tt[-1], NofTpts)
-        plt.plot(t, V, linewidth=lws[idx])
+    for idx, (tt, t, V) in enumerate(zip(kwgs['tt_tests'], kwgs['t_tests'], Vs)):
+        plt.semilogy(t, V, linewidth=lws[idx])
         lgd.append("Test Seq " + str(idx))
     
     plt.legend(lgd, fontsize=20, loc='best')
@@ -418,22 +415,26 @@ def plotSequences(beta, kwgs, pwd):
 # # Load data
 # shit =  torch.load('./data/RandnData1_std_1e-3_0504.pt')
 
-V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0.)
-V_targ_tests, theta_targ_tests, f_targ_tests = cal_f_beta(beta_targ, kwgs, t_tests, t_JumpIdx_tests, tt_tests, JumpIdx_tests, VtFunc_tests, 0.)
+V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
+                                           kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
+V_targ_tests, theta_targ_tests, f_targ_tests = cal_f_beta(beta_targ, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
+                                                          kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0.)
 kwgs['f_targs'] = f_targs
 kwgs['f_targ_tests'] = f_targ_tests
 
-## Invert on an problem
-t = torch.linspace(tt[0], tt[-1], NofTpts)
-
 ## ------------------------------------ Gradient descent ------------------------------------ 
 # Maximum alternative iterations
-max_iters = 10
+max_iters = 30
 
 # Store all betas and all Os
 All_betas = []
 All_Os = []
 All_grads = []
+
+# Early stop criteria
+early_stop_rounds = 10
+best_O = 1.e4
+notImprovingRounds = 0
 
 # Start the outer loop of iterations
 beta_this = beta0
@@ -471,10 +472,10 @@ for alt_iter in range(max_iters):
 
         O_this = 0.
         grad_this = torch.zeros(4)
-        for V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx in zip(V_thiss, theta_thiss, f_thiss, kwgs['f_targs'], kwgs['t_JumpIdxs'], kwgs['tts'], kwgs['VVs'], kwgs['JumpIdxs']):
-            O_this += O(f_this, f_targ, t)
+        for V_this, theta_this, f_this, t_this, f_targ, t_JumpIdx, tt, VV, JumpIdx in zip(V_thiss, theta_thiss, f_thiss, kwgs['ts'], kwgs['f_targs'], kwgs['t_JumpIdxs'], kwgs['tts'], kwgs['VVs'], kwgs['JumpIdxs']):
+            O_this += O(f_this, f_targ, t_this)
             # beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
-            grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs)
+            grad_this += grad(beta_this, t_this, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs)
 
         # print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
         # print("Initial beta: ", beta_this)
@@ -490,6 +491,9 @@ for alt_iter in range(max_iters):
             All_betas.append(beta_this)
             All_Os.append(O_this)
             All_grads.append(grad_this)
+
+            best_O = O_this
+            notImprovingRounds = 0
         
         for i in range(1):
         # for i in range(kwgs['beta_unfixed_NofIters'][grp_idx]):
@@ -505,8 +509,8 @@ for alt_iter in range(max_iters):
                                                               kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
                 O_trial = 0.
                 
-                for V_trial, theta_trial, f_trial, f_targ in zip(V_trials, theta_trials, f_trials, kwgs['f_targs']):
-                    O_trial += O(f_trial, f_targ, t)
+                for V_trial, theta_trial, f_trial, f_targ, t_this in zip(V_trials, theta_trials, f_trials, kwgs['f_targs'], kwgs['ts']):
+                    O_trial += O(f_trial, f_targ, t_this)
                 # print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
                 iter += 1
 
@@ -518,10 +522,10 @@ for alt_iter in range(max_iters):
 
             # Get new grad
             grad_this = torch.zeros(4)
-            for V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx in zip(V_thiss, theta_thiss, f_thiss, kwgs['f_targs'], kwgs['t_JumpIdxs'], kwgs['tts'], kwgs['VVs'], kwgs['JumpIdxs']):
-                O_this += O(f_this, f_targ, t)
+            for V_this, theta_this, f_this, t_this, f_targ, t_JumpIdx, tt, VV, JumpIdx in zip(V_thiss, theta_thiss, f_thiss, kwgs['ts'], kwgs['f_targs'], kwgs['t_JumpIdxs'], kwgs['tts'], kwgs['VVs'], kwgs['JumpIdxs']):
+                O_this += O(f_this, f_targ, t_this)
                 # beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
-                grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs)
+                grad_this += grad(beta_this, t_this, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs)
             
             print("=" * 40, " Inner Iteration ", str(i + 1), " ", "=" * 40)
             print("Optimized beta: ", beta_this)
@@ -530,22 +534,37 @@ for alt_iter in range(max_iters):
             All_betas.append(beta_this)
             All_Os.append(O_this)
             All_grads.append(grad_this)
+
+            # Set up early stop
+            if O_this < best_O:
+                best_O = O_this
+                notImprovingRounds = 0
+            else:
+                notImprovingRounds += 1
+            if notImprovingRounds > early_stop_rounds:
+                break
+
     if alt_iter % 10 == 0:
         O_test = 0.
         # V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
         #                                                       kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
         V_tests, theta_tests, f_tests = cal_f_beta(beta_this, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
                                                    kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0.)
-        for V_test, theta_test, f_test, f_targ in zip(V_tests, theta_tests, f_tests, kwgs['f_targs']):
-            O_test += O(f_trial, f_targ, t)
+        for V_test, theta_test, f_test, f_targ, t_this in zip(V_tests, theta_tests, f_tests, kwgs['f_targ_tests'], kwgs['t_tests']):
+            O_test += O(f_test, f_targ, t_this)
         print("-!" * 40)
         print("Testing O: ", O_test), 
         print("-!" * 40)
 
+    # Set up early stop
+    if notImprovingRounds > early_stop_rounds:
+        print("~" * 40, " Early stop criteria has been met ", "~" * 40)
+        break
+
 
 # Save a figure of the result
 # pwd ="./plots/FricSeqGen0323_alternating_DrsFStar/"
-pwd ="./plots/shit_IntervalIntegral_AdjMtd/"
+pwd = "./plots/Test0516_std_0_AdjMtd_intervals/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments
