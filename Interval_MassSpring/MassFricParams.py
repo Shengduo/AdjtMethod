@@ -37,7 +37,7 @@ class MassFricParams:
         
         # Get the displacement at T
         self.S = torch.zeros(self.V.shape)
-        self.S[1:] = torch.cumulative_trapezoid(self.V, self.T)
+        # self.S[1:] = torch.cumulative_trapezoid(self.V, self.T)
         
         self.RSParams = RSParams
         self.y0 = y0
@@ -46,9 +46,25 @@ class MassFricParams:
         self.lawFlag = lawFlag
         self.regularizedFlag = regularizedFlag
         
+        # Get the jump points
+        self.JumpIdx = [0]
+        for i in range(1, len(self.V)):
+            if self.V[i] != self.V[i - 1]:
+                self.JumpIdx.append(i)
+        self.JumpIdx.append(len(self.V) - 1)
+
         # Get the function of V, S at T
-        self.vtFunc = interp1d(self.T, self.V)
-        self.stFunc = interp1d(self.T, self.S)
+        self.vtFuncs = []
+        self.stFuncs = []
+        for i in range(len(self.JumpIdx) - 1):
+            this_V = self.V[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1]
+            this_T = self.T[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1]
+            self.S[self.JumpIdx[i] + 1 : self.JumpIdx[i + 1] + 1] = torch.cumulative_trapezoid(this_V, this_T) + self.S[self.JumpIdx[i]]
+            this_V[-1] = this_V[-2]
+            this_vtFunc = interp1d(this_T, this_V)
+            this_stFunc = interp1d(this_T, self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
+            self.vtFuncs.append(this_vtFunc)
+            self.stFuncs.append(this_stFunc)
         
     # Define the function that gives V at t
     def VatT_interp(self, t):
