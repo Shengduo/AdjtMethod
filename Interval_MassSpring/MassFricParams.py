@@ -48,10 +48,13 @@ class MassFricParams:
         
         # Get the jump points
         self.JumpIdx = [0]
+        self.JumpT = [self.T[0]]
         for i in range(1, len(self.V)):
             if self.V[i] != self.V[i - 1]:
                 self.JumpIdx.append(i)
+                self.JumpT.append(self.T[i])
         self.JumpIdx.append(len(self.V) - 1)
+        self.JumpT.append(self.T[-1])
 
         # Get the function of V, S at T
         self.vtFuncs = []
@@ -68,25 +71,21 @@ class MassFricParams:
         
     # Define the function that gives V at t
     def VatT_interp(self, t):
-        # Piecewise linear interplation
-        if t < self.T[0]:
-            v = self.V[0]
-        elif t > self.T[-1]:
-            v = self.V[-1]
-        else:
-            v = self.vtFunc(t)
-        return torch.tensor(v, dtype=torch.float)
+        for idx, jumpT in enumerate(self.JumpT):
+            if jumpT > t:
+                return self.vtFuncs[idx - 1](t)
+
+        # If the last interval
+        return self.vtFuncs[-1](t) 
     
     # Define the function that gives S at t
     def SatT_interp(self, t):
-        # Piecewise linear interplation
-        if t < self.T[0]:
-            s = self.S[0]
-        elif t > self.T[-1]:
-            s = self.S[-1]
-        else:
-            s = torch.from_numpy(self.stFunc(t))
-        return s
+        for idx, jumpT in enumerate(self.JumpT):
+            if jumpT > t:
+                return self.stFuncs[idx - 1](t)
+
+        # If the last interval
+        return self.stFuncs[-1](t) 
     
     # Output the information of this class
     def print_info(self):

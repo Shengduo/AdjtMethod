@@ -36,6 +36,21 @@ class TimeSequenceGen:
         self.atol = atol
         self.regularizedFlag = regularizedFlag
         self.solver = solver
+        
+        # Find the jumps in self.t
+        t_Jumps = self.MFParams.JumpT
+        self.JumpIdx = self.MFParams.JumpIdx
+        self.tt = self.MFParams.T
+        self.VV = self.MFParams.V
+        
+        self.t_JumpIdx = []
+        for jumpT in t_Jumps:
+            for idx in range(len(self.t)):
+                if self.t[idx] >= jumpT:
+                    self.t_JumpIdx.append(idx)
+                    break
+        
+        self.t_JumpIdx[-1] = len(self.t)
 
         # Generate the sequence
         st = time.time()
