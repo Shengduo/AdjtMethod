@@ -177,8 +177,8 @@ this_rtol = 1.e-6
 this_atol = 1.e-8
 
 # Solver
-solver = 'rk4'
-# solver = 'dopri5'
+# solver = 'rk4'
+solver = 'dopri5'
 
 # LawFlag
 # lawFlag = "slip"
