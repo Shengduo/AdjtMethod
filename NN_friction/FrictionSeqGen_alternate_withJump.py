@@ -65,6 +65,12 @@ VVseeds = torch.tensor([[-10,  -9,  -2,  -1,  -4,   0,  -6,  -3,  -6,  -6, -10, 
                         [  1,   1,   1,   1,   1,   1,   1, -10, -10, -10, -10, -10, -10, -10, -10]])
 
 VV_seeds_len = [10, 10, 10, 10, 100, 100, 100, 100]
+
+# Selected
+selected = [0, 2, 6, 7]
+VVseeds = VVseeds[selected, :]
+VV_seeds_len = [VV_seeds_len[i] for i in selected]
+
 VVs = []
 tts = []
 
@@ -432,7 +438,7 @@ All_Os = []
 All_grads = []
 
 # Early stop criteria
-early_stop_rounds = 10
+early_stop_rounds = 20
 best_O = 1.e4
 notImprovingRounds = 0
 
@@ -564,7 +570,7 @@ for alt_iter in range(max_iters):
 
 # Save a figure of the result
 # pwd ="./plots/FricSeqGen0323_alternating_DrsFStar/"
-pwd = "./plots/Test0516_std_0_AdjMtd_intervals/"
+pwd = "./plots/Test0516_std_0_AdjMtd_selected_intervals/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments
