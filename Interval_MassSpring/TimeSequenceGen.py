@@ -120,9 +120,39 @@ class TimeSequenceGen:
     
     # Generate the sequence of y(t) = [x_1(t), v_1(t), theta(t)]
     def calculateYAtT(self, t):
-        y = odeint(self.DyDt, self.MFParams.y0, t, 
-                   rtol = self.rtol, atol = self.atol, method = self.solver)
-        return torch.transpose(y, 0, 1)
+        # Initialize
+        y = torch.zeros([len(self.MFParams.y0), len(t)])
+
+        # Re-calculate into intervals
+        y0_this = self.MFParams.y0
+        for idx in len(self.JumpIdx - 1):
+            t_this_interval = self.t[self.t_JumpIdx[idx] : self.t_JumpIdx[idx + 1]].clone()
+            t_this_interval = torch.cat([self.tt[self.JumpIdx[idx]], t_this_interval, self.tt[self.JumpIdx[idx + 1]]])
+            i = 0
+            j = len(t_this_interval)
+            if t_this_interval[0] == t_this_interval[1]:
+                i = 1
+            if t_this_interval[-1] == t_this_interval[-2]:
+                j = -1
+            t_this_interval = t_this_interval[i : j]
+
+            y_this_interval = odeint(self.DyDt, y0_this, t_this_interval, 
+                                     rtol = self.rtol, atol = self.atol, 
+                                     method = self.solver)
+            y_this_interval = torch.transpose(y_this_interval, 0, 1)
+
+            if i == 0:
+                i = 1
+            else:
+                i = 0
+            if j == -1:
+                j = len(t_this_interval)
+            else:
+                j = -1
+            y[:, self.t_JumpIdx[idx] : self.t_JumpIdx[idx + 1]] = y_this_interval[:, i : j]
+            y0_this = y_this_interval[:, -1].reshape(-1)
+            
+        return y
     
     # Visualize the sequence of y
     def plotY(self, t, y):

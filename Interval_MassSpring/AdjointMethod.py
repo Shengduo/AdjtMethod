@@ -35,6 +35,11 @@ class AdjDerivs:
         self.atol = atol
         self.solver = solver
         
+        # The jump indexes in t and tt
+        self.t_JumpIdx = self.MFParams.t_JumpIdx
+        self.tt = self.MFParams.T
+        self.JumpIdx = self.MFParams.JumpIdx
+        self.JumpTT = self.MFParams.JumpT
         ## Calculate the partial derivatives ##
         if regularizedFlag:
             self.dCdy = DCDy_regularized(y, y_targ, t, MFParams)
@@ -61,8 +66,8 @@ class AdjDerivs:
         self.uz = self.u_z()
         
         # Calculate A_l and u_l
-        self.Al = self.A_l()
-        self.ul = self.u_l()
+        self.Als = self.A_l()
+        self.uls = self.u_l()
         
         # Calculate dOdBeta
         st = time.time()
@@ -81,17 +86,20 @@ class AdjDerivs:
         A_l_discrete = torch.linalg.solve(dCdyDot, dCdy - ddCdyDotdt)
         A_l_discrete = torch.transpose(A_l_discrete, 0, 2)
         
-        # DEBUG LINES
-        self.A_l_discrete = A_l_discrete
+        # self.A_l_discrete = A_l_discrete
+        # Define the series of interpolation functions
+        A_ls = []
+        for idx in range(len(self.t_JumpIdx) - 1):
+            # The real index
+            this_idx = len(self.t_JumpIdx) - idx - 1
+            this_A_l_discrete = A_l_discrete[:, :, self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
+            this_A_l_discrete = torch.cat([this_A_l_discrete[:, :, [0]], this_A_l_discrete, this_A_l_discrete[:, :, [-1]]], -1)
+            this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
+            this_t = torch.cat([[self.JumpTT[idx - 1]], this_t, [self.JumpTT[idx]]])
+            this_A_l = interp1d(self.T - this_t, this_A_l_discrete)
+            A_ls.append(this_A_l)
         
-        # Compute the interpolation for slip rate Ds
-        t_temp = torch.concat([torch.tensor([self.t[0] - 1.]), self.t, torch.tensor([self.t[-1] + 1.])], 0)
-        A_l_discrete_temp = torch.concat([A_l_discrete[:, :, [0]], A_l_discrete, A_l_discrete[:, :, [-1]]], -1)
-        
-        # Return the function
-        # A_l = interp1d(self.T - t_temp, A_l_discrete_temp, kind="cubic")
-        A_l = interp1d(self.T - t_temp, A_l_discrete_temp)
-        return A_l
+        return A_ls
     
     # Calculate u_l at tau
     def u_l(self):
@@ -103,17 +111,18 @@ class AdjDerivs:
         u_l_discrete = torch.linalg.solve(dCdyDot, dody - ddodyDotdt)
         u_l_discrete = torch.movedim(u_l_discrete, 0, 1)
         
-        # DEBUG LINES
-        self.u_l_discrete = u_l_discrete
-    
-        # Compute the interpolation for slip rate Ds
-        t_temp = torch.concat([torch.tensor([self.t[0] - 1.]), self.t, torch.tensor([self.t[-1] + 1.])], 0)
-        u_l_discrete_temp = torch.concat([u_l_discrete[:, [0]], u_l_discrete, u_l_discrete[:, [-1]]], -1)
-        
-        # Return the function
-        # u_l = interp1d(self.T - t_temp, u_l_discrete_temp, kind="cubic")
-        u_l = interp1d(self.T - t_temp, u_l_discrete_temp)
-        return u_l
+        u_ls = []
+        for idx in range(len(self.t_JumpIdx) - 1):
+            # The real index
+            this_idx = len(self.t_JumpIdx) - idx - 1
+            this_u_l_discrete = u_l_discrete[:, self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
+            this_u_l_discrete = torch.cat([this_u_l_discrete[:, [0]], this_u_l_discrete, this_u_l_discrete[:, [-1]]], -1)
+            this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
+            this_t = torch.cat([[self.JumpTT[idx - 1]], this_t, [self.JumpTT[idx]]])
+            this_u_l = interp1d(self.T - this_t, this_u_l_discrete)
+            u_ls.append(this_u_l)
+
+        return u_ls
     
     # Calculate f_l(self, tau, l)
     def f_l(self, tau, l):
@@ -193,12 +202,42 @@ class AdjDerivs:
         L0 = torch.zeros(self.y.shape[0])
         
         # Solve for L(t)
-        L = odeint(self.f_l, L0, torch.flip(self.tau, [0]), 
-                   rtol = self.rtol, atol = self.atol, method = self.solver)
+        L = torch.zeros([len(self.y0), len(self.t)])
         
-        L = L.reshape([L.shape[0], 1, L.shape[1]])
-        L = torch.flip(L, [0])
-
+        # Loop thru all intervals
+        this_L0 = L0
+        for idx in range(len(self.t_JumpIdx) - 1):
+            this_idx = len(self.t_JumpIdx) - 1 - idx
+            this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
+            this_t = torch.cat([[self.JumpTT[idx - 1]], this_t, [self.JumpTT[idx]]])
+            
+            # Deal with duplicates
+            i = 0
+            j = len(this_t)
+            if this_t[0] == this_t[1]:
+                i = 1
+            if this_t[-1] == this_t[-2]:
+                j = -1
+            this_t = this_t[i : j]
+            this_tau = self.T - this_t
+            f_l = lambda tau, l: -torch.matmul(l, torch.tensor(self.Als[idx](torch.clip(tau, this_tau[-1], this_tau[0])), dtype=torch.float)) - \
+                                  torch.tensor(self.uls[idx](torch.clip(tau, this_tau[-1], this_tau[0])), dtype=torch.float)
+            this_L = odeint(f_l, this_L0, torch.flip(this_tau, [0]), 
+                            rtol = self.rtol, atol = self.atol, method = self.solver)
+            if i == 0:
+                i = 1
+            else:
+                i = 0
+            if j == -1:
+                j = len(this_tau)
+            else:
+                j = -1
+            
+            this_L = this_L.reshape([this_L.shape[0], 1, this_L.shape[1]])
+            this_L = torch.flip(this_L, [0])
+            this_L0 = this_L[0, :, :].reshape(-1)
+            L[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx], 1, :] = this_L[i : j, 1, :]
+            
         # # DEBUG LINES
         # print("L: ", L)
         
