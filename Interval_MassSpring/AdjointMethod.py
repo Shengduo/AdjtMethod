@@ -212,14 +212,14 @@ class AdjDerivs:
         L0 = torch.zeros(self.y.shape[0])
         
         # Solve for L(t)
-        L = torch.zeros([len(L0), len(self.t)])
+        L = torch.zeros([len(L0), 1, len(self.t)])
         
         # Loop thru all intervals
         this_L0 = L0
         for idx in range(len(self.t_JumpIdx) - 1):
             this_idx = len(self.t_JumpIdx) - 1 - idx
             this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
-            this_t = torch.cat([torch.tensor([self.JumpTT[idx - 1]]), this_t, torch.tensor([self.JumpTT[idx]])])
+            this_t = torch.cat([torch.tensor([self.JumpTT[this_idx - 1]]), this_t, torch.tensor([self.JumpTT[this_idx]])])
             
             # Deal with duplicates
             i = 0
@@ -230,8 +230,10 @@ class AdjDerivs:
                 j = -1
             this_t = this_t[i : j]
             this_tau = self.T - this_t
-            f_l = lambda tau, l: -torch.matmul(l, torch.tensor(self.Als[idx](torch.clip(tau, this_tau[-1], this_tau[0])), dtype=torch.float)) - \
-                                  torch.tensor(self.uls[idx](torch.clip(tau, this_tau[-1], this_tau[0])), dtype=torch.float)
+            this_tau_low = self.T - self.JumpTT[this_idx]
+            this_tau_high = self.T - self.JumpTT[this_idx - 1]
+            f_l = lambda tau, l: -torch.matmul(l, torch.tensor(self.Als[idx](torch.clip(tau, this_tau_low, this_tau_high)), dtype=torch.float)) - \
+                                  torch.tensor(self.uls[idx](torch.clip(tau, this_tau_low, this_tau_high)), dtype=torch.float)
             this_L = odeint(f_l, this_L0, torch.flip(this_tau, [0]), 
                             rtol = self.rtol, atol = self.atol, method = self.solver)
             if i == 0:
@@ -246,7 +248,7 @@ class AdjDerivs:
             this_L = this_L.reshape([this_L.shape[0], 1, this_L.shape[1]])
             this_L = torch.flip(this_L, [0])
             this_L0 = this_L[0, :, :].reshape(-1)
-            L[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx], 1, :] = this_L[i : j, 1, :]
+            L[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx], 0, :] = this_L[i : j, 0, :]
 
         # # DEBUG LINES
         # print("L: ", L)
