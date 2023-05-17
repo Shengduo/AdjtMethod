@@ -150,12 +150,12 @@ Xi0 = torch.zeros(DimXi)
 # NN parameters for f = fStar + NN1(V, log(V), \xi, log(\xi))
 f0 = 0.58
 NN1_input_dim = 2 + 2 * DimXi
-NN1s = [16, 64, 64, 16]
+NN1s = [128, 512, 512, 128]
 NN1_output_dim = 1
 
 # NN parameters for \dot{\xi} = NN2(V, log(V), \xi, log(\xi))
 NN2_input_dim = 2 + 2 * DimXi
-NN2s = [16, 64, 64, 16]
+NN2s = [128, 512, 512, 128]
 NN2_output_dim = DimXi
 
 # Store all the input parameters as a keyword dictionary
@@ -328,7 +328,7 @@ NNModel = NN_computeF(kwgs);
 # print("f_NNs: ", f_NNs)
 
 ## Gradient descent:
-max_epochs = 201
+max_epochs = 501
 optimizer = optim.SGD(NNModel.parameters(), lr=0.001, momentum=0.9)
 
 # Train NNModel
@@ -357,6 +357,6 @@ for epoch in range(max_epochs):
         print("Testing loss in this epoch: ", this_epoch_test_loss, flush=True)
 
 # Save a figure of the result
-pwd ="./plots/Test0504_std_1e-3/"
+pwd ="./plots/Test0517_std_1e-3_NN128_512/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 plotSequences(NNModel, kwgs, pwd)
