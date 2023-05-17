@@ -73,19 +73,19 @@ class MassFricParams:
     def VatT_interp(self, t):
         for idx, jumpT in enumerate(self.JumpT):
             if jumpT > t:
-                return self.vtFuncs[idx - 1](t)
+                return torch.tensor(self.vtFuncs[idx - 1](t), dtype=torch.float)
 
         # If the last interval
-        return self.vtFuncs[-1](t) 
+        return torch.tensor(self.vtFuncs[-1](t), dtype=torch.float) 
     
     # Define the function that gives S at t
     def SatT_interp(self, t):
         for idx, jumpT in enumerate(self.JumpT):
             if jumpT > t:
-                return self.stFuncs[idx - 1](t)
+                return torch.tensor(self.stFuncs[idx - 1](t), dtype=torch.float)
 
         # If the last interval
-        return self.stFuncs[-1](t) 
+        return torch.tensor(self.stFuncs[-1](t), dtype=torch.float)
     
     # Output the information of this class
     def print_info(self):

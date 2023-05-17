@@ -36,10 +36,20 @@ class AdjDerivs:
         self.solver = solver
         
         # The jump indexes in t and tt
-        self.t_JumpIdx = self.MFParams.t_JumpIdx
         self.tt = self.MFParams.T
         self.JumpIdx = self.MFParams.JumpIdx
         self.JumpTT = self.MFParams.JumpT
+
+        # Calculate t_JumpIdx
+        self.t_JumpIdx = []
+        for jumpT in self.JumpTT:
+            for idx in range(len(self.t)):
+                if self.t[idx] >= jumpT:
+                    self.t_JumpIdx.append(idx)
+                    break
+        
+        self.t_JumpIdx[-1] = len(self.t)
+
         ## Calculate the partial derivatives ##
         if regularizedFlag:
             self.dCdy = DCDy_regularized(y, y_targ, t, MFParams)
@@ -95,7 +105,7 @@ class AdjDerivs:
             this_A_l_discrete = A_l_discrete[:, :, self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
             this_A_l_discrete = torch.cat([this_A_l_discrete[:, :, [0]], this_A_l_discrete, this_A_l_discrete[:, :, [-1]]], -1)
             this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
-            this_t = torch.cat([[self.JumpTT[idx - 1]], this_t, [self.JumpTT[idx]]])
+            this_t = torch.cat([torch.tensor([self.JumpTT[idx - 1]]), this_t, torch.tensor([self.JumpTT[idx]])])
             this_A_l = interp1d(self.T - this_t, this_A_l_discrete)
             A_ls.append(this_A_l)
         
@@ -118,7 +128,7 @@ class AdjDerivs:
             this_u_l_discrete = u_l_discrete[:, self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
             this_u_l_discrete = torch.cat([this_u_l_discrete[:, [0]], this_u_l_discrete, this_u_l_discrete[:, [-1]]], -1)
             this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
-            this_t = torch.cat([[self.JumpTT[idx - 1]], this_t, [self.JumpTT[idx]]])
+            this_t = torch.cat([torch.tensor([self.JumpTT[idx - 1]]), this_t, torch.tensor([self.JumpTT[idx]])])
             this_u_l = interp1d(self.T - this_t, this_u_l_discrete)
             u_ls.append(this_u_l)
 
@@ -202,14 +212,14 @@ class AdjDerivs:
         L0 = torch.zeros(self.y.shape[0])
         
         # Solve for L(t)
-        L = torch.zeros([len(self.y0), len(self.t)])
+        L = torch.zeros([len(L0), len(self.t)])
         
         # Loop thru all intervals
         this_L0 = L0
         for idx in range(len(self.t_JumpIdx) - 1):
             this_idx = len(self.t_JumpIdx) - 1 - idx
             this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
-            this_t = torch.cat([[self.JumpTT[idx - 1]], this_t, [self.JumpTT[idx]]])
+            this_t = torch.cat([torch.tensor([self.JumpTT[idx - 1]]), this_t, torch.tensor([self.JumpTT[idx]])])
             
             # Deal with duplicates
             i = 0
@@ -237,7 +247,7 @@ class AdjDerivs:
             this_L = torch.flip(this_L, [0])
             this_L0 = this_L[0, :, :].reshape(-1)
             L[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx], 1, :] = this_L[i : j, 1, :]
-            
+
         # # DEBUG LINES
         # print("L: ", L)
         

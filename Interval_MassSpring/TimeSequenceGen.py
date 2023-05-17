@@ -125,9 +125,9 @@ class TimeSequenceGen:
 
         # Re-calculate into intervals
         y0_this = self.MFParams.y0
-        for idx in len(self.JumpIdx - 1):
+        for idx in range(len(self.JumpIdx) - 1):
             t_this_interval = self.t[self.t_JumpIdx[idx] : self.t_JumpIdx[idx + 1]].clone()
-            t_this_interval = torch.cat([self.tt[self.JumpIdx[idx]], t_this_interval, self.tt[self.JumpIdx[idx + 1]]])
+            t_this_interval = torch.cat([self.tt[[self.JumpIdx[idx]]], t_this_interval, self.tt[[self.JumpIdx[idx + 1]]]])
             i = 0
             j = len(t_this_interval)
             if t_this_interval[0] == t_this_interval[1]:
@@ -151,7 +151,7 @@ class TimeSequenceGen:
                 j = -1
             y[:, self.t_JumpIdx[idx] : self.t_JumpIdx[idx + 1]] = y_this_interval[:, i : j]
             y0_this = y_this_interval[:, -1].reshape(-1)
-            
+
         return y
     
     # Visualize the sequence of y

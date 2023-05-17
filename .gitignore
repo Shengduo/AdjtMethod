@@ -3,3 +3,8 @@ models/
 .ipynb_checkpoints/
 __pycache__/
 plots/
+NN_friction/data/
+NN_friction/log/
+NN_friction/plots/
+Interval_MassSpring/log/
+Interval_MassSpring/plots/

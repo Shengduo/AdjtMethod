@@ -74,28 +74,28 @@ alphas = torch.tensor([[100., 5., 9.8],
                        [100., 5., 9.8], 
                        [100., 5., 9.8]])
 
-VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
-                       [1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
+# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
+#                        [1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
 
-VT_tts = torch.stack([torch.linspace(0., 30., 15), 
-                      torch.linspace(0., 30., 15), 
-                      torch.linspace(0., 30., 15), 
-                      torch.linspace(0., 30., 15)])
+# VT_tts = torch.stack([torch.linspace(0., 30., 15), 
+#                       torch.linspace(0., 30., 15), 
+#                       torch.linspace(0., 30., 15), 
+#                       torch.linspace(0., 30., 15)])
 
-# # # Multi data2
-# ones = 4 * [1.]
-# tens = 4 * [10.]
-# VT_VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
-#                        ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
-#                        ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
-#                        tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
+# # Multi data2
+ones = 10 * [1.]
+tens = 10 * [10.]
+VT_VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
+                       ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
+                       ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
+                       tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
 
-# VT_tts = torch.stack([torch.linspace(0., 30., VT_VVs.shape[1]),
-#                       torch.linspace(0., 30., VT_VVs.shape[1]),
-#                       torch.linspace(0., 30., VT_VVs.shape[1]),
-#                       torch.linspace(0., 30., VT_VVs.shape[1])])
+VT_tts = torch.stack([torch.linspace(0., 30., VT_VVs.shape[1]),
+                      torch.linspace(0., 30., VT_VVs.shape[1]),
+                      torch.linspace(0., 30., VT_VVs.shape[1]),
+                      torch.linspace(0., 30., VT_VVs.shape[1])])
 
 VT_Trange = torch.tensor([0., 30.])
 VT_Trange = torch.tensor([0., 30.])
@@ -149,12 +149,12 @@ beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 beta_low = torch.tensor([0.001, 0.001, 0.001, 0.1])
 beta_high = torch.tensor([1., 1., 1.e6, 0.9])
 
-beta_fixed = torch.tensor([0, 1, 0, 0], dtype=torch.bool)
+beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Document the unfixed groups
 # beta_unfixed_groups = [[0], [1], [2], [3]]
 # beta_unfixed_NofIters = torch.tensor([1, 1, 1, 1])
-beta_unfixed_groups = [[0, 2, 3]]
+beta_unfixed_groups = [[0, 1, 2, 3]]
 beta_unfixed_NofIters = torch.tensor([1])
 
 scaling = torch.tensor([1., 1., 1., 1.])
