@@ -46,7 +46,19 @@ theta0 = torch.tensor(1.)
 ones = 10 * [1.e-8]
 tens = 10 * [10.]
 
-    
+# Generate or load data
+generate_data = False
+dataFilename = "./data/VVTTs0517.pt"
+totalNofSeqs = 4
+VVseeds = []
+VVseeds_len = []
+for i in range(totalNofSeqs):
+    NofSds = torch.randint(5, 11, [1])
+    VVseed = torch.randint(-10, 3, [NofSds])
+    VVseed_len = 10 * torch.randint(1, 11, [NofSds])
+    VVseeds.append(VVseed)
+    VVseeds_len.append(VVseed_len)
+
 # VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
 #                     ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
 #                     ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
@@ -54,34 +66,30 @@ tens = 10 * [10.]
 
 # VVseeds = torch.randint(-10, 3, [4, 15])
 # print("VVseeds: ", VVseeds)
+if generate_data == True:
+    VVs = []
+    tts = []
 
-VVseeds = torch.tensor([[-10,  -9,  -2,  -1,  -4,   0,  -6,  -3,  -6,  -6, -10,   0,  -9,  -5,  -9],
-                        [ -7,   2,  -3,  -3,  -6,   1,  -5,  -9,  -8,  -4, -10,  -9,   0,  -3,  -7],
-                        [ -5,  -8,  -7,  -3,  -4,  -3,   0,  -9,  -1,   0,  -6,  -8,  -6,  -2,  -6],
-                        [ -5,  -6,   1,   1,  -2,   1,   2,  -8,  -6,   1,  -2,   2, -10,  -6,   1], 
-                        [-10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10], 
-                        [  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1], 
-                        [-10, -10, -10, -10, -10, -10, -10, -10,   1,   1,   1,   1,   1,   1,   1], 
-                        [  1,   1,   1,   1,   1,   1,   1, -10, -10, -10, -10, -10, -10, -10, -10]])
-
-VV_seeds_len = [10, 10, 10, 10, 100, 100, 100, 100]
-
-# Selected
-selected = [0, 2, 6, 7]
-VVseeds = VVseeds[selected, :]
-VV_seeds_len = [VV_seeds_len[i] for i in selected]
-
-VVs = []
-tts = []
-
-# Generate VVs and tts
-for idx, VVseed in enumerate(VVseeds):
-    VV = torch.zeros(len(VVseed) * VV_seeds_len[idx])
-    for j in range(len(VVseed)):
-        VV[VV_seeds_len[idx] * j : VV_seeds_len[idx] * (j + 1)] = torch.pow(10., VVseed[j])
-    VVs.append(VV)
-    tt = torch.linspace(0., 0.2 * len(VV), len(VV))
-    tts.append(tt)
+    # Generate VVs and tts
+    for idx, (VVseed, VVseed_len) in enumerate(zip(VVseeds, VVseeds_len)):
+        VV = torch.zeros(torch.sum(VVseed_len))
+        st = 0
+        for j in range(len(VVseed_len)):
+            VV[st : st + VVseed_len[j]] = torch.pow(10., VVseed[j])
+            st += VVseed_len[j]
+        VVs.append(VV)
+        tt = torch.linspace(0., 0.2 * len(VV), len(VV))
+        tts.append(tt)
+    
+    data = {
+        "VVs" : VVs, 
+        "tts" : tts
+    }
+    torch.save(data, dataFilename)
+else:
+    shit = torch.load(dataFilename)
+    VVs = shit['VVs']
+    tts = shit['tts']
 
 # Figure out the jump points of V-sequences
 JumpIdxs = []
@@ -122,7 +130,7 @@ t_JumpIdxs = []
 t_JumpIdx_tests = []
 
 # Functions, ts and t_JumpIdxs
-t_tt_times = [10, 10, 10, 10, 3, 3, 3, 3]
+t_tt_times = [10 for i in range(totalNofSeqs)]
 for JumpIdx, VV, tt, t_tt_time in zip(JumpIdxs, VVs, tts, t_tt_times):
     VtFunc = []
     t = torch.linspace(tt[0], tt[-1], t_tt_time * len(tt))
@@ -417,17 +425,19 @@ def plotSequences(beta, kwgs, pwd):
     plt.savefig(pwd + "TestSeqs.png", dpi = 300.)
     plt.close()
 
-# Let's not load the data and calculate f_targs for now
-# # Load data
-# shit =  torch.load('./data/RandnData1_std_1e-3_0504.pt')
-
+# Let's not load the data and calculate f_targs this time
 V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-                                           kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
+                                           kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.001)
 V_targ_tests, theta_targ_tests, f_targ_tests = cal_f_beta(beta_targ, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
                                                           kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0.)
 kwgs['f_targs'] = f_targs
 kwgs['f_targ_tests'] = f_targ_tests
 
+# Save data 
+torch.save(kwgs, './data/VVTTs_0517_std1e-3_kwgs.pt')
+
+# # Load data
+# kwgs = torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')
 ## ------------------------------------ Gradient descent ------------------------------------ 
 # Maximum alternative iterations
 max_iters = 30
@@ -438,7 +448,7 @@ All_Os = []
 All_grads = []
 
 # Early stop criteria
-early_stop_rounds = 20
+early_stop_rounds = 30
 best_O = 1.e4
 notImprovingRounds = 0
 
@@ -569,8 +579,7 @@ for alt_iter in range(max_iters):
 
 
 # Save a figure of the result
-# pwd ="./plots/FricSeqGen0323_alternating_DrsFStar/"
-pwd = "./plots/Test0516_std_0_AdjMtd_selected_intervals/"
+pwd = "./plots/Test0518_std_0.001_AdjMtd_generated_intervals/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments
@@ -585,12 +594,23 @@ best_grad = All_grads[best_idx]
 best_O = All_Os[best_idx]
 best_beta = All_betas[best_idx]
 
+# Calculate best test data
+O_test = 0.
+# V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
+#                                                       kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
+V_tests, theta_tests, f_tests = cal_f_beta(best_beta, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
+                                            kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0.)
+for V_test, theta_test, f_test, f_targ, t_this in zip(V_tests, theta_tests, f_tests, kwgs['f_targ_tests'], kwgs['t_tests']):
+    O_test += O(f_test, f_targ, t_this)
+
 # Print results
 print("~" * 40, " Final Optimization Answer ", "~" * 40)
 print("Optimized beta: ", best_beta)
-print("O: ", best_O)
+print("Training O under optimized neta: ", best_O)
+print("Testing O under optimized beta: ", O_test), 
 print("Gradient: ", best_grad, flush=True)
-
+print("VVs: ", VVs)
+print("tts: ", tts)
 plotSequences(best_beta, kwgs, pwd)
 
 

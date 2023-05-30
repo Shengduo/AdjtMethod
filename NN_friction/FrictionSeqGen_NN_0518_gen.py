@@ -62,11 +62,11 @@ class NN_computeF(nn.Module):
         
         self.NN2.append(nn.Linear(NN2s[-1], NN2_output_dim))
 
-    def forward(self, VtFunc):
+    def forward(self, VtFunc, tt):
         NofTpts = kwgs['NofTpts']
 
         # Get all sequences
-        t = torch.linspace(tt[0], tt[-1], NofTpts)
+        t = torch.linspace(tt[0], tt[-1], NofTpts * len(tt))
         V = torch.tensor(VtFunc(t), dtype=torch.float)
         # shit = torch.concat([torch.tensor(VtFunc(1.), dtype=torch.float).reshape(-1), 
         #                      torch.log(torch.tensor(VtFunc(1.), dtype=torch.float)).reshape(-1), 
@@ -82,7 +82,7 @@ class NN_computeF(nn.Module):
         # Xi = odeint(XiFunc, Xi0, t, atol = 1.e-10, rtol = 1.e-8)
         
         # Forward Euler
-        Xi = torch.ones([self.kwgs['DimXi'], NofTpts]) * kwgs['Xi0'];
+        Xi = torch.ones([self.kwgs['DimXi'], len(t)]) * kwgs['Xi0'];
         for i in range(1, NofTpts):
             DXiDt = self.NN2(
                 torch.concat(
@@ -105,35 +105,40 @@ class NN_computeF(nn.Module):
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
 # VV_tt history
-NofTpts = 1500
+NofTpts = 10
 theta0 = torch.tensor(1.)
 
 # Multi data2
 ones = 10 * [1.]
 tens = 10 * [10.]
 
-# Prescribed velocities - training
-VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
-                    ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
-                    ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
-                    tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
+# # Prescribed velocities - training
+# VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
+#                     ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
+#                     ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
+#                     tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
 
 # Prescribed velocities - testing
 VV_tests = torch.tensor([ones + tens + tens + ones + ones + tens + tens + tens + tens + ones + ones + tens + tens + ones + ones, \
                          ones + ones + tens + tens + tens + ones + ones + tens + tens + tens + tens + ones + ones + ones + ones])
 
-# Times at which the velocities are prescribed
-tts = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1]),
-                   torch.linspace(0., 30., VVs.shape[1])])
+# # Times at which the velocities are prescribed
+# tts = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
+#                    torch.linspace(0., 30., VVs.shape[1]),
+#                    torch.linspace(0., 30., VVs.shape[1]),
+#                    torch.linspace(0., 30., VVs.shape[1])])
 
 # Times at which the velocities are prescribed - testing
-tt_tests = torch.stack([torch.linspace(0., 30., VVs.shape[1]),
-                        torch.linspace(0., 30., VVs.shape[1])])
+tt_tests = torch.stack([torch.linspace(0., 30., VV_tests.shape[1]),
+                        torch.linspace(0., 30., VV_tests.shape[1])])
 
 VtFuncs = []
 VtFunc_tests = []
+
+# Load the data
+shit = torch.load('./data/VVTTs0517.pt')
+VVs = shit['VVs']
+tts = shit['tts']
 
 # Functions for V-t interpolation
 for VV, tt in zip(VVs, tts):
@@ -143,6 +148,9 @@ for VV, tt in zip(VVs, tts):
 for VV, tt in zip(VV_tests, tt_tests):
     VtFunc_tests.append(interp1d(tt, VV))
 
+print('VVs:', VVs)
+print('tts:', tts)
+
 # Number of hidden variables, i.e. the dimension of xi
 DimXi = 1
 Xi0 = torch.zeros(DimXi)
@@ -150,12 +158,12 @@ Xi0 = torch.zeros(DimXi)
 # NN parameters for f = fStar + NN1(V, log(V), \xi, log(\xi))
 f0 = 0.58
 NN1_input_dim = 2 + 2 * DimXi
-NN1s = [128, 512, 512, 512, 128]
+NN1s = [128, 512, 512, 128]
 NN1_output_dim = 1
 
 # NN parameters for \dot{\xi} = NN2(V, log(V), \xi, log(\xi))
 NN2_input_dim = 2 + 2 * DimXi
-NN2s = [128, 512, 512, 512, 128]
+NN2s = [128, 512, 512, 128]
 NN2_output_dim = DimXi
 
 # Store all the input parameters as a keyword dictionary
@@ -309,7 +317,7 @@ t = torch.linspace(tt[0], tt[-1], NofTpts)
 # torch.save(kwgs, './data/RandnData1_std_1e-3_0504.pt')
 
 # Load data
-shit =  torch.load('./data/RandnData1_std_1e-3_0504.pt')
+shit =  torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')
 kwgs['f_targs'] = shit['f_targs']
 kwgs['f_targ_tests'] = shit['f_targ_tests']
 
@@ -340,9 +348,10 @@ nonDecreasing_steps = 0
 for epoch in range(max_epochs):
     print("=" * 40, " Epoch ", str(epoch + 1), " ", "=" * 40, flush=True)
     this_epoch_loss_sum = 0.
-    for i, (VtFunc, f_targ) in enumerate(zip(kwgs['VtFuncs'], kwgs['f_targs'])):
+    for i, (tt, VtFunc, f_targ) in enumerate(zip(kwgs['tts'], kwgs['VtFuncs'], kwgs['f_targs'])):
         optimizer.zero_grad()
-        f_pred = NNModel(VtFunc)
+        f_pred = NNModel(VtFunc, tt)
+        t = torch.linspace(tt[0], tt[-1], NofTpts * len(tt))
         loss = O(f_pred, f_targ, t)
         this_epoch_loss_sum += loss
         loss.backward()
@@ -360,12 +369,22 @@ for epoch in range(max_epochs):
     # Early stop
     if nonDecreasing_steps >= early_stop_rounds:
         print("~"*40, " Early stop criteria has been met! ", "~"*40)
+        this_epoch_test_loss = 0.
+        for i, (tt, VtFunc, f_targ) in enumerate(zip(kwgs['tt_tests'], kwgs['VtFunc_tests'], kwgs['f_targ_tests'])):
+            f_pred = NNModel(VtFunc, tt)
+            t = torch.linspace(tt[0], tt[-1], NofTpts * len(tt))
+            loss = O(f_pred, f_targ, t)
+            this_epoch_test_loss += loss
+
+        # Print this epoch loss sum
+        print("Testing loss in this epoch: ", this_epoch_test_loss, flush=True)
         break
 
     if (epoch % 10 == 0):
         this_epoch_test_loss = 0.
-        for i, (VtFunc, f_targ) in enumerate(zip(kwgs['VtFunc_tests'], kwgs['f_targ_tests'])):
-            f_pred = NNModel(VtFunc)
+        for i, (tt, VtFunc, f_targ) in enumerate(zip(kwgs['tt_tests'], kwgs['VtFunc_tests'], kwgs['f_targ_tests'])):
+            f_pred = NNModel(VtFunc, tt)
+            t = torch.linspace(tt[0], tt[-1], NofTpts * len(tt))
             loss = O(f_pred, f_targ, t)
             this_epoch_test_loss += loss
 
@@ -373,6 +392,6 @@ for epoch in range(max_epochs):
         print("Testing loss in this epoch: ", this_epoch_test_loss, flush=True)
 
 # Save a figure of the result
-pwd ="./plots/Test0518_std_1e-3_NN128_512_doubled/"
+pwd ="./plots/Test0518_std_1e-3_NN128_512_doubled_gen/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 plotSequences(NNModel, kwgs, pwd)
