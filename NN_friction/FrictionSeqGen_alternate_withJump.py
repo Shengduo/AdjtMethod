@@ -6,13 +6,20 @@ import time
 import torch.nn as nn
 import scipy.optimize as opt
 import numpy as np
-
 from pathlib import Path
 from torchdiffeq import odeint
 from xitorch.interpolate import Interp1D
 from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 from random import shuffle
+from joblib import Parallel, delayed, effective_n_jobs
+
+# Output number of available workers
+print("Number of workers available: ", effective_n_jobs(-1))
+
+# Initialize the parallel pool
+nWorkers = 16
+parallel_pool = Parallel(n_jobs=nWorkers, backend='threading')
 
 # Target Rate and state properties
 beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
@@ -241,26 +248,24 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
                 i = i + 1
             if (t_this_interval[-1] == t_this_interval[-2]):
                 j = -1
-            
-            # If theta can't be directly computed
-            if (index == 0):
-                print("theta0_this: ", theta0_this)
 
             if directCompute == True:
                 V_thisStep = V[t_JumpIdx[index]]
-                InsideExp = -DRSInv * V_thisStep * (t_this_interval[i : j] - t_this_interval[i])
-                ExpIdx = (torch.abs(InsideExp) >= 1.e-4)
-                ExpTerm = torch.zeros(t_this_interval[i : j].shape)
-                ExpTerm[ExpIdx] = torch.exp(InsideExp[ExpIdx])
-                ExpTerm[~ExpIdx] = 1. + InsideExp[~ExpIdx] + 0.5 * torch.square(InsideExp[~ExpIdx])
-                # ExpTerm = torch.exp(InsideExp)
-                theta_this = (1 - (1 - DRSInv * V_thisStep * theta0_this) * ExpTerm) / (DRSInv * V_thisStep)
-                # DEBUG LINES
-                print("!"*100)
-                print("theta0_this: ", theta0_this)
-                print("theta_this[0]: ", theta_this[0])
-                print("DRSInv * V_thisStep: ", DRSInv * V_thisStep)
-                print("!"*100)
+                if V_thisStep * DRSInv < 1.e-4:
+                    alp = V_thisStep * DRSInv
+                    deltaT = t_this_interval[i : j] - t_this_interval[i]
+                    theta_this = theta0_this + deltaT - alp * (deltaT * theta0_this + torch.square(deltaT) / 2.) \
+                                 + alp * alp * theta0_this * torch.square(deltaT) / 2.
+                else: 
+                    InsideExp = -DRSInv * V_thisStep * (t_this_interval[i : j] - t_this_interval[i])
+                    ExpTerm = torch.exp(InsideExp)
+                    theta_this = (1 - (1 - DRSInv * V_thisStep * theta0_this) * ExpTerm) / (DRSInv * V_thisStep)
+                # # DEBUG LINES
+                # print("!"*100)
+                # print("theta0_this: ", theta0_this)
+                # print("theta_this[0]: ", theta_this[0])
+                # print("DRSInv * V_thisStep: ", DRSInv * V_thisStep)
+                # print("!"*100)
 
             else:
                 thetaFunc = lambda t, theta: 1. - torch.tensor(vtfunc(torch.clip(t, tt[JumpIdx[index]], tt[JumpIdx[index + 1]])), dtype=torch.float) * theta * DRSInv
@@ -280,11 +285,11 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
             theta[t_JumpIdx[index] : t_JumpIdx[index + 1]] = theta_this[i : j]
             theta0_this = theta_this[-1]
 
-        # Inside the cal_f_beta
-        print("="*10, " inside cal_f_beta ", "="*10)
-        print("V: ", V)
-        print("theta: ", theta)
-        print("="*10, " after cal_f_beta ", "="*10)
+        # # Inside the cal_f_beta
+        # print("="*10, " inside cal_f_beta ", "="*10)
+        # print("V: ", V)
+        # print("theta: ", theta)
+        # print("="*10, " after cal_f_beta ", "="*10)
         f = fStar + a * torch.log(V / 1.e-6) + b * torch.log(1.e-6 * theta * DRSInv)
         mean_f = torch.mean(f);
         f = f + std_noise * mean_f * torch.randn(f.shape)
@@ -654,13 +659,13 @@ V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs, ts, t_JumpIdxs, tts,
 O_this = 0.
 grad_this = torch.zeros(4)
 for V_this, theta_this, f_this, f_targ, t_JumpIdx, t, tt, VV, JumpIdx in zip(V_thiss, theta_thiss, f_thiss, f_targs, t_JumpIdxs, ts, tts, VVs, JumpIdxs):
-    # Debug lines
-    print("f_this shape: ", f_this.shape)
-    print("f_targ shape: ", f_targ.shape)
-    print("t shape: ", t.shape)
-    print("f_this: ", f_this)
-    print("theta_this: ", theta_this)
-    print("V_this: ", V_this)
+    # # Debug lines
+    # print("f_this shape: ", f_this.shape)
+    # print("f_targ shape: ", f_targ.shape)
+    # print("t shape: ", t.shape)
+    # print("f_this: ", f_this)
+    # print("theta_this: ", theta_this)
+    # print("V_this: ", V_this)
 
     O_this += O(f_this, f_targ, t)
     # beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
