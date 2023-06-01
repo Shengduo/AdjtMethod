@@ -1,4 +1,5 @@
 ## Import standard librarys
+from tkinter import NW
 import torch
 import torchdiffeq
 import pickle
@@ -210,6 +211,42 @@ kwgs = {
     'beta_low' : beta_low, 
     'beta_high' : beta_high, 
 }
+
+# Divide the sequences and distribute to different workers
+def cal_f_beta_parallel(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001, directCompute = True, 
+                        n_workers = nWorkers, pool = parallel_pool):
+    # For now, partition the tts such that each chunk only has one sequence
+    t_splits = [[t] for t in ts]
+    t_JumpIdx_splits = [[t_JumpIdx] for t_JumpIdx in t_JumpIdxs]
+    tt_splits = [[tt] for tt in tts]
+    JumpIdx_splits = [[JumpIdx] for JumpIdx in JumpIdxs]
+    VtFunc_splits = [[VtFunc] for VtFunc in VtFuncs]
+
+    # Get all the sequences
+    res = pool(delayed(cal_f_beta)(
+                beta, kwgs, t_split, t_JumpIdx_split, tt_split, JumpIdx_split, VtFunc_split, std_noise, directCompute
+            ) for t_split, t_JumpIdx_split, tt_split, JumpIdx_split, VtFunc_split in zip(t_splits, t_JumpIdx_splits, tt_splits, JumpIdx_splits, VtFunc_splits)
+        )
+
+    # Join the list
+    Vs = [res[i][0] for i in range(len(res))]
+    thetas = [res[i][1] for i in range(len(res))]
+    fs = [res[i][2] for i in range(len(res))]
+    
+    Vs = [piece for this in Vs for piece in this] 
+    thetas = [piece for this in thetas for piece in this] 
+    fs = [piece for this in fs for piece in this] 
+
+    ## Debug lines
+    print("len(Vs): ", len(Vs))
+    print("len(thetas): ", len(thetas))
+    print("len(fs): ", len(fs))
+
+    print("Vs: ", Vs)
+    print("thetas: ", thetas)
+    print("fs: ", fs)
+    # Partition the sets
+    return res
 
 # Compute f history based on VtFunc and beta
 def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001, directCompute = True):
@@ -698,3 +735,5 @@ for i in range(len(beta0)):
     numerical_grad0[i] = (Op - Om) / (2 * inc * beta0[i])
 
 print("Grad by finite difference: ", numerical_grad0)
+
+res = cal_f_beta_parallel(beta_this, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0., DirectComputeFlag, nWorkers, parallel_pool)
