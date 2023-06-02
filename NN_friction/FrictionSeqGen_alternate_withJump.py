@@ -340,6 +340,9 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
 
     return Vs, thetas, fs
 
+def O_parallel(fs, f_targs, ts, pool = parallel_pool):
+    
+
 def O(f, f_targ, t):
     return torch.trapezoid(
         torch.square(f - f_targ), t
