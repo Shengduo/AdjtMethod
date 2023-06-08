@@ -352,7 +352,7 @@ def O_parallel(fs, f_targs, ts, p = 2, pool = parallel_pool):
     # # To the power 1/p
     # res = torch.pow(torch.mean(torch.stack(Os)), 1. / p) 
     # To the power 1
-    res = torch.pow(torch.mean(torch.stack(Os)), 1.) 
+    res = torch.pow(torch.sum(torch.stack(Os)), 1.) 
     return res
 
 # Add l_p for O
@@ -717,7 +717,7 @@ def plotSequences(beta, kwgs, pwd):
 # Check numerical derivatives
 # beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001
 DirectComputeFlag = True
-p = 2
+p = 4
 beta0=torch.tensor([0.009, 0.012, 0.2000, 0.3800])
 
 # Time start
