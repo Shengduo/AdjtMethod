@@ -545,12 +545,12 @@ V_targ_tests, theta_targ_tests, f_targ_tests = cal_f_beta(beta_targ, kwgs, kwgs[
 f_targ_pnorms = []
 f_targ_testPnorms = []
 
-for t, f_targ in zip(ts, f_targs):
-    res = torch.pow(torch.trapz(t, torch.pow(f_targ, p)), 1./p)
+for t, f_targ in zip(kwgs['ts'], f_targs):
+    res = torch.pow(torch.trapz(torch.pow(f_targ, p), t), 1./p)
     f_targ_pnorms.append(res)
 
-for t, f_targ in zip(t_tests, f_targ_tests):
-    res = torch.pow(torch.trapz(t, torch.pow(f_targ, p_test)), 1./p_test)
+for t, f_targ in zip(kwgs['t_tests'], f_targ_tests):
+    res = torch.pow(torch.trapz(torch.pow(f_targ, p_test), t), 1./p_test)
     f_targ_testPnorms.append(res)
 
 kwgs['f_targs'] = f_targs
@@ -558,6 +558,11 @@ kwgs['f_targ_tests'] = f_targ_tests
 kwgs['f_targ_pnorms'] = f_targ_pnorms
 kwgs['f_targ_testPnorms'] = f_targ_testPnorms
 
+## DEBUG LINE
+print('Train P norms: ', kwgs['f_targ_pnorms'])
+print('Test P norms: ', kwgs['f_targ_testPnorms'])
+print('Test ts: ', kwgs['t_tests'])
+print('f_targ_tests: ', f_targ_tests)
 # Save data 
 torch.save(kwgs, './data/VVTTs_0601_std0_kwgs.pt')
 
