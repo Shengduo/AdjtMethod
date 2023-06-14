@@ -40,12 +40,11 @@ beta_high = torch.tensor([1., 1., 1.e6, 0.9])
 # beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
 
 # For 0323 alternating a b drs fstar
-beta0 = torch.tensor([0.009, 0.012, 1. / 2.e1, 0.7])
+beta0 = torch.tensor([0.005, 0.02, 1. / 5.e1, 0.4])
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Set p values, p works fine between 2 and 12, even
-p = 4
-
+p = 6
 # Use same standard for test data
 p_test = 2
 
@@ -570,7 +569,7 @@ torch.save(kwgs, './data/VVTTs_0601_std0_kwgs.pt')
 # kwgs = torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')
 ## ------------------------------------ Gradient descent ------------------------------------ 
 # Maximum alternative iterations
-max_iters = 30
+max_iters = 50
 
 # Store all betas and all Os
 All_betas = []
@@ -713,7 +712,7 @@ for alt_iter in range(max_iters):
 
 
 # Save a figure of the result
-pwd = "./plots/Test0608_std_0_AdjMtd_generated_intervals_p4/"
+pwd = "./plots/Test0609_std_0_AdjMtd_generated_intervals_p6/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments
