@@ -1,6 +1,5 @@
 # This script re-sample training sequences after every training epoch, and use the worst training samples for next epoch
 ## Import standard librarys
-from tkinter import NW
 import torch
 import torchdiffeq
 import pickle
@@ -64,26 +63,27 @@ ones = 10 * [1.e-8]
 tens = 10 * [10.]
 
 # Generate or load data
-generate_data = False
+generate_VVtts = False
 dataFilename = "./data/VVTTs0517.pt"
 totalNofSeqs = 4
-VVseeds = []
-VVseeds_len = []
-for i in range(totalNofSeqs):
-    NofSds = torch.randint(5, 11, [1])
-    VVseed = torch.randint(-10, 3, [NofSds])
-    VVseed_len = 10 * torch.randint(1, 11, [NofSds])
-    VVseeds.append(VVseed)
-    VVseeds_len.append(VVseed_len)
+NofIntervalsRange = [5, 11]
+VVRange = [-10, 3]
+VVLenRange = [1, 11]
 
-# VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
-#                     ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
-#                     ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
-#                     tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
+# Function that generates VVs and tts
+def genVVtt(totalNofSeqs, NofIntervalsRange, VVRange, VVLenRange):
+    VVseeds = []
+    VVseeds_len = []
 
-# VVseeds = torch.randint(-10, 3, [4, 15])
-# print("VVseeds: ", VVseeds)
-if generate_data == True:
+    # Generate the seeds of VVs and tts
+    for i in range(totalNofSeqs):
+        NofSds = torch.randint(5, 11, [1])
+        VVseed = torch.randint(-10, 3, [NofSds])
+        VVseed_len = 10 * torch.randint(1, 11, [NofSds])
+        VVseeds.append(VVseed)
+        VVseeds_len.append(VVseed_len)
+
+
     VVs = []
     tts = []
 
@@ -103,6 +103,12 @@ if generate_data == True:
         "tts" : tts
     }
     torch.save(data, dataFilename)
+    
+    return VVs, tts
+
+# Determine method of getting data
+if generate_VVtts == True:
+    VVs, tts = genVVtt(totalNofSeqs, NofIntervalsRange, VVRange, VVLenRange)
 else:
     shit = torch.load(dataFilename)
     VVs = shit['VVs']
