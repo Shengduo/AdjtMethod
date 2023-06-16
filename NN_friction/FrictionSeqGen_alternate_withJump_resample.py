@@ -16,7 +16,7 @@ from random import shuffle
 from joblib import Parallel, delayed, effective_n_jobs
 from FrictionSeqGen_alternate_withJump_resample_functions import genVVtt, calVtFuncs, \
     cal_f_beta_parallel, cal_f_beta, O_parallel, O, grad_parallel, grad, plotSequences, \
-    checkNumericalDerivatives
+    checkNumericalDerivatives, findTopNSeqs
 
 # Output number of available workers
 print("Number of workers available: ", effective_n_jobs(-1))
@@ -69,7 +69,8 @@ tens = 10 * [10.]
 generate_VVtts = False
 loadDataFilename = "./data/VVTTs0517.pt"
 saveDataFilename = "./data/VVTTs0614.pt"
-totalNofSeqs = 4
+totalNofSeqs = 32
+selectedNofSeqs = 8
 NofIntervalsRange = [5, 11]
 VVRange = [-10, 3]
 VVLenRange = [1, 11]
@@ -121,6 +122,13 @@ kwgs = {
     'beta_low' : beta_low, 
     'beta_high' : beta_high, 
     'DirectComputeFlag' : DirectComputeFlag, 
+    'totalNofSeqs' : totalNofSeqs,
+    'selectedNofSeqs' : selectedNofSeqs,  
+    'NofIntervalsRange' : NofIntervalsRange, 
+    'VVRange' : VVRange,
+    'VVLenRange' : VVLenRange, 
+    'p' : p, 
+    'p_test' : p_test, 
 }
 
 # Let's not load the data and calculate f_targs this time
@@ -157,7 +165,9 @@ torch.save(kwgs, './data/VVTTs_0615_std0_kwgs.pt')
 
 # Test numerical derivatives
 outputFile = "log/testDerivatives0615"
-checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool, outputFile)
+# checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool, outputFile)
+
+findTopNSeqs(beta0, beta_targ, 2, p, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, nWorkers, parallel_pool)
 
 # # Load data
 # kwgs = torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')

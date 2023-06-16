@@ -51,7 +51,6 @@ def genVVtt(totalNofSeqs, NofIntervalsRange, VVRange, VVLenRange):
     
     return VVs, tts
 
-
 # Function to get ts, JumpIdxs, t_JumpIdxs, VtFuncs
 def calVtFuncs(VVs, tts):
     # get JumpIdxs
@@ -245,8 +244,29 @@ def O(f, f_targ, t, p):
     res = torch.pow(res, 1. / p)
     return res
 
+# Generate and then find 8 training sequences
+def findVtFuncs(beta_this, beta_targ, kwgs, n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
+    # Generate N of VVs and tts
+    VVs, tts = genVVtt(kwgs['totalNofSeqs'], kwgs['NofIntervalsRange'], kwgs['VVRange'], kwgs['VVLenRange'])
+
+    # Calculate VtFuncs based on VVs and tts
+    ts, JumpIdxs, t_JumpIdxs, VtFuncs = calVtFuncs(VVs, tts)
+
+    # Grab the Top n seqs
+    resIdx, resOs = findTopNSeqs(beta_this, beta_targ, kwgs['selectedNofSeqs'], kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, n_Workers, parallel_pool)
+
+    VV_res = [VVs[i] for i in resIdx]
+    tts_res = [tts[i] for i in resIdx]
+    ts_res = [ts[i] for i in resIdx]
+    JumpIdxs_res = [JumpIdxs[i] for i in resIdx]
+    t_JumpIdxs_res = [t_JumpIdxs[i] for i in resIdx]
+    VtFuncs_res = [VtFuncs[i] for i in resIdx]
+
+    # Return all resulting res
+    return VV_res, tts_res, ts_res, JumpIdxs_res, t_JumpIdxs_res, VtFuncs_res
+
 # Find n sequences with the highest O values
-def findTopNSeqs(beta_this, beta_targ, n, p, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, n_Workers, parallel_pool):
+def findTopNSeqs(beta_this, beta_targ, n, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, n_Workers, parallel_pool):
     # beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001, directCompute = True, n_workers = nWorkers, pool = parallel_pool
     V_thiss, theta_thiss, f_thiss = cal_f_beta_parallel(beta_this, kwgs, ts, t_JumpIdxs, 
                                                         tts, JumpIdxs, VtFuncs, 
@@ -256,8 +276,21 @@ def findTopNSeqs(beta_this, beta_targ, n, p, kwgs, ts, t_JumpIdxs, tts, JumpIdxs
                                                         tts, JumpIdxs, VtFuncs, 
                                                         0., True, n_Workers, parallel_pool)
     
-    Os, O = O_parallel(f_thiss, f_targs, ts, p, parallel_pool)
+    Os, O = O_parallel(f_thiss, f_targs, ts, kwgs['p'], parallel_pool)
+    Os = torch.tensor(Os)
     
+    # Sort
+    sorted, indices = torch.sort(Os, descending=True)
+    resIdx = indices[0:n]
+    resOs = sorted[0:n]
+
+    # # DEBUG LINE
+    # print('Os: ', Os)
+    # print('First n indices: ', resIdx)
+    # print('First n values: ', resOs)
+    return resIdx, resOs
+
+
 
 # Gradient of objective function, for all sequences
 def grad_parallel(beta, ts, Vs, thetas, fs, f_targs, t_JumpIdxs, tts, VVs, JumpIdxs, kwgs, p = 2, pool = Parallel(n_jobs=16, backend='threading')):
