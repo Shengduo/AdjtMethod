@@ -98,7 +98,7 @@ def calVtFuncs(VVs, tts):
 
 # Divide the sequences and distribute to different workers
 def cal_f_beta_parallel(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001, directCompute = True, 
-                        n_workers = nWorkers, pool = parallel_pool):
+                        n_workers = 16, pool = Parallel(n_jobs=16, backend='threading')):
     # For now, partition the tts such that each chunk only has one sequence
     t_splits = [[t] for t in ts]
     t_JumpIdx_splits = [[t_JumpIdx] for t_JumpIdx in t_JumpIdxs]
@@ -225,16 +225,15 @@ def cal_f_beta(beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0
     return Vs, thetas, fs
 
 # Objective function, parallel version
-def O_parallel(fs, f_targs, ts, p = 2, pool = parallel_pool):
+def O_parallel(fs, f_targs, ts, p = 2, pool = Parallel(n_jobs=16, backend='threading')):
     Os = pool(
         delayed(O)(f, f_targ, t, p) for f, f_targ, t in zip(fs, f_targs, ts)  
     )
     
     # To the power 1/p
     res = torch.sum(torch.stack(Os))
-    # # To the power 1
-    # res = torch.pow(torch.sum(torch.stack(Os)), 1.) 
-    return res
+
+    return Os, res
 
 # Add l_p for O
 def O(f, f_targ, t, p):
@@ -246,9 +245,22 @@ def O(f, f_targ, t, p):
     res = torch.pow(res, 1. / p)
     return res
 
+# Find n sequences with the highest O values
+def findTopNSeqs(beta_this, beta_targ, n, p, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, n_Workers, parallel_pool):
+    # beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001, directCompute = True, n_workers = nWorkers, pool = parallel_pool
+    V_thiss, theta_thiss, f_thiss = cal_f_beta_parallel(beta_this, kwgs, ts, t_JumpIdxs, 
+                                                        tts, JumpIdxs, VtFuncs, 
+                                                        0., True, n_Workers, parallel_pool)
+    
+    V_targs, theta_targs, f_targs = cal_f_beta_parallel(beta_targ, kwgs, ts, t_JumpIdxs, 
+                                                        tts, JumpIdxs, VtFuncs, 
+                                                        0., True, n_Workers, parallel_pool)
+    
+    Os, O = O_parallel(f_thiss, f_targs, ts, p, parallel_pool)
+    
 
-# Gradient of objective function, parallel
-def grad_parallel(beta, ts, Vs, thetas, fs, f_targs, t_JumpIdxs, tts, VVs, JumpIdxs, kwgs, p = 2, pool = parallel_pool):
+# Gradient of objective function, for all sequences
+def grad_parallel(beta, ts, Vs, thetas, fs, f_targs, t_JumpIdxs, tts, VVs, JumpIdxs, kwgs, p = 2, pool = Parallel(n_jobs=16, backend='threading')):
     grads = pool(
         delayed(grad)(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p) \
             for t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx in zip(ts, Vs, thetas, fs, f_targs, t_JumpIdxs, tts, VVs, JumpIdxs)
@@ -260,7 +272,7 @@ def grad_parallel(beta, ts, Vs, thetas, fs, f_targs, t_JumpIdxs, tts, VVs, JumpI
     res = torch.sum(grads, dim = 0)
     return res
 
-
+# Gradient of objective function, for one sequence
 def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p):
     integrand = torch.zeros([len(beta), len(t)])
     integrand[0, :] = torch.log(V / 1.e-6)
@@ -381,7 +393,7 @@ def plotSequences(beta, kwgs, pwd):
 
     # -------------------- For test data --------------------------
     Vs, thetas, fs = cal_f_beta(beta, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
-                                kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0., DirectComputeFlag)
+                                kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0., kwgs['DirectComputeFlag'])
     f_targs = kwgs['f_targ_tests']
     lws = torch.linspace(3.0, 1.0, len(Vs))
 
@@ -410,10 +422,10 @@ def plotSequences(beta, kwgs, pwd):
     plt.savefig(pwd + "TestSeqs.png", dpi = 300.)
     plt.close()
 
-def checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool):
+# Check numerical derivatives by finite difference method
+def checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool, outputFile):
     # Check numerical derivatives
     # beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001
-    DirectComputeFlag = True
 
     # Time start
     st = time.time()
@@ -423,14 +435,14 @@ def checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool
     # beta, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, std_noise = 0.001, directCompute = True, n_workers = nWorkers, pool = parallel_pool
     V_thiss, theta_thiss, f_thiss = cal_f_beta_parallel(beta_this, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
                                                         kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 
-                                                        0., DirectComputeFlag, nWorkers, parallel_pool)
+                                                        0., kwgs['DirectComputeFlag'], nWorkers, parallel_pool)
     
     V_targs, theta_targs, f_targs = cal_f_beta_parallel(beta_targ, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
                                                         kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 
-                                                        0., DirectComputeFlag, nWorkers, parallel_pool)
+                                                        0., kwgs['DirectComputeFlag'], nWorkers, parallel_pool)
     O_this = 0.
     grad_this = torch.zeros(4)
-    O_this = O_parallel(f_thiss, f_targs, kwgs['ts'], p, parallel_pool)
+    O_thiss, O_this = O_parallel(f_thiss, f_targs, kwgs['ts'], p, parallel_pool)
     grad_this = grad_parallel(beta_this, kwgs['ts'], V_thiss, theta_thiss, f_thiss, f_targs, 
                               kwgs['t_JumpIdxs'], kwgs['tts'], kwgs['VVs'], kwgs['JumpIdxs'], 
                               kwgs, p, parallel_pool)
@@ -446,44 +458,44 @@ def checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool
     #     O_this += O(f_this, f_targ, t)
     #     # beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
     #     grad_this += grad(beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs)
+    with open(outputFile, 'a') as myFile:
+        print("Grad by Adjoint: ", grad_this, file=myFile)
 
-    print("Grad by Adjoint: ", grad_this)
+        # Numerical gradients
+        inc = 0.001
+        numerical_grad0 = torch.zeros(beta0.shape)
+        for i in range(len(beta0)):
+            beta_plus = torch.clone(beta0)
+            beta_plus[i] *= (1 + inc)
+            # print("beta_plus: ", beta_plus, file=myFile)
+            Vps, thetasp, fps = cal_f_beta_parallel(beta_plus, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
+                                                    kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 
+                                                    0., kwgs['DirectComputeFlag'], nWorkers, parallel_pool)
 
-    # Numerical gradients
-    inc = 0.001
-    numerical_grad0 = torch.zeros(beta0.shape)
-    for i in range(len(beta0)):
-        beta_plus = torch.clone(beta0)
-        beta_plus[i] *= (1 + inc)
-        print("beta_plus: ", beta_plus)
-        Vps, thetasp, fps = cal_f_beta_parallel(beta_plus, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-                                                kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 
-                                                0., DirectComputeFlag, nWorkers, parallel_pool)
+            Ops, Op = O_parallel(fps, f_targs, kwgs['ts'], p, parallel_pool)
+            # Op = 0.
+            # for f_targ, fp, t in zip(f_targs, fps, ts):
+            #     Op += O(fp, f_targ, t)
 
-        Op = O_parallel(fps, f_targs, kwgs['ts'], p, parallel_pool)
-        # Op = 0.
-        # for f_targ, fp, t in zip(f_targs, fps, ts):
-        #     Op += O(fp, f_targ, t)
+            beta_minus = torch.clone(beta0)
+            beta_minus[i] *= (1 - inc)
+            # print("beta_minus: ", beta_minus, file=myFile)
+            Vms, thetams, fms = cal_f_beta_parallel(beta_minus, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
+                                                    kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 
+                                                    0., kwgs['DirectComputeFlag'], nWorkers, parallel_pool)
+            
+            Oms, Om = O_parallel(fms, f_targs, kwgs['ts'], p, parallel_pool)
+            # Om = 0.
+            # for f_targ, fm , t in zip(f_targs, fms, ts):
+            #     Om += O(fm, f_targ, t)
 
-        beta_minus = torch.clone(beta0)
-        beta_minus[i] *= (1 - inc)
-        print("beta_minus: ", beta_minus)
-        Vms, thetams, fms = cal_f_beta_parallel(beta_minus, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-                                                kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 
-                                                0., DirectComputeFlag, nWorkers, parallel_pool)
-        
-        Om = O_parallel(fms, f_targs, kwgs['ts'], p, parallel_pool)
-        # Om = 0.
-        # for f_targ, fm , t in zip(f_targs, fms, ts):
-        #     Om += O(fm, f_targ, t)
+            numerical_grad0[i] = (Op - Om) / (2 * inc * beta0[i])
 
-        numerical_grad0[i] = (Op - Om) / (2 * inc * beta0[i])
+        print("Grad by finite difference: ", numerical_grad0, file=myFile)
 
-    print("Grad by finite difference: ", numerical_grad0)
+        # grad_par_this = grad_parallel(beta_this, ts, V_thiss, theta_thiss, f_thiss, f_targs, t_JumpIdxs, tts, VVs, JumpIdxs, kwgs, pool = parallel_pool)
+        # print("Gradient by parallel function: ", grad_par_this)
 
-    # grad_par_this = grad_parallel(beta_this, ts, V_thiss, theta_thiss, f_thiss, f_targs, t_JumpIdxs, tts, VVs, JumpIdxs, kwgs, pool = parallel_pool)
-    # print("Gradient by parallel function: ", grad_par_this)
-
-    # End the timer
-    timeCost = time.time() - st
-    print("Time costed: ", timeCost)
+        # End the timer
+        timeCost = time.time() - st
+        print("Time costed: ", timeCost, file=myFile)
