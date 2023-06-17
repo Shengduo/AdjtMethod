@@ -22,7 +22,7 @@ from FrictionSeqGen_alternate_withJump_resample_functions import genVVtt, calVtF
 print("Number of workers available: ", effective_n_jobs(-1))
 
 # Initialize the parallel pool
-nWorkers = 32
+nWorkers = 16
 parallel_pool = Parallel(n_jobs=nWorkers, backend='threading')
 
 # Directly compute the sequences
@@ -299,7 +299,7 @@ for alt_iter in range(max_iters):
             # beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
             grad_this += grad(beta_this, t_this, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p) / torch.pow(f_targ_pnorm, p)
         
-        print("=" * 40, " Inner Iteration ", str(i + 1), " ", "=" * 40)
+        print("=" * 40, " Inner Iteration ", str(grp_idx + 1), " ", "=" * 40)
         print("Optimized beta: ", beta_this)
         print("Training data O: ", O_this)
         print("Gradient: ", grad_this, flush=True)
@@ -324,8 +324,8 @@ for alt_iter in range(max_iters):
         V_origs, theta_origs, f_origs = cal_f_beta(beta_this, kwgs, kwgs['t_origs'], kwgs['t_JumpIdx_origs'], 
                                                     kwgs['tt_origs'], kwgs['JumpIdx_origs'], kwgs['VtFunc_origs'], 0., DirectComputeFlag)
         for V_orig, theta_orig, f_orig, f_targ, f_targ_pnorm, t_this in \
-            zip(V_tests, theta_tests, f_tests, kwgs['f_targ_origs'], kwgs['f_targ_origPnorms'], kwgs['t_origs']):
-            O_orig += O(f_test, f_targ, t_this, p) / f_targ_pnorm
+            zip(V_origs, theta_origs, f_origs, kwgs['f_targ_origs'], kwgs['f_targ_origPnorms'], kwgs['t_origs']):
+            O_orig += O(f_orig, f_targ, t_this, p) / f_targ_pnorm
         print("-!" * 40)
         print("Original training O: ", O_orig), 
         print("-!" * 40)

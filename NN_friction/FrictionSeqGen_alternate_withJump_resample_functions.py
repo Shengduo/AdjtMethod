@@ -248,8 +248,10 @@ def O(f, f_targ, t, p):
 def findVtFuncs(beta_this, beta_targ, kwgs, VVs_prev = [], tts_prev = [], n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
     # Generate N of VVs and tts
     VVs, tts = genVVtt(kwgs['totalNofSeqs'], kwgs['NofIntervalsRange'], kwgs['VVRange'], kwgs['VVLenRange'])
-    VVs.append(VVs_prev)
-    tts.append(tts_prev)
+
+    # Concat the previous VVs
+    VVs = VVs + VVs_prev
+    tts = tts + tts_prev
 
     # Calculate VtFuncs based on VVs and tts
     ts, JumpIdxs, t_JumpIdxs, VtFuncs = calVtFuncs(VVs, tts)
