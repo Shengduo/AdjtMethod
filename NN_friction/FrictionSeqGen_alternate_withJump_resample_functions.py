@@ -245,9 +245,11 @@ def O(f, f_targ, t, p):
     return res
 
 # Generate and then find 8 training sequences
-def findVtFuncs(beta_this, beta_targ, kwgs, n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
+def findVtFuncs(beta_this, beta_targ, kwgs, VVs_prev = [], tts_prev = [], n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
     # Generate N of VVs and tts
     VVs, tts = genVVtt(kwgs['totalNofSeqs'], kwgs['NofIntervalsRange'], kwgs['VVRange'], kwgs['VVLenRange'])
+    VVs.append(VVs_prev)
+    tts.append(tts_prev)
 
     # Calculate VtFuncs based on VVs and tts
     ts, JumpIdxs, t_JumpIdxs, VtFuncs = calVtFuncs(VVs, tts)
@@ -255,7 +257,7 @@ def findVtFuncs(beta_this, beta_targ, kwgs, n_Workers=16, parallel_pool=Parallel
     # Grab the Top n seqs
     resIdx, resOs = findTopNSeqs(beta_this, beta_targ, kwgs['selectedNofSeqs'], kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, n_Workers, parallel_pool)
 
-    VV_res = [VVs[i] for i in resIdx]
+    VVs_res = [VVs[i] for i in resIdx]
     tts_res = [tts[i] for i in resIdx]
     ts_res = [ts[i] for i in resIdx]
     JumpIdxs_res = [JumpIdxs[i] for i in resIdx]
@@ -263,7 +265,7 @@ def findVtFuncs(beta_this, beta_targ, kwgs, n_Workers=16, parallel_pool=Parallel
     VtFuncs_res = [VtFuncs[i] for i in resIdx]
 
     # Return all resulting res
-    return VV_res, tts_res, ts_res, JumpIdxs_res, t_JumpIdxs_res, VtFuncs_res
+    return VVs_res, tts_res, ts_res, JumpIdxs_res, t_JumpIdxs_res, VtFuncs_res
 
 # Find n sequences with the highest O values
 def findTopNSeqs(beta_this, beta_targ, n, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, n_Workers, parallel_pool):
@@ -395,33 +397,33 @@ def grad(beta, t, V, theta, f, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p):
 
 # Plot sequences of friction coefficient
 def plotSequences(beta, kwgs, pwd):
-    Vs, thetas, fs = cal_f_beta(beta, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-                                kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
-    f_targs = kwgs['f_targs']
+    Vs, thetas, fs = cal_f_beta(beta, kwgs, kwgs['t_origs'], kwgs['t_JumpIdx_origs'], 
+                                kwgs['tt_origs'], kwgs['JumpIdx_origs'], kwgs['VtFunc_origs'], 0.)
+    f_targs = kwgs['f_targ_origs']
     lws = torch.linspace(3.0, 1.0, len(Vs))
-    for idx, (tt, t, f_targ, f) in enumerate(zip(kwgs['tts'], kwgs['ts'], f_targs, fs)):
+    for idx, (tt, t, f_targ, f) in enumerate(zip(kwgs['tt_origs'], kwgs['t_origs'], f_targs, fs)):
         plt.figure(figsize=[15, 10])
         plt.plot(t, f_targ, linewidth=2.0)
         plt.plot(t, f, linewidth=1.5)
         plt.legend(["Target", "Optimized"], fontsize=20, loc='best')
         plt.xlabel("t [s]", fontsize=20)
         plt.ylabel("Friction coefficient", fontsize=20)
-        plt.title("Train sequence " + str(idx), fontsize=20)
-        plt.savefig(pwd + "TrainSeq_" + str(idx) + ".png", dpi = 300.)
+        plt.title("Orignal train sequence " + str(idx), fontsize=20)
+        plt.savefig(pwd + "OrigTrainSeq_" + str(idx) + ".png", dpi = 300.)
         plt.close()
 
     # Plot the generating sequences
     plt.figure(figsize=[15, 10])
     lgd = []
 
-    for idx, (tt, t, V) in enumerate(zip(kwgs['tts'], kwgs['ts'], Vs)):
+    for idx, (tt, t, V) in enumerate(zip(kwgs['tt_origs'], kwgs['t_origs'], Vs)):
         plt.semilogy(t, V, linewidth=lws[idx])
-        lgd.append("Train Seq " + str(idx))
+        lgd.append("Original train Seq " + str(idx))
     
     plt.legend(lgd, fontsize=20, loc='best')
     plt.xlabel("t [s]", fontsize=20)
     plt.ylabel("V [m/s]", fontsize=20)
-    plt.savefig(pwd + "TrainSeqs.png", dpi = 300.)
+    plt.savefig(pwd + "OrigTrainSeqs.png", dpi = 300.)
     plt.close()
 
     # -------------------- For test data --------------------------

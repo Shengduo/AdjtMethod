@@ -16,13 +16,13 @@ from random import shuffle
 from joblib import Parallel, delayed, effective_n_jobs
 from FrictionSeqGen_alternate_withJump_resample_functions import genVVtt, calVtFuncs, \
     cal_f_beta_parallel, cal_f_beta, O_parallel, O, grad_parallel, grad, plotSequences, \
-    checkNumericalDerivatives, findTopNSeqs
+    checkNumericalDerivatives, findTopNSeqs, findVtFuncs
 
 # Output number of available workers
 print("Number of workers available: ", effective_n_jobs(-1))
 
 # Initialize the parallel pool
-nWorkers = 16
+nWorkers = 32
 parallel_pool = Parallel(n_jobs=nWorkers, backend='threading')
 
 # Directly compute the sequences
@@ -53,7 +53,7 @@ p_test = 2
 
 # Document the unfixed groups
 beta_unfixed_groups = [[0], [1], [2], [3]]
-beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+beta_unfixed_NofIters = torch.tensor([8, 8, 8, 8])
 # beta_unfixed_groups = [[0, 1, 2, 3]]
 # beta_unfixed_NofIters = torch.tensor([1])
 
@@ -69,7 +69,7 @@ tens = 10 * [10.]
 generate_VVtts = False
 loadDataFilename = "./data/VVTTs0517.pt"
 saveDataFilename = "./data/VVTTs0614.pt"
-totalNofSeqs = 32
+totalNofSeqs = 128
 selectedNofSeqs = 8
 NofIntervalsRange = [5, 11]
 VVRange = [-10, 3]
@@ -101,18 +101,18 @@ t_tests, JumpIdx_tests, t_JumpIdx_tests, VtFunc_tests = calVtFuncs(VV_tests, tt_
 
 # Store all keyword arguments
 kwgs = {
-    'VVs' : VVs, 
-    'tts' : tts, 
-    'VtFuncs' : VtFuncs, 
-    'JumpIdxs' : JumpIdxs, 
+    'VV_origs' : VVs, 
+    'tt_origs' : tts, 
+    'VtFunc_origs' : VtFuncs, 
+    'JumpIdx_origs' : JumpIdxs, 
     'VV_tests' : VV_tests, 
     'tt_tests' : tt_tests, 
     'VtFunc_tests' : VtFunc_tests, 
     'JumpIdx_tests' : JumpIdx_tests, 
     'NofTpts' : NofTpts, 
-    'ts' : ts, 
+    't_origs' : ts, 
     't_tests' : t_tests, 
-    't_JumpIdxs' : t_JumpIdxs, 
+    't_JumpIdx_origs' : t_JumpIdxs, 
     't_JumpIdx_tests' : t_JumpIdx_tests, 
     'theta0' : theta0, 
     'beta_fixed' : beta_fixed, 
@@ -131,222 +131,259 @@ kwgs = {
     'p_test' : p_test, 
 }
 
-# Let's not load the data and calculate f_targs this time
-V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-                                           kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0., kwgs['DirectComputeFlag'])
+# # Let's not load the data and calculate f_targs this time
+V_targ_origs, theta_targ_origs, f_targ_origs = cal_f_beta(beta_targ, kwgs, kwgs['t_origs'], kwgs['t_JumpIdx_origs'], 
+                                                          kwgs['tt_origs'], kwgs['JumpIdx_origs'], kwgs['VtFunc_origs'], 0., kwgs['DirectComputeFlag'])
+
 V_targ_tests, theta_targ_tests, f_targ_tests = cal_f_beta(beta_targ, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
                                                           kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0., kwgs['DirectComputeFlag'])
 
-# Compute p_norm of target fs for trainig and testing
-f_targ_pnorms = []
+# # Compute p_norm of target fs for trainig and testing
+f_targ_origPnorms = []
 f_targ_testPnorms = []
 
-for t, f_targ in zip(kwgs['ts'], f_targs):
+for t, f_targ in zip(kwgs['t_origs'], f_targ_origs):
     res = torch.pow(torch.trapz(torch.pow(f_targ, p), t), 1./p)
-    f_targ_pnorms.append(res)
+    f_targ_origPnorms.append(res)
 
 for t, f_targ in zip(kwgs['t_tests'], f_targ_tests):
     res = torch.pow(torch.trapz(torch.pow(f_targ, p_test), t), 1./p_test)
     f_targ_testPnorms.append(res)
 
-kwgs['f_targs'] = f_targs
+kwgs['f_targ_origs'] = f_targ_origs
+kwgs['f_targ_origPnorms'] = f_targ_origPnorms
 kwgs['f_targ_tests'] = f_targ_tests
-kwgs['f_targ_pnorms'] = f_targ_pnorms
 kwgs['f_targ_testPnorms'] = f_targ_testPnorms
 
-# ## DEBUG LINE
-# print('Train P norms: ', kwgs['f_targ_pnorms'])
-# print('Test P norms: ', kwgs['f_targ_testPnorms'])
-# print('Test ts: ', kwgs['t_tests'])
-# print('f_targ_tests: ', f_targ_tests)
+## DEBUG LINE
+print('Test P norms: ', kwgs['f_targ_testPnorms'])
+print('Test ts: ', kwgs['t_tests'])
+print('f_targ_tests: ', f_targ_tests)
 
-# Save data 
-torch.save(kwgs, './data/VVTTs_0615_std0_kwgs.pt')
+# # Save data 
+# torch.save(kwgs, './data/VVTTs_0615_std0_kwgs.pt')
 
 # Test numerical derivatives
-outputFile = "log/testDerivatives0615"
-# checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool, outputFile)
+outputFileCkDerivs = "log/testDerivatives0615"
+# checkNumericalDerivatives(beta0, beta_targ, p, kwgs, nWorkers, parallel_pool, outputFileCkDerivs)
 
-findTopNSeqs(beta0, beta_targ, 2, p, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, nWorkers, parallel_pool)
 
 # # Load data
 # kwgs = torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')
-# ## ------------------------------------ Gradient descent ------------------------------------ 
-# # Maximum alternative iterations
-# max_iters = 50
+## ------------------------------------ Gradient descent ------------------------------------ 
+# Maximum alternative iterations
+max_iters = 20
 
-# # Store all betas and all Os
-# All_betas = []
-# All_Os = []
-# All_grads = []
+# Store all betas and all Os
+All_betas = []
+All_Os = []
+All_O_origs = []
+All_grads = []
 
-# # Early stop criteria
-# early_stop_rounds = 60
-# best_O = 1.e4
-# notImprovingRounds = 0
+# Early stop criteria
+early_stop_rounds = 20
+best_O = 1.e8
+notImprovingRounds = 0
 
-# # Start the outer loop of iterations
-# beta_this = beta0
-# for alt_iter in range(max_iters):
-#     # Print out section
-#     print("*" * 100)
-#     print("*", " "*40, "Outer Iteration ", str(alt_iter), " " * 40, "*")
-#     print("*" * 100)
+# Start the outer loop of iterations
+beta_this = beta0
+for alt_iter in range(max_iters):
+    # Print out section
+    print("*" * 100)
+    print("*", " "*40, "Outer Iteration ", str(alt_iter), " " * 40, "*")
+    print("*" * 100)
 
-#     ## Inner iteration, get fixed randomly
-#     inner_groups = []
-#     for idx, NofIters in enumerate(kwgs['beta_unfixed_NofIters']):
-#         inner_groups = inner_groups + [kwgs['beta_unfixed_groups'][idx] for i in range(NofIters)]
+    ## Inner iteration, get fixed randomly
+    inner_groups = []
+    for idx, NofIters in enumerate(kwgs['beta_unfixed_NofIters']):
+        inner_groups = inner_groups + [kwgs['beta_unfixed_groups'][idx] for i in range(NofIters)]
     
-#     # Permute it 
-#     shuffle(inner_groups)
-#     print("Inner groups: ", inner_groups)
+    # Randomly permute inner groups 
+    shuffle(inner_groups)
+    print("Inner groups: ", inner_groups)
     
-#     for (grp_idx, release_idx) in enumerate(inner_groups):
-#     # for grp_idx, release_idx in enumerate(kwgs['beta_unfixed_groups']):
-#         beta_fixed_this = torch.ones(len(kwgs['beta0']), dtype=torch.bool)
-#         beta_fixed_this[release_idx] = False
+    # Generate VVs and TTs for this cycle
+    VVs_prev = VVs 
+    tts_prev = tts
+    VVs, tts, ts, JumpIdxs, t_JumpIdxs, VtFuncs = findVtFuncs(beta_this, beta_targ, kwgs, VVs_prev, tts_prev, nWorkers, parallel_pool)
+    
+    # Let's not load the data and calculate f_targs this time, 
+    # corresponding to the generated VVs and tts
+    V_targs, theta_targs, f_targs = cal_f_beta(beta_targ, kwgs, ts, t_JumpIdxs, 
+                                               tts, JumpIdxs, VtFuncs, 0., DirectComputeFlag)
+
+    # Compute p_norm of target fs for trainig and testing
+    f_targ_pnorms = []
+
+    for t, f_targ in zip(ts, f_targs):
+        res = torch.pow(torch.trapz(torch.pow(f_targ, p), t), 1./p)
+        f_targ_pnorms.append(res)
+
+    # Enumerate the inner groups
+    for (grp_idx, release_idx) in enumerate(inner_groups):
+        # Clear the notImprovingRounds
+        notImprovingRounds = 0
+        best_O = 1.e8
+
+        beta_fixed_this = torch.ones(len(kwgs['beta0']), dtype=torch.bool)
+        beta_fixed_this[release_idx] = False
         
-#         # Print out which values are fixed
-#         print("~" * 20, "beta_fixed: ", beta_fixed_this, "~"*20)
+        # Print out which values are fixed
+        print("~" * 20, "beta_fixed: ", beta_fixed_this, "~"*20)
 
 
-#         # max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
-#         max_step = torch.tensor([1., 1., 1., 1.])
-#         max_step[beta_fixed_this] = 1.e30
-#         beta0_this = beta_this
-#         # beta_targ, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0.
-#         V_thiss, theta_thiss, f_thiss = cal_f_beta(beta_this, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-#                                                    kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0., DirectComputeFlag)
+        # max_step = torch.tensor([0.005, 0.005, 0.01, 0.1])
+        max_step = torch.tensor([1., 1., 1., 1.])
+        max_step[beta_fixed_this] = 1.e30
+        beta0_this = beta_this
+        # beta_targ, kwgs, ts, t_JumpIdxs, tts, JumpIdxs, VtFuncs, 0.
+        V_thiss, theta_thiss, f_thiss = cal_f_beta(beta_this, kwgs, ts, t_JumpIdxs, 
+                                                   tts, JumpIdxs, VtFuncs, 0., DirectComputeFlag)
 
-#         O_this = 0.
-#         grad_this = torch.zeros(4)
-#         for V_this, theta_this, f_this, t_this, f_targ, f_targ_pnorm, t_JumpIdx, tt, VV, JumpIdx \
-#             in zip(V_thiss, theta_thiss, f_thiss, kwgs['ts'], kwgs['f_targs'], kwgs['f_targ_pnorms'], kwgs['t_JumpIdxs'], kwgs['tts'], kwgs['VVs'], kwgs['JumpIdxs']):
-#             O_this += O(f_this, f_targ, t_this, p) / f_targ_pnorm
-#             # beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
-#             grad_this += grad(beta_this, t_this, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p) / torch.pow(f_targ_pnorm, p)
+        O_this = 0.
+        grad_this = torch.zeros(4)
+        for V_this, theta_this, f_this, t_this, f_targ, f_targ_pnorm, t_JumpIdx, tt, VV, JumpIdx \
+            in zip(V_thiss, theta_thiss, f_thiss, ts, f_targs, f_targ_pnorms, t_JumpIdxs, tts, VVs, JumpIdxs):
+            O_this += O(f_this, f_targ, t_this, p) / f_targ_pnorm
+            # beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
+            grad_this += grad(beta_this, t_this, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p) / torch.pow(f_targ_pnorm, p)
 
-#         # print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
-#         # print("Initial beta: ", beta_this)
-#         # print("O: ", O_this)
-#         # print("Gradient: ", grad_this, flush=True)
+        # print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
+        # print("Initial beta: ", beta_this)
+        # print("O: ", O_this)
+        # print("Gradient: ", grad_this, flush=True)
         
-#         # Store the first O and grad if both the outside and inside iteration number is 0
-#         if alt_iter == 0 and grp_idx == 0:
-#             print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
-#             print("Initial beta: ", beta_this)
-#             print("O: ", O_this)
-#             print("Gradient: ", grad_this, flush=True)
-#             All_betas.append(beta_this)
-#             All_Os.append(O_this)
-#             All_grads.append(grad_this)
+        # Store the first O and grad if both the outside and inside iteration number is 0
+        if alt_iter == 0 and grp_idx == 0:
+            print("=" * 40, "Inner Iteration ", str(0), " ", "=" * 40)
+            print("Initial beta: ", beta_this)
+            print("O: ", O_this)
+            print("Gradient: ", grad_this, flush=True)
+            All_betas.append(beta_this)
+            All_Os.append(O_this)
+            All_grads.append(grad_this)
 
-#             best_O = O_this
-#             notImprovingRounds = 0
+            best_O = O_this
+            notImprovingRounds = 0
         
-#         for i in range(1):
-#         # for i in range(kwgs['beta_unfixed_NofIters'][grp_idx]):
-#             max_eta = torch.min(torch.abs(max_step / grad_this))
-#             # Line search
-#             iter = 0
-#             O_trial = O_this
-#             while (iter <= 12 and O_trial >= O_this):
-#                 beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
-#                 beta_trial[beta_fixed_this] = beta0_this[beta_fixed_this]
-#                 beta_trial = torch.clip(beta_trial, kwgs['beta_low'], kwgs['beta_high'])
-#                 V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-#                                                               kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0., DirectComputeFlag)
-#                 O_trial = 0.
-                
-#                 for V_trial, theta_trial, f_trial, f_targ, f_targ_pnorm, t_this in \
-#                     zip(V_trials, theta_trials, f_trials, kwgs['f_targs'], kwgs['f_targ_pnorms'], kwgs['ts']):
-#                     O_trial += O(f_trial, f_targ, t_this, p) / f_targ_pnorm
-#                 # print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
-#                 iter += 1
-
-#             beta_this = beta_trial
-#             V_thiss = V_trials
-#             theta_thiss = theta_trials
-#             f_thiss = f_trials
-#             O_this = O_trial
-
-#             # Get new grad
-#             grad_this = torch.zeros(4)
-#             for V_this, theta_this, f_this, t_this, f_targ, f_targ_pnorm, t_JumpIdx, tt, VV, JumpIdx in \
-#                 zip(V_thiss, theta_thiss, f_thiss, kwgs['ts'], kwgs['f_targs'], kwgs['f_targ_pnorms'], kwgs['t_JumpIdxs'], kwgs['tts'], kwgs['VVs'], kwgs['JumpIdxs']):
-#                 O_this += O(f_this, f_targ, t_this, p) / f_targ_pnorm
-#                 # beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
-#                 grad_this += grad(beta_this, t_this, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p) / torch.pow(f_targ_pnorm, p)
+        # for i in range(kwgs['beta_unfixed_NofIters'][grp_idx]):
+        max_eta = torch.min(torch.abs(max_step / grad_this))
+        # Line search
+        iter = 0
+        O_trial = O_this
+        while (iter <= 12 and O_trial >= O_this):
+            beta_trial = beta_this - grad_this * max_eta * pow(2, -iter)
+            beta_trial[beta_fixed_this] = beta0_this[beta_fixed_this]
+            beta_trial = torch.clip(beta_trial, kwgs['beta_low'], kwgs['beta_high'])
+            V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, ts, t_JumpIdxs, 
+                                                          tts, JumpIdxs, VtFuncs, 0., DirectComputeFlag)
+            O_trial = 0.
             
-#             print("=" * 40, " Inner Iteration ", str(i + 1), " ", "=" * 40)
-#             print("Optimized beta: ", beta_this)
-#             print("Training data O: ", O_this)
-#             print("Gradient: ", grad_this, flush=True)
-#             All_betas.append(beta_this)
-#             All_Os.append(O_this)
-#             All_grads.append(grad_this)
+            for V_trial, theta_trial, f_trial, f_targ, f_targ_pnorm, t_this in \
+                zip(V_trials, theta_trials, f_trials, f_targs, f_targ_pnorms, ts):
+                O_trial += O(f_trial, f_targ, t_this, p) / f_targ_pnorm
+            # print("beta, O" + str(iter) + ": ", beta_trial, O_trial)
+            iter += 1
 
-#             # Set up early stop
-#             if O_this < best_O:
-#                 best_O = O_this
-#                 notImprovingRounds = 0
-#             else:
-#                 notImprovingRounds += 1
-#             if notImprovingRounds > early_stop_rounds:
-#                 break
+        beta_this = beta_trial
+        V_thiss = V_trials
+        theta_thiss = theta_trials
+        f_thiss = f_trials
+        O_this = O_trial
 
-#     if alt_iter % 10 == 0:
-#         O_test = 0.
-#         # V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-#         #                                                       kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
-#         V_tests, theta_tests, f_tests = cal_f_beta(beta_this, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
-#                                                    kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0., DirectComputeFlag)
-#         for V_test, theta_test, f_test, f_targ, f_targ_pnorm, t_this in \
-#             zip(V_tests, theta_tests, f_tests, kwgs['f_targ_tests'], kwgs['f_targ_testPnorms'], kwgs['t_tests']):
-#             O_test += O(f_test, f_targ, t_this, p_test) / f_targ_pnorm
-#         print("-!" * 40)
-#         print("Testing O (p = 2): ", O_test), 
-#         print("-!" * 40)
+        # Get new grad
+        grad_this = torch.zeros(4)
+        for V_this, theta_this, f_this, t_this, f_targ, f_targ_pnorm, t_JumpIdx, tt, VV, JumpIdx in \
+            zip(V_thiss, theta_thiss, f_thiss, ts, f_targs, f_targ_pnorms, t_JumpIdxs, tts, VVs, JumpIdxs):
+            O_this += O(f_this, f_targ, t_this, p) / f_targ_pnorm
+            # beta_this, t, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs
+            grad_this += grad(beta_this, t_this, V_this, theta_this, f_this, f_targ, t_JumpIdx, tt, VV, JumpIdx, kwgs, p) / torch.pow(f_targ_pnorm, p)
+        
+        print("=" * 40, " Inner Iteration ", str(i + 1), " ", "=" * 40)
+        print("Optimized beta: ", beta_this)
+        print("Training data O: ", O_this)
+        print("Gradient: ", grad_this, flush=True)
+        All_betas.append(beta_this)
+        All_Os.append(O_this)
+        All_grads.append(grad_this)
 
-#     # Set up early stop
-#     if notImprovingRounds > early_stop_rounds:
-#         print("~" * 40, " Early stop criteria has been met ", "~" * 40)
-#         break
+        # Set up early stop
+        if O_this < best_O:
+            best_O = O_this
+            notImprovingRounds = 0
+        else:
+            notImprovingRounds += 1
+        
+        # Set up early sampling
+        if notImprovingRounds > early_stop_rounds:
+            print("~" * 40, " Early sampling criteria has been met ", "~" * 40)
+            break
+
+        # Record performance on the original generating data set
+        O_orig = 0.
+        V_origs, theta_origs, f_origs = cal_f_beta(beta_this, kwgs, kwgs['t_origs'], kwgs['t_JumpIdx_origs'], 
+                                                    kwgs['tt_origs'], kwgs['JumpIdx_origs'], kwgs['VtFunc_origs'], 0., DirectComputeFlag)
+        for V_orig, theta_orig, f_orig, f_targ, f_targ_pnorm, t_this in \
+            zip(V_tests, theta_tests, f_tests, kwgs['f_targ_origs'], kwgs['f_targ_origPnorms'], kwgs['t_origs']):
+            O_orig += O(f_test, f_targ, t_this, p) / f_targ_pnorm
+        print("-!" * 40)
+        print("Original training O: ", O_orig), 
+        print("-!" * 40)
+    
+        # Keep track of the performance
+        All_O_origs.append(O_orig)
+
+    # Record performance on test data
+    if alt_iter % 5 == 0:
+        O_test = 0.
+        V_tests, theta_tests, f_tests = cal_f_beta(beta_this, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
+                                                   kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0., DirectComputeFlag)
+        for V_test, theta_test, f_test, f_targ, f_targ_pnorm, t_this in \
+            zip(V_tests, theta_tests, f_tests, kwgs['f_targ_tests'], kwgs['f_targ_testPnorms'], kwgs['t_tests']):
+            O_test += O(f_test, f_targ, t_this, p_test) / f_targ_pnorm
+        print("-!" * 40)
+        print("Testing O (p = 2): ", O_test), 
+        print("-!" * 40)
+
+    # # Set up early sampling
+    # if notImprovingRounds > early_stop_rounds:
+    #     print("~" * 40, " Early sampling criteria has been met ", "~" * 40)
+    #     continue
 
 
-# # Save a figure of the result
-# pwd = "./plots/Test0609_std_0_AdjMtd_generated_intervals_p6/"
-# Path(pwd).mkdir(parents=True, exist_ok=True)
+# Save a figure of the result
+pwd = "./plots/Test0616_std_0_AdjMtd_sampled_intervals_p6/"
+Path(pwd).mkdir(parents=True, exist_ok=True)
 
-# # Append to the keywords arguments
-# kwgs['All_betas'] = All_betas
-# kwgs['All_Os'] = All_Os
-# kwgs['All_grads'] = All_grads
-# torch.save(kwgs, pwd + "kwgs.pt")
+# Append to the keywords arguments
+kwgs['All_betas'] = All_betas
+kwgs['All_Os'] = All_Os
+kwgs['All_grads'] = All_grads
+kwgs['All_O_origs'] = All_O_origs
+torch.save(kwgs, pwd + "kwgs.pt")
 
-# # Print out best performance and plot sequences
-# best_idx = All_Os.index(min(All_Os))
-# best_grad = All_grads[best_idx]
-# best_O = All_Os[best_idx]
-# best_beta = All_betas[best_idx]
+# Print out best performance and plot sequences
+best_idx = All_O_origs.index(min(All_O_origs))
+best_grad = All_grads[best_idx]
+best_O = All_Os[best_idx]
+best_beta = All_betas[best_idx]
 
-# # Calculate best test data
-# O_test = 0.
-# # V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
-# #                                                       kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
-# V_tests, theta_tests, f_tests = cal_f_beta(best_beta, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
-#                                             kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0., DirectComputeFlag)
-# for V_test, theta_test, f_test, f_targ, f_targ_pnorm, t_this in \
-#     zip(V_tests, theta_tests, f_tests, kwgs['f_targ_tests'], kwgs['f_targ_testPnorms'], kwgs['t_tests']):
-#     O_test += O(f_test, f_targ, t_this, p_test) / f_targ_pnorm
+# Calculate best test data
+O_test = 0.
+# V_trials, theta_trials, f_trials = cal_f_beta(beta_trial, kwgs, kwgs['ts'], kwgs['t_JumpIdxs'], 
+#                                                       kwgs['tts'], kwgs['JumpIdxs'], kwgs['VtFuncs'], 0.)
+V_tests, theta_tests, f_tests = cal_f_beta(best_beta, kwgs, kwgs['t_tests'], kwgs['t_JumpIdx_tests'], 
+                                            kwgs['tt_tests'], kwgs['JumpIdx_tests'], kwgs['VtFunc_tests'], 0., DirectComputeFlag)
+for V_test, theta_test, f_test, f_targ, f_targ_pnorm, t_this in \
+    zip(V_tests, theta_tests, f_tests, kwgs['f_targ_tests'], kwgs['f_targ_testPnorms'], kwgs['t_tests']):
+    O_test += O(f_test, f_targ, t_this, p_test) / f_targ_pnorm
 
-# # Print results
-# print("~" * 40, " Final Optimization Answer ", "~" * 40)
-# print("Optimized beta: ", best_beta)
-# print("Training O under optimized neta: ", best_O)
-# print("Testing O under optimized beta (p = 2): ", O_test), 
-# print("Gradient: ", best_grad, flush=True)
-# print("VVs: ", VVs)
-# print("tts: ", tts)
-# plotSequences(best_beta, kwgs, pwd)
+# Print results
+print("~" * 40, " Final Optimization Answer ", "~" * 40)
+print("Optimized beta: ", best_beta)
+print("Training O under optimized neta: ", best_O)
+print("Testing O under optimized beta (p = 2): ", O_test), 
+print("Gradient: ", best_grad, flush=True)
+print("VVs: ", VVs)
+print("tts: ", tts)
+plotSequences(best_beta, kwgs, pwd)
