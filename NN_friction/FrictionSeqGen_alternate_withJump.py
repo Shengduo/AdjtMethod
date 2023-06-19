@@ -40,7 +40,7 @@ beta_high = torch.tensor([1., 1., 1.e6, 0.9])
 # beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
 
 # For 0323 alternating a b drs fstar
-beta0 = torch.tensor([0.005, 0.02, 1. / 5.e1, 0.4])
+beta0 = torch.tensor([0.004, 0.002, 5. / 1.e-1, 0.3])
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Set p values, p works fine between 2 and 12, even
@@ -712,7 +712,7 @@ for alt_iter in range(max_iters):
 
 
 # Save a figure of the result
-pwd = "./plots/Test0609_std_0_AdjMtd_generated_intervals_p6/"
+pwd = "./plots/Test0619_std_0_AdjMtd_generated_intervals_p6/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments

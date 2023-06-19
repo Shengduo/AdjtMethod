@@ -22,7 +22,7 @@ from FrictionSeqGen_alternate_withJump_resample_functions import genVVtt, calVtF
 print("Number of workers available: ", effective_n_jobs(-1))
 
 # Initialize the parallel pool
-nWorkers = 16
+nWorkers = 32
 parallel_pool = Parallel(n_jobs=nWorkers, backend='threading')
 
 # Directly compute the sequences
@@ -43,7 +43,7 @@ beta_high = torch.tensor([1., 1., 1.e6, 0.9])
 # beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
 
 # For 0323 alternating a b drs fstar
-beta0 = torch.tensor([0.005, 0.02, 1. / 5.e1, 0.4])
+beta0 = torch.tensor([0.004, 0.002, 5. / 1.e-1, 0.3])
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Set p values, p works fine between 2 and 12, even
@@ -53,7 +53,7 @@ p_test = 2
 
 # Document the unfixed groups
 beta_unfixed_groups = [[0], [1], [2], [3]]
-beta_unfixed_NofIters = torch.tensor([8, 8, 8, 8])
+beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
 # beta_unfixed_groups = [[0, 1, 2, 3]]
 # beta_unfixed_NofIters = torch.tensor([1])
 
@@ -69,7 +69,7 @@ tens = 10 * [10.]
 generate_VVtts = False
 loadDataFilename = "./data/VVTTs0517.pt"
 saveDataFilename = "./data/VVTTs0614.pt"
-totalNofSeqs = 128
+totalNofSeqs = 256
 selectedNofSeqs = 8
 NofIntervalsRange = [5, 11]
 VVRange = [-10, 3]
@@ -172,7 +172,7 @@ outputFileCkDerivs = "log/testDerivatives0615"
 # kwgs = torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')
 ## ------------------------------------ Gradient descent ------------------------------------ 
 # Maximum alternative iterations
-max_iters = 20
+max_iters = 50
 
 # Store all betas and all Os
 All_betas = []
@@ -181,7 +181,7 @@ All_O_origs = []
 All_grads = []
 
 # Early stop criteria
-early_stop_rounds = 20
+early_stop_rounds = 50
 best_O = 1.e8
 notImprovingRounds = 0
 
@@ -189,9 +189,9 @@ notImprovingRounds = 0
 beta_this = beta0
 for alt_iter in range(max_iters):
     # Print out section
-    print("*" * 100)
+    print("*" * 104)
     print("*", " "*40, "Outer Iteration ", str(alt_iter), " " * 40, "*")
-    print("*" * 100)
+    print("*" * 104)
 
     ## Inner iteration, get fixed randomly
     inner_groups = []
@@ -352,7 +352,7 @@ for alt_iter in range(max_iters):
 
 
 # Save a figure of the result
-pwd = "./plots/Test0616_std_0_AdjMtd_sampled_intervals_p6/"
+pwd = "./plots/Test0619_std_0_AdjMtd_sampled_intervals_p6/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments
