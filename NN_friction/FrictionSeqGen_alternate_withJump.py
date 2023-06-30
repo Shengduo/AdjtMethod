@@ -569,7 +569,7 @@ torch.save(kwgs, './data/VVTTs_0601_std0_kwgs.pt')
 # kwgs = torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')
 ## ------------------------------------ Gradient descent ------------------------------------ 
 # Maximum alternative iterations
-max_iters = 50
+max_iters = 150
 
 # Store all betas and all Os
 All_betas = []
@@ -712,7 +712,7 @@ for alt_iter in range(max_iters):
 
 
 # Save a figure of the result
-pwd = "./plots/Test0619_std_0_AdjMtd_generated_intervals_p6/"
+pwd = "./plots/Test0620_std_0_AdjMtd_generated_intervals_p6/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments

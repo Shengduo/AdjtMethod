@@ -43,7 +43,7 @@ beta_high = torch.tensor([1., 1., 1.e6, 0.9])
 # beta_fixed = torch.tensor([1, 1, 0, 0], dtype=torch.bool)
 
 # For 0323 alternating a b drs fstar
-beta0 = torch.tensor([0.004, 0.002, 5. / 1.e-1, 0.3])
+beta0 = torch.tensor([0.0106, 0.0105, 0.1667, 0.4985])
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Set p values, p works fine between 2 and 12, even
@@ -52,8 +52,10 @@ p = 6
 p_test = 2
 
 # Document the unfixed groups
-beta_unfixed_groups = [[0], [1], [2], [3]]
-beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+# beta_unfixed_groups = [[0], [1], [2], [3]]
+# beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+beta_unfixed_groups = [[0, 1], [2, 3]]
+beta_unfixed_NofIters = torch.tensor([6, 6])
 # beta_unfixed_groups = [[0, 1, 2, 3]]
 # beta_unfixed_NofIters = torch.tensor([1])
 
@@ -69,7 +71,7 @@ tens = 10 * [10.]
 generate_VVtts = False
 loadDataFilename = "./data/VVTTs0517.pt"
 saveDataFilename = "./data/VVTTs0614.pt"
-totalNofSeqs = 256
+totalNofSeqs = 1024
 selectedNofSeqs = 8
 NofIntervalsRange = [5, 11]
 VVRange = [-10, 3]
@@ -172,7 +174,7 @@ outputFileCkDerivs = "log/testDerivatives0615"
 # kwgs = torch.load('./data/VVTTs_0517_std1e-3_kwgs.pt')
 ## ------------------------------------ Gradient descent ------------------------------------ 
 # Maximum alternative iterations
-max_iters = 50
+max_iters = 100
 
 # Store all betas and all Os
 All_betas = []
@@ -352,7 +354,7 @@ for alt_iter in range(max_iters):
 
 
 # Save a figure of the result
-pwd = "./plots/Test0619_std_0_AdjMtd_sampled_intervals_p6/"
+pwd = "./plots/Test0630_std_0_AdjMtd_sampled_intervals_p6_01_34/"
 Path(pwd).mkdir(parents=True, exist_ok=True)
 
 # Append to the keywords arguments
