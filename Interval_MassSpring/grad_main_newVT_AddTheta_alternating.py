@@ -85,8 +85,8 @@ alphas = torch.tensor([[100., 5., 9.8],
 #                       torch.linspace(0., 30., 15)])
 
 # # Multi data2
-ones = 10 * [1.]
-tens = 10 * [10.]
+ones = 4 * [1.]
+tens = 4 * [10.]
 VT_VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
                        ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
                        ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
@@ -131,7 +131,7 @@ alp_hi = torch.tensor([100., 2., 10., 10.])
 y0 = torch.tensor([0., 1.0, 1.0])
 
 # Start beta
-beta0 = torch.tensor([0.008, 0.016, 1. / 2.e1, 0.3])
+beta0 = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 
 # # Different start beta, closer to target
 # beta0 = torch.tensor([0.010, 0.017, 2. / 1.e1, 0.6])
@@ -160,7 +160,7 @@ beta_unfixed_NofIters = torch.tensor([1])
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
-max_iters = 100
+max_iters = 5
 maxFuncCalls = 200
 regularizedFlag = True
 noLocalSearch = True
@@ -223,6 +223,9 @@ def generate_target_v(alphas, VTs, beta, y0, this_rtol, this_atol, regularizedFl
     ys = []
     MFParams_targs = []
     for idx, (alpha, VT) in enumerate(zip(alphas, VTs)):
+        # DEBUG LINES
+        print("VT No.: ", idx + 1)
+        
         targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag, regularizedFlag)
         # targ_SpringSlider.print_info()
         targ_seq = TimeSequenceGen(VT[1, -1], NofTPts, targ_SpringSlider, 

@@ -39,7 +39,7 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0420ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
+res_path = "./plots/0630ABDRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
@@ -74,28 +74,28 @@ alphas = torch.tensor([[100., 5., 9.8],
                        [100., 5., 9.8], 
                        [100., 5., 9.8]])
 
-VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
-                       [1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-                       [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
+# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
+#                        [1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
+#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
 
-VT_tts = torch.stack([torch.linspace(0., 30., 15), 
-                      torch.linspace(0., 30., 15), 
-                      torch.linspace(0., 30., 15), 
-                      torch.linspace(0., 30., 15)])
+# VT_tts = torch.stack([torch.linspace(0., 30., 15), 
+#                       torch.linspace(0., 30., 15), 
+#                       torch.linspace(0., 30., 15), 
+#                       torch.linspace(0., 30., 15)])
 
-# # # Multi data2
-# ones = 4 * [1.]
-# tens = 4 * [10.]
-# VT_VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
-#                        ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
-#                        ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
-#                        tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
+# # Multi data2
+ones = 1 * [1.]
+tens = 1 * [10.]
+VT_VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
+                       ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
+                       ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
+                       tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
 
-# VT_tts = torch.stack([torch.linspace(0., 30., VT_VVs.shape[1]),
-#                       torch.linspace(0., 30., VT_VVs.shape[1]),
-#                       torch.linspace(0., 30., VT_VVs.shape[1]),
-#                       torch.linspace(0., 30., VT_VVs.shape[1])])
+VT_tts = torch.stack([torch.linspace(0., 30., VT_VVs.shape[1]),
+                      torch.linspace(0., 30., VT_VVs.shape[1]),
+                      torch.linspace(0., 30., VT_VVs.shape[1]),
+                      torch.linspace(0., 30., VT_VVs.shape[1])])
 
 VT_Trange = torch.tensor([0., 30.])
 VT_Trange = torch.tensor([0., 30.])
@@ -131,7 +131,7 @@ alp_hi = torch.tensor([100., 2., 10., 10.])
 y0 = torch.tensor([0., 1.0, 1.0])
 
 # Start beta
-beta0 = torch.tensor([0.008, 0.016, 1. / 2.e1, 0.3])
+beta0 = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.5])
 
 # # Different start beta, closer to target
 # beta0 = torch.tensor([0.010, 0.017, 2. / 1.e1, 0.6])
@@ -149,18 +149,18 @@ beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 beta_low = torch.tensor([0.001, 0.001, 0.001, 0.1])
 beta_high = torch.tensor([1., 1., 1.e6, 0.9])
 
-beta_fixed = torch.tensor([0, 1, 0, 0], dtype=torch.bool)
+beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Document the unfixed groups
 # beta_unfixed_groups = [[0], [1], [2], [3]]
 # beta_unfixed_NofIters = torch.tensor([1, 1, 1, 1])
-beta_unfixed_groups = [[0, 2, 3]]
+beta_unfixed_groups = [[0, 1, 2, 3]]
 beta_unfixed_NofIters = torch.tensor([1])
 
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
-max_iters = 100
+max_iters = 5
 maxFuncCalls = 200
 regularizedFlag = True
 noLocalSearch = True
@@ -177,8 +177,8 @@ this_rtol = 1.e-6
 this_atol = 1.e-8
 
 # Solver
-solver = 'rk4'
-# solver = 'dopri5'
+# solver = 'rk4'
+solver = 'dopri5'
 
 # LawFlag
 # lawFlag = "slip"

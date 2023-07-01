@@ -60,15 +60,21 @@ class MassFricParams:
         self.vtFuncs = []
         self.stFuncs = []
         for i in range(len(self.JumpIdx) - 1):
-            this_V = self.V[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1]
-            this_T = self.T[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1]
+            this_V = self.V[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
+            this_T = self.T[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
             self.S[self.JumpIdx[i] + 1 : self.JumpIdx[i + 1] + 1] = torch.cumulative_trapezoid(this_V, this_T) + self.S[self.JumpIdx[i]]
             this_V[-1] = this_V[-2]
             this_vtFunc = interp1d(this_T, this_V)
             this_stFunc = interp1d(this_T, self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
             self.vtFuncs.append(this_vtFunc)
             self.stFuncs.append(this_stFunc)
-        
+
+            # # DEBUG LINES
+            # print("~+"*30, " In MassFricParams ", "+~"*30)
+            # print("this_V: ", this_V)
+            # print("this_S: ", self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
+            # print("~+"*30, "                   ", "+~"*30, flush=True)
+
     # Define the function that gives V at t
     def VatT_interp(self, t):
         for idx, jumpT in enumerate(self.JumpT):
