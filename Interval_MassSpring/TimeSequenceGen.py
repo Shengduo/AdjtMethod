@@ -27,10 +27,10 @@ Class TimeSequenceGen, container for a Generated time sequence containing
 """
 class TimeSequenceGen:
     # Constructor
-    def __init__(self, T, NofTPts, MFParams, rtol = 1.e-6, atol = 1.e-8, regularizedFlag = True, solver = 'dopri5'):
+    def __init__(self, NofTPts, MFParams, rtol = 1.e-6, atol = 1.e-8, regularizedFlag = True, solver = 'dopri5'):
         # Load the parameters
-        self.T = T
-        self.t = torch.linspace(0., T, NofTPts)
+        self.T = MFParams.TT[-1]
+        self.t = torch.linspace(0., self.T, NofTPts)
         self.MFParams = MFParams
         self.rtol = rtol
         self.atol = atol
@@ -40,13 +40,13 @@ class TimeSequenceGen:
         # Find the jumps in self.t
         t_Jumps = self.MFParams.JumpT
         self.JumpIdx = self.MFParams.JumpIdx
-        self.tt = self.MFParams.T
-        self.VV = self.MFParams.V
+        self.tt = self.MFParams.TT
+        self.VV = self.MFParams.VV
         
         self.t_JumpIdx = []
-        for jumpT in t_Jumps:
+        for t_Jump in t_Jumps:
             for idx in range(len(self.t)):
-                if self.t[idx] >= jumpT:
+                if self.t[idx] >= t_Jump:
                     self.t_JumpIdx.append(idx)
                     break
         

@@ -43,8 +43,6 @@ res_path = "./plots/0420ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
-# # For prescribed VT
-VT_NofTpts = 1500
 # VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
 #                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
 
@@ -100,6 +98,9 @@ VT_tts = torch.stack([torch.linspace(0., 30., VT_VVs.shape[1]),
 VT_Trange = torch.tensor([0., 30.])
 VT_Trange = torch.tensor([0., 30.])
 
+# # For prescribed VT
+VT_NofTpts = 1500
+
 # VT_VVs = torch.tensor([[1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
 # VT_tts = torch.linspace(0., 30., 15).reshape([1, -1])
 
@@ -116,14 +117,14 @@ VT_kwgs = {
     "plt_save_path" : gen_plt_save_path, 
 }
 
-# Get the series
-VT_instance = GenerateVT(VT_kwgs)
-print("Shit!")
+# # Get the series
+# VT_instance = GenerateVT(VT_kwgs)
+# print("Shit!")
 
-VTs = VT_instance.VT
+# VTs = VT_instance.VT
 
-# Plot VT (optional)
-VT_instance.plotVT()
+# # Plot VT (optional)
+# VT_instance.plotVT()
 
 # Alpha range
 alp_low = torch.tensor([50., 0.5, 1., 9.])
@@ -191,7 +192,9 @@ alter_grad_flag = True
 kwgs = {
     'y0' : y0, 
     'alphas' : alphas, 
-    'VTs' : VTs,
+    "VVs" : VT_VVs, 
+    "tts" : VT_tts, 
+    'NofTPts' : NofTPts, 
     'alp_low' : alp_low, 
     'alp_high' : alp_hi, 
     'max_iters' : max_iters, 
@@ -218,18 +221,20 @@ kwgs = {
 
 
 # Function to get target v
-def generate_target_v(alphas, VTs, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
+def generate_target_v(kwgs, beta):
+# def generate_target_v(alphas, VVs, tts, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
     ts = []
     ys = []
     MFParams_targs = []
-    for idx, (alpha, VT) in enumerate(zip(alphas, VTs)):
+    for idx, (alpha, VV, tt) in enumerate(zip(kwgs['alphas'], kwgs['VVs'], kwgs['tts'])):
         # DEBUG LINES
         print("VT No.: ", idx + 1)
         
-        targ_SpringSlider = MassFricParams(alpha, VT, beta, y0, lawFlag, regularizedFlag)
+        targ_SpringSlider = MassFricParams(alpha, VV, tt, beta, kwgs['y0'], kwgs['lawFlag'], kwgs['regularizedFlag'])
         # targ_SpringSlider.print_info()
-        targ_seq = TimeSequenceGen(VT[1, -1], NofTPts, targ_SpringSlider, 
-                                   rtol=this_rtol, atol=this_atol, regularizedFlag=regularizedFlag, solver=solver)
+        targ_seq = TimeSequenceGen(kwgs['NofTPts'], targ_SpringSlider, 
+                                   rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], 
+                                   regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
         
         ts.append(targ_seq.t)
         ys.append(targ_seq.default_y)
@@ -261,10 +266,9 @@ for i in range(N_AllIters):
     
     ## Run grad descent on beta
     # Generate target v
-    ts, vs, MFParams_targs = generate_target_v(this_alphas, kwgs['VTs'], kwgs['beta_targ'], kwgs['y0'], 
-                                               kwgs['this_rtol'], kwgs['this_atol'], kwgs['regularizedFlag'], 
-                                               kwgs['solver'], kwgs['lawFlag'])
+    ts, vs, MFParams_targs = generate_target_v(kwgs, beta0)
 
+    exit()
     # Run gradient descent
     myGradBB = GradDescent(kwgs, this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
                            this_beta, kwgs['beta_low'], kwgs['beta_high'], 

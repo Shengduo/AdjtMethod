@@ -24,7 +24,7 @@ Class MassFricParams, manages data of a mass block sliding on rate-and-state fri
 """
 class MassFricParams: 
     # Constructor
-    def __init__(self, kmg, VT, RSParams, y0, lawFlag = "aging", regularizedFlag = True):
+    def __init__(self, kmg, VV, TT, RSParams, y0, lawFlag = "aging", regularizedFlag = True):
         # Define constant parameters k, m and g
         self.k = kmg[0]
         self.m = kmg[1]
@@ -32,66 +32,68 @@ class MassFricParams:
         
         # Get the VT relation
         # print("VT: ", VT)
-        self.V = VT[0, :]
-        self.T = VT[1, :]
+        self.VV = VV
+        self.TT = TT
         
         # Get the displacement at T
-        self.S = torch.zeros(self.V.shape)
-        # self.S[1:] = torch.cumulative_trapezoid(self.V, self.T)
+        self.S = torch.zeros(self.VV.shape)
+        # self.S[1:] = torch.cumulative_trapezoid(self.VV, self.TT)
         
         self.RSParams = RSParams
         self.y0 = y0
-        self.y0[1] = VT[0, 0]
+        self.y0[1] = VV[0]
 
         self.lawFlag = lawFlag
         self.regularizedFlag = regularizedFlag
         
         # Get the jump points
         self.JumpIdx = [0]
-        self.JumpT = [self.T[0]]
-        for i in range(1, len(self.V)):
-            if self.V[i] != self.V[i - 1]:
+        self.JumpT = [self.TT[0]]
+        for i in range(1, len(self.VV)):
+            if self.VV[i] != self.VV[i - 1]:
                 self.JumpIdx.append(i)
-                self.JumpT.append(self.T[i])
-        self.JumpIdx.append(len(self.V) - 1)
-        self.JumpT.append(self.T[-1])
+                self.JumpT.append(self.TT[i])
+        self.JumpIdx.append(len(self.VV) - 1)
+        self.JumpT.append(self.TT[-1])
 
         # Get the function of V, S at T
-        self.vtFuncs = []
+        self.VtFuncs = []
         self.stFuncs = []
         for i in range(len(self.JumpIdx) - 1):
-            this_V = self.V[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
-            this_T = self.T[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
+            this_V = self.VV[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
+            this_T = self.TT[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
             self.S[self.JumpIdx[i] + 1 : self.JumpIdx[i + 1] + 1] = torch.cumulative_trapezoid(this_V, this_T) + self.S[self.JumpIdx[i]]
             this_V[-1] = this_V[-2]
             this_vtFunc = interp1d(this_T, this_V)
             this_stFunc = interp1d(this_T, self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
-            self.vtFuncs.append(this_vtFunc)
+            self.VtFuncs.append(this_vtFunc)
             self.stFuncs.append(this_stFunc)
 
-            # # DEBUG LINES
-            # print("~+"*30, " In MassFricParams ", "+~"*30)
-            # print("this_V: ", this_V)
-            # print("this_S: ", self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
-            # print("~+"*30, "                   ", "+~"*30, flush=True)
+            # DEBUG LINES
+            print("~+"*30, " In MassFricParams ", "+~"*30)
+            print("this_V: ", this_V)
+            print("this_S: ", self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
+            print("~+"*30, "                   ", "+~"*30, flush=True)
 
     # Define the function that gives V at t
     def VatT_interp(self, t):
+        t_clipped = torch.clip(t, self.TT[0], self.TT[-1])
         for idx, jumpT in enumerate(self.JumpT):
-            if jumpT > t:
-                return torch.tensor(self.vtFuncs[idx - 1](t), dtype=torch.float)
+            if jumpT > t_clipped:
+                return torch.tensor(self.VtFuncs[idx - 1](t_clipped), dtype=torch.float)
 
         # If the last interval
-        return torch.tensor(self.vtFuncs[-1](t), dtype=torch.float) 
+        return torch.tensor(self.VtFuncs[-1](t_clipped), dtype=torch.float) 
     
     # Define the function that gives S at t
     def SatT_interp(self, t):
+        t_clipped = torch.clip(t, self.TT[0], self.TT[-1])
         for idx, jumpT in enumerate(self.JumpT):
-            if jumpT > t:
-                return torch.tensor(self.stFuncs[idx - 1](t), dtype=torch.float)
+            if jumpT > t_clipped:
+                return torch.tensor(self.stFuncs[idx - 1](t_clipped), dtype=torch.float)
 
         # If the last interval
-        return torch.tensor(self.stFuncs[-1](t), dtype=torch.float)
+        return torch.tensor(self.stFuncs[-1](t_clipped), dtype=torch.float)
     
     # Output the information of this class
     def print_info(self):
@@ -111,6 +113,6 @@ class MassFricParams:
         print('law:      ', self.lawFlag)
         # # Plot V at t
         # plt.figure()
-        # plt.plot(self.T, self.V, linewidth = 2.0)
+        # plt.plot(self.TT, self.VV, linewidth = 2.0)
         # plt.show()
         
