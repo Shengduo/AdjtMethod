@@ -36,7 +36,7 @@ class MassFricParams:
         self.TT = TT
         
         # Get the displacement at T
-        self.S = torch.zeros(self.VV.shape)
+        self.S = torch.zeros([len(self.VV)])
         # self.S[1:] = torch.cumulative_trapezoid(self.VV, self.TT)
         
         self.RSParams = RSParams
@@ -60,6 +60,8 @@ class MassFricParams:
         self.VtFuncs = []
         self.stFuncs = []
         for i in range(len(self.JumpIdx) - 1):
+            # this_V = torch.tensor(self.VV[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1]).clone()
+            # this_T = torch.tensor(self.TT[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1]).clone()
             this_V = self.VV[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
             this_T = self.TT[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1].clone()
             self.S[self.JumpIdx[i] + 1 : self.JumpIdx[i + 1] + 1] = torch.cumulative_trapezoid(this_V, this_T) + self.S[self.JumpIdx[i]]

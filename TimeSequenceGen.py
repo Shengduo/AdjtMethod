@@ -30,7 +30,7 @@ class TimeSequenceGen:
     def __init__(self, T, NofTPts, MFParams, rtol = 1.e-6, atol = 1.e-8, regularizedFlag = True, solver = 'dopri5'):
         # Load the parameters
         self.T = T
-        self.t = torch.linspace(0., T, NofTPts)
+        self.t = torch.linspace(0., T, NofTPts * len(T))
         self.MFParams = MFParams
         self.rtol = rtol
         self.atol = atol

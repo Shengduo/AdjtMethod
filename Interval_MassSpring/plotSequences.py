@@ -92,24 +92,31 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit/'):
     # os.mkdir(savePath)
 
     # Generate the sequences
-    VTs = kwgs['VTs']
+    VVs = kwgs['VV_origs']
+    tts = kwgs['tt_origs']
     alphas = kwgs['alphas']
 
-    for idx, (alpha, VT) in enumerate(zip(alphas, VTs)):
-        # Store all sequeces as a list
+    gen_Vs = []
+    gen_ts = []
+    for idx, (alpha, VV, tt) in enumerate(zip(alphas, VVs, tts)):
+        # Store all sequences as a list
         ys = []
         ts = []
         lwidths = np.linspace(2., 1., len(betas))
         
         for beta in betas:
-            targ_SpringSlider = MassFricParams(alpha, VT, beta, kwgs['y0'])
+            targ_SpringSlider = MassFricParams(alpha, VV, tt, beta, kwgs['y0'])
             # targ_SpringSlider.print_info()
-            targ_seq = TimeSequenceGen(VT[1, -1], kwgs['NofTPts'], targ_SpringSlider, 
-                                    rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
+            targ_seq = TimeSequenceGen(kwgs['NofTPts'], targ_SpringSlider, 
+                                      rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], 
+                                      regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
             
             # Append the sequences into the list
             ys.append(targ_seq.default_y)
             ts.append(targ_seq.t)
+        
+        gen_ts.append(targ_seq.t)
+        gen_Vs.append(targ_seq.V)
 
         # Plot all (2) sequences
         # Plot Sequence of V(t) and theta(t) given sample-index
@@ -165,8 +172,23 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit/'):
         axs[1][1].grid()
 
         # Save the figure
-        f.suptitle("Sequence " + str(idx), fontsize=20)
+        f.suptitle("Original Sequence " + str(idx), fontsize=20)
         f.savefig(savePath + str(idx) + ".png", dpi=300.)
+        f.close()
+
+    # Plot the generating sequences
+    plt.figure(figsize=[15, 10])
+    lgd = []
+
+    for idx, (t, V) in enumerate(zip(gen_ts, gen_Vs)):
+        plt.semilogy(t, V, linewidth=lws[idx])
+        lgd.append("Original Seq " + str(idx))
+    
+    plt.legend(lgd, fontsize=20, loc='best')
+    plt.xlabel("t [s]", fontsize=20)
+    plt.ylabel("V [m/s]", fontsize=20)
+    plt.savefig(pwd + "OrigGenSeqs.png", dpi = 300.)
+    plt.close()
 
 
 ## Main executions 

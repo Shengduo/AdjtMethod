@@ -39,32 +39,9 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0420ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
+res_path = "./plots/0704ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
-
-# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
-
-# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1, 1.e1]])
-
-# # Data 3
-# alphas = torch.tensor([[100., 5., 9.8], 
-#                        [100., 5., 9.8], 
-#                        [100., 5., 9.8], 
-#                        [100., 5., 9.8]])
-
-# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
-#                        [1., 1., 1., 1., 1., 1. ,1., 1., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]])
-
-# Data 4
-# alphas = torch.tensor([[100., 5., 9.8], 
-#                        [100, 5., 9.8], 
-#                        [1.e5, 5., 9.8], 
-#                        [1.e5, 5., 9.8]])
 
 # Multi data2
 alphas = torch.tensor([[100., 5., 9.8], 
@@ -72,34 +49,21 @@ alphas = torch.tensor([[100., 5., 9.8],
                        [100., 5., 9.8], 
                        [100., 5., 9.8]])
 
-# VT_VVs = torch.tensor([[1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.], 
-#                        [1., 1., 10., 10., 1., 1., 10., 10., 1., 1., 1., 1., 1., 1., 1.], 
-#                        [1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
-
-# VT_tts = torch.stack([torch.linspace(0., 30., 15), 
-#                       torch.linspace(0., 30., 15), 
-#                       torch.linspace(0., 30., 15), 
-#                       torch.linspace(0., 30., 15)])
-
 # # Multi data2
-ones = 4 * [1.]
-tens = 4 * [10.]
-VT_VVs = torch.tensor([ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
-                       ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
-                       ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
-                       tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens])
-
-VT_tts = torch.stack([torch.linspace(0., 30., VT_VVs.shape[1]),
-                      torch.linspace(0., 30., VT_VVs.shape[1]),
-                      torch.linspace(0., 30., VT_VVs.shape[1]),
-                      torch.linspace(0., 30., VT_VVs.shape[1])])
+ones = 10 * [1.]
+tens = 10 * [10.]
+VT_VVs = [ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
+          ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
+          ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
+          tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens]
+VT_VVs = [torch.tensor(VV) for VV in VT_VVs]
+VT_tts = [torch.linspace(0., 0.2 * len(VV), len(VV)) for VV in VT_VVs]
 
 VT_Trange = torch.tensor([0., 30.])
 VT_Trange = torch.tensor([0., 30.])
 
 # # For prescribed VT
-VT_NofTpts = 1500
+VT_NofTpts = 10
 
 # VT_VVs = torch.tensor([[1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
 # VT_tts = torch.linspace(0., 30., 15).reshape([1, -1])
@@ -192,8 +156,8 @@ alter_grad_flag = True
 kwgs = {
     'y0' : y0, 
     'alphas' : alphas, 
-    "VVs" : VT_VVs, 
-    "tts" : VT_tts, 
+    "VV_origs" : VT_VVs, 
+    "tt_origs" : VT_tts, 
     'NofTPts' : NofTPts, 
     'alp_low' : alp_low, 
     'alp_high' : alp_hi, 
@@ -249,6 +213,8 @@ def generate_target_v(kwgs, beta):
 N_AllIters = 1
 this_alphas = alphas
 this_beta = beta0
+this_VVs = VT_VVs
+this_tts = VT_tts
 
 ## Run alpha-beta iterations
 for i in range(N_AllIters):
@@ -258,32 +224,28 @@ for i in range(N_AllIters):
     ## First optimize alpha
     kwgs['alphas'] = this_alphas
     kwgs['beta_this'] = this_beta
-    
-    # Timing alpha
-    # Update this Alpha
-    # this_alpha = optAlpha(O_GAN, kwgs)
-    
-    
+    kwgs['VVs'] = this_VVs
+    kwgs['tts'] = this_tts
+
     ## Run grad descent on beta
     # Generate target v
     ts, vs, MFParams_targs = generate_target_v(kwgs, beta0)
 
-    exit()
-    # Run gradient descent
-    myGradBB = GradDescent(kwgs, this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
-                           this_beta, kwgs['beta_low'], kwgs['beta_high'], 
-                           kwgs['y0'], vs, ts, MFParams_targs, 
-                           objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
-                           max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
-                           regularizedFlag = kwgs['regularizedFlag'], 
-                           NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'], 
-                           solver = kwgs['solver'], lawFlag = kwgs['lawFlag'], alter_grad_flag = kwgs['alter_grad_flag'])
+    # # Run gradient descent
+    # myGradBB = GradDescent(kwgs, this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
+    #                        this_beta, kwgs['beta_low'], kwgs['beta_high'], 
+    #                        kwgs['y0'], vs, ts, MFParams_targs, 
+    #                        objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
+    #                        max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
+    #                        regularizedFlag = kwgs['regularizedFlag'], 
+    #                        NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'], 
+    #                        solver = kwgs['solver'], lawFlag = kwgs['lawFlag'], alter_grad_flag = kwgs['alter_grad_flag'])
     
-    myGradBB.run()
+    # myGradBB.run()
     
-    # Update parameters
-    this_beta = myGradBB.beta_optimal
-    print("Optimal beta: ", this_beta)
+    # # Update parameters
+    # this_beta = myGradBB.beta_optimal
+    # print("Optimal beta: ", this_beta)
 
 # Plot sequences
 print("[k, m, g]: ", alphas)
@@ -296,6 +258,8 @@ print("stepping: ", stepping)
 print("solver: ", solver)
 print("lawFlag: ", lawFlag)
 print("alter_grad_flag", alter_grad_flag)
-betas = [beta_targ, beta0, this_beta]
-betas_legend = ["True", "Init", "Finl"]
+# betas = [beta_targ, beta0, this_beta]
+# betas_legend = ["True", "Init", "Finl"]
+betas = [beta_targ, beta0]
+betas_legend = ["True", "Init"]
 plot_differences(kwgs, betas, betas_legend, res_path)
