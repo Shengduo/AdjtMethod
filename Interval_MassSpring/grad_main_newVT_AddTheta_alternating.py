@@ -142,8 +142,8 @@ this_rtol = 1.e-6
 this_atol = 1.e-8
 
 # Solver
-# solver = 'rk4'
-solver = 'dopri5'
+solver = 'rk4'
+# solver = 'dopri5'
 
 # LawFlag
 # lawFlag = "slip"
@@ -260,6 +260,6 @@ print("lawFlag: ", lawFlag)
 print("alter_grad_flag", alter_grad_flag)
 # betas = [beta_targ, beta0, this_beta]
 # betas_legend = ["True", "Init", "Finl"]
-betas = [beta_targ, beta0]
-betas_legend = ["True", "Init"]
+betas = [beta0, beta_targ]
+betas_legend = ["Init", "True"]
 plot_differences(kwgs, betas, betas_legend, res_path)
