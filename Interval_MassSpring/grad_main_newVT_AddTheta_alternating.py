@@ -21,7 +21,7 @@ from matplotlib import pyplot as plt
 from MassFricParams import MassFricParams
 from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
-from GradientDescent import GradDescent, objGradFunc
+from GradientDescent import GradDescent, objGradFunc, empiricalGrad
 from plotSequences import plot_differences
 from GenerateVT import GenerateVT
 
@@ -213,6 +213,35 @@ def generate_target_v(kwgs, beta):
     return torch.stack(ts), torch.stack(ys), MFParams_targs
 
 
+# Test out adjoint and empirical gradients
+# Generate target v
+t_targs, y_targs, MFParams_targs = generate_target_v(kwgs, beta_targ)
+
+obj, grad = objGradFunc(kwgs, 
+                        kwgs['alphas'], 
+                        kwgs['VV_origs'], 
+                        kwgs['tt_origs'], 
+                        beta0, 
+                        kwgs['y0'], 
+                        y_targs, 
+                        MFParams_targs, 
+                        objOnly = False)
+
+empirical_grad = empiricalGrad(kwgs, 
+                               kwgs['alphas'], 
+                               kwgs['VV_origs'], 
+                               kwgs['tt_origs'], 
+                               beta0, 
+                               kwgs['y0'], 
+                               y_targs, 
+                               MFParams_targs, 
+                               proportion = 0.01)
+
+print("-$" * 20, " Gradient test ", "-$" * 20)
+print("Adjoint gradient: ", grad)
+print("Finite difference gradient: ", empirical_grad)
+print("-$" * 20, "               ", "-$" * 20)
+
 ## Number of total alpha-beta iterations
 N_AllIters = 1
 this_alphas = alphas
@@ -233,7 +262,7 @@ for i in range(N_AllIters):
 
     ## Run grad descent on beta
     # Generate target v
-    ts, vs, MFParams_targs = generate_target_v(kwgs, beta0)
+    ts, ys, MFParams_targs = generate_target_v(kwgs, beta0)
 
     # # Run gradient descent
     # myGradBB = GradDescent(kwgs, this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
