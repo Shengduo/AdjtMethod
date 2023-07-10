@@ -30,24 +30,24 @@ from DerivativesAddTheta import *
 # this_atol = 1.e-10
 
 # Function observation function
-def objGradFunc(alphas, VTs, beta, y0, targ_ys, MFParams_targs, scaling, regularizedFlag, objOnly = False, 
-                NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
-                solver = 'dopri5', lawFlag = "aging"):
+def objGradFunc(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOnly = False):
     # Initialize objective and gradient
     obj = 0.
     grad = torch.zeros(beta.shape)
 
     # Generate target v
-    for (alpha, VT, targ_y, MFParams_targ) in zip(alphas, VTs, targ_ys, MFParams_targs):
-        this_RSParams = beta * scaling
-        this_SpringSlider = MassFricParams(alpha, VT, this_RSParams, y0, lawFlag, regularizedFlag)
+    for (alpha, VV, tt, targ_y, MFParams_targ) in zip(alphas, VVs, tts, targ_ys, MFParams_targs):
+        this_RSParams = beta * kwgs['scaling']
+        this_SpringSlider = MassFricParams(alpha, VV, tt, this_RSParams, y0, kwgs['lawFlag'], kwgs['regularizedFlag'])
         
-        this_seq = TimeSequenceGen(VT[1, -1], NofTPts, this_SpringSlider, 
-                                   rtol = this_rtol, atol = this_atol, regularizedFlag = regularizedFlag, 
-                                   solver = solver)
+        this_seq = TimeSequenceGen(kwgs['NofTPts'], this_SpringSlider, 
+                                   rtol = kwgs['this_rtol'], 
+                                   atol = kwgs['this_atol'], 
+                                   regularizedFlag = kwgs['regularizedFlag'], 
+                                   solver = kwgs['solver'])
         
         # Compute the value of objective function
-        obj = obj + O(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider, MFParams_targ)
+        obj = obj + O(this_seq.default_y, targ_y, this_seq.t, kwgs['p'], this_SpringSlider, MFParams_targ)
         
     #     # DEBUG LINES
     #     print("-"*30)
@@ -60,8 +60,8 @@ def objGradFunc(alphas, VTs, beta, y0, targ_ys, MFParams_targs, scaling, regular
             grad = 0.
         else:
             myAdj = AdjDerivs(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider, MFParams_targ, 
-                              rtol = this_rtol, atol = this_atol, regularizedFlag = regularizedFlag, solver = solver)
-            grad = grad + myAdj.dOdBeta / scaling
+                              rtol = kwgs['this_rtol'], atol = kwgs['this_atol'], regularizedFlag = kwgs['regularizedFlag'], solver = kwgs['solver'])
+            grad = grad + myAdj.dOdBeta / kwgs['scaling']
         
     return obj, grad
 

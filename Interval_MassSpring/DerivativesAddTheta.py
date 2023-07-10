@@ -19,7 +19,7 @@ from matplotlib import pyplot as plt
 
 # ------------------------ Calculate the derivative: Do / D\beta -------------------------
 # Observation
-def O(y, y_targ, t, MFParams, MFParams_targ, f_coef=1., normalization=True, includeTheta=False):
+def O(y, y_targ, t, p, MFParams, MFParams_targ, f_coef=1., normalization=True, includeTheta=False):
     ff_targ = computeF(y_targ, MFParams_targ)
     ff = computeF(y, MFParams)
     
@@ -35,49 +35,48 @@ def O(y, y_targ, t, MFParams, MFParams_targ, f_coef=1., normalization=True, incl
     # Least square error
     if normalization == True:
         O = torch.trapezoid(
-            torch.square((y[1, :] - y_targ[1, :]) / torch.mean(y_targ[1, :]))
-            + torch.square((torch.log(y[1, :]) - torch.log(y_targ[1, :])) / torch.mean(torch.log(y_targ[1, :])))
-            + torch.square((ff - ff_targ) / torch.mean(ff_targ) * f_coef), 
+            torch.pow((y[1, :] - y_targ[1, :]) / torch.mean(torch.abs(y_targ[1, :])), p)
+            + torch.pow((ff - ff_targ) / torch.mean(torch.abs(ff_targ)) * f_coef, p), 
             t
         )
 
         if includeTheta == True:
             O += torch.trapezoid(
-                 torch.square((y[2, :] - y_targ[2, :]) / torch.mean(y_targ[2, :]))
-                 + torch.square((torch.log(y[2, :]) - torch.log(y_targ[2, :])) / torch.mean(torch.log(y_targ[2, :]))), 
+                 torch.pow((y[2, :] - y_targ[2, :]) / torch.mean(y_targ[2, :]), p), 
                  t
             )
     else:
         O = torch.trapezoid(
-            torch.square(y[1, :] - y_targ[1, :]) + torch.square(y[2, :] - y_targ[2, :])  
-            + torch.square(torch.log(y[1, :]) - torch.log(y_targ[1, :]))
-            + torch.square(torch.log(y[2, :]) - torch.log(y_targ[2, :])) 
-            + torch.square((ff - ff_targ) * f_coef), 
+            torch.pow(y[1, :] - y_targ[1, :], p) 
+            + torch.pow((ff - ff_targ) * f_coef, p), 
             t
         )
 
         if includeTheta == True:
             O += torch.trapezoid(
-                 torch.square(y[2, :] - y_targ[2, :])
-                 + torch.square(torch.log(y[2, :]) - torch.log(y_targ[2, :])), 
+                 torch.pow(y[2, :] - y_targ[2, :], p), 
                  t
             )
         
+    # Normalize by time, and then to the power 1/p
+    O = O / (t[-1] - t[0])
+    O = torch.pow(O, 1. / p)
+
     # print("Relative L2 error: ", torch.sqrt(O) / torch.linalg.norm(v))
     return O
 
 # \partial o(y, yDot, t; \beta) / \partial y
-def DoDy(y, y_targ, t, MFParams, MFParams_targ, f_coef=1., normalization=True, includeTheta=False):
+def DoDy(y, y_targ, t, p, MFParams, MFParams_targ, f_coef=1., normalization=True, includeTheta=False):
     DoDy = torch.zeros(y.shape)
 
     if normalization == True:
-        DoDy[1, :] = 2. * (y[1, :] - y_targ[1, :]) / torch.mean(y_targ[1, :])**2 + 2. * (torch.log(y[1, :]) - torch.log(y_targ[1, :])) / y[1, :] / torch.mean(torch.log(y_targ[1, :]))**2
+        DoDy[1, :] = p * torch.pow(y[1, :] - y_targ[1, :], p - 1) / torch.pow(torch.mean(torch.abs(y_targ[1, :])), p)
         if includeTheta == True:
-            DoDy[2, :] = 2. * (y[2, :] - y_targ[2, :]) / torch.mean(y_targ[2, :])**2 + 2. * (torch.log(y[2, :]) - torch.log(y_targ[2, :])) / y[2, :] / torch.mean(torch.log(y_targ[2, :]))**2
+            DoDy[2, :] = p * torch.pow(y[2, :] - y_targ[2, :], p - 1) / torch.pow(torch.mean(y_targ[2, :]), p)
     else:
-        DoDy[1, :] = 2. * (y[1, :] - y_targ[1, :]) + 2. * (torch.log(y[1, :]) - torch.log(y_targ[1, :])) / y[1, :]
+        DoDy[1, :] = p * torch.pow(y[1, :] - y_targ[1, :], p - 1)
         if includeTheta == True:
-            DoDy[2, :] = 2. * (y[2, :] - y_targ[2, :]) + 2. * (torch.log(y[2, :]) - torch.log(y_targ[2, :])) / y[2, :]
+            DoDy[2, :] = p * torch.pow(y[2, :] - y_targ[2, :], p - 1)
     
     # # Add the f terms
     ff_targ = computeF(y_targ, MFParams_targ)
@@ -85,21 +84,24 @@ def DoDy(y, y_targ, t, MFParams, MFParams_targ, f_coef=1., normalization=True, i
     dfdy = computeDFdy(y, MFParams)
     
     if normalization == True: 
-        DoDy += 2. * (ff - ff_targ) * f_coef * f_coef / (torch.mean(ff_targ)**2) * dfdy 
+        DoDy += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) / (torch.pow(torch.mean(torch.abs(ff_targ)), p)) * dfdy 
     else:
-        DoDy += 2. * f_coef * f_coef * (ff - ff_targ) * dfdy 
+        DoDy += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) * dfdy 
+    
+    # Normalize by time
+    DoDy = DoDy / (t[-1] - t[0])
     return DoDy
 
 # \partial o / \partial yDot
-def DoDyDot(y, y_targ, t, MFParams):
+def DoDyDot(y, y_targ, t, p, MFParams):
     return torch.zeros(y.shape)
 
 # d/dt (\partial o / \partial yDot)
-def DDoDyDotDt(y, y_targ, t, MFParams):
+def DDoDyDotDt(y, y_targ, t, p, MFParams):
     return torch.zeros(y.shape)
 
 # \partial o / \partial \beta
-def DoDBeta(y, y_targ, t, MFParams, MFParams_targ, f_coef=1., normalization=True):
+def DoDBeta(y, y_targ, t, p, MFParams, MFParams_targ, f_coef=1., normalization=True):
     DoDbeta = torch.zeros([MFParams.RSParams.shape[0], y.shape[1]])
 
     # # Add the f terms
@@ -107,9 +109,12 @@ def DoDBeta(y, y_targ, t, MFParams, MFParams_targ, f_coef=1., normalization=True
     ff = computeF(y, MFParams)
     dfdbeta = computeDFDBeta(y, MFParams)
     if normalization == True:
-        DoDbeta += 2. * (ff - ff_targ) * f_coef * f_coef / (torch.mean(ff_targ)**2) * dfdbeta 
+        DoDbeta += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) / (torch.pow(torch.mean(torch.abs(ff_targ)), p)) * dfdbeta 
     else:
-        DoDbeta += 2. * f_coef * f_coef * (ff - ff_targ) * dfdbeta 
+        DoDbeta += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) * dfdbeta 
+
+    # Normalize by time
+    DoDBeta = DoDBeta / (t[-1] - t[0])
     return DoDbeta
 
 # ------------------------ Calculate the derivative: DC / D\beta -------------------------

@@ -152,6 +152,9 @@ lawFlag = "aging"
 # Alternating gradient descent, default False
 alter_grad_flag = True
 
+# Lp norm for the error
+p = 2
+
 # Store the keywords for optAlpha
 kwgs = {
     'y0' : y0, 
@@ -177,6 +180,7 @@ kwgs = {
     'this_atol' : this_atol, 
     'solver' : solver, 
     'lawFlag' : lawFlag, 
+    'p' : p, 
     'alter_grad_flag' : alter_grad_flag, 
     'beta_fixed' : beta_fixed,
     'beta_unfixed_groups' : beta_unfixed_groups, 
@@ -192,7 +196,7 @@ def generate_target_v(kwgs, beta):
     MFParams_targs = []
     for idx, (alpha, VV, tt) in enumerate(zip(kwgs['alphas'], kwgs['VVs'], kwgs['tts'])):
         # DEBUG LINES
-        print("VT No.: ", idx + 1)
+        print("Sequence No.: ", idx + 1)
         
         targ_SpringSlider = MassFricParams(alpha, VV, tt, beta, kwgs['y0'], kwgs['lawFlag'], kwgs['regularizedFlag'])
         # targ_SpringSlider.print_info()

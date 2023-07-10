@@ -16,11 +16,12 @@ from DerivativesAddTheta import *
 
 class AdjDerivs:
     # Constructor
-    def __init__(self, y, y_targ, t, MFParams, MFParams_targ, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8, solver = 'dopri5'):
+    def __init__(self, y, y_targ, t, p, MFParams, MFParams_targ, regularizedFlag = False, rtol = 1.e-6, atol = 1.e-8, solver = 'dopri5'):
         self.y = y
         self.y_targ = y_targ
         self.t = t
-        
+        self.p = p
+
         # Define tau = T - t
         self.T = self.t[-1]
         self.tau = self.T - self.t
@@ -58,13 +59,13 @@ class AdjDerivs:
             self.dCdy = DCDy(y, y_targ, t, MFParams)
             self.dCdBeta = DCDBeta(y, y_targ, t, MFParams)
         
-        self.dody = DoDy(y, y_targ, t, MFParams, MFParams_targ)
+        self.dody = DoDy(y, y_targ, t, p, MFParams, MFParams_targ)
         self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         self.ddCdyDotdt = DDCDyDotDt(y, y_targ, t, MFParams)
-        self.dodyDot = DoDyDot(y, y_targ, t, MFParams)
-        self.ddodyDotdt = DDoDyDotDt(y, y_targ, t, MFParams)
-        self.dodBeta = DoDBeta(y, y_targ, t, MFParams, MFParams_targ)
-        self.dodyDot = DoDyDot(y, y_targ, t, MFParams)
+        self.dodyDot = DoDyDot(y, y_targ, t, p, MFParams)
+        self.ddodyDotdt = DDoDyDotDt(y, y_targ, t, p, MFParams)
+        self.dodBeta = DoDBeta(y, y_targ, t, p, MFParams, MFParams_targ)
+        self.dodyDot = DoDyDot(y, y_targ, t, p, MFParams)
         self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         
         # # DEBUG LINES
