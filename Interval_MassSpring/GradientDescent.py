@@ -63,7 +63,50 @@ def objGradFunc(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOn
                               rtol = kwgs['this_rtol'], atol = kwgs['this_atol'], regularizedFlag = kwgs['regularizedFlag'], solver = kwgs['solver'])
             grad = grad + myAdj.dOdBeta / kwgs['scaling']
         
+        # Normalize by number of sequences
+        obj = obj / len(VVs)
+        grad = grad / len(VVs)
+
     return obj, grad
+
+
+# Function that provides empirical gradients through finite differences
+def empiricalGrad(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, proportion = 0.01):
+    # Initialize gradient
+    grad = torch.zeros(beta.shape)
+
+    # Generate target v
+    for i in range(len(beta)):
+        beta_plus =  beta.clone()
+        beta_plus[i] = beta_plus[i] * (1 + proportion)
+        beta_minus = beta.clone()
+        beta_minus[i] = beta_minus[i] * (1 - proportion)
+        betas_to_study = [beta_plus, beta_minus]
+
+        # Compute grads via finite difference
+        objs = []
+        for beta_this in betas_to_study:
+            obj = 0.
+            for (alpha, VV, tt, targ_y, MFParams_targ) in zip(alphas, VVs, tts, targ_ys, MFParams_targs):
+                this_RSParams = beta_this * kwgs['scaling']
+                this_SpringSlider = MassFricParams(alpha, VV, tt, this_RSParams, y0, kwgs['lawFlag'], kwgs['regularizedFlag'])
+                
+                this_seq = TimeSequenceGen(kwgs['NofTPts'], this_SpringSlider, 
+                                        rtol = kwgs['this_rtol'], 
+                                        atol = kwgs['this_atol'], 
+                                        regularizedFlag = kwgs['regularizedFlag'], 
+                                        solver = kwgs['solver'])
+                
+                # Compute the value of objective function
+                obj = obj + O(this_seq.default_y, targ_y, this_seq.t, kwgs['p'], this_SpringSlider, MFParams_targ)
+                
+                # Normalize by number of sequences
+                obj = obj / len(VVs)
+            objs.append(obj)
+        
+        grad[i] = (objs[0] - objs[1]) / (beta[i] * 2 * proportion)
+        
+    return grad
 
 
 # Give the initial position and gradient updating function
