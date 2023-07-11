@@ -39,7 +39,7 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0704ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
+res_path = "./plots/0710ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
@@ -99,10 +99,11 @@ y0 = torch.tensor([0., 1.0, 1.0])
 beta0 = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 
 # # Different start beta, closer to target
-# beta0 = torch.tensor([0.010, 0.017, 2. / 1.e1, 0.6])
+# beta0 = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
 # Target beta
-beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+# beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
@@ -138,8 +139,8 @@ lsrh_steps = 20
 NofTPts = VT_NofTpts
 
 # Tolerance parameters
-this_rtol = 1.e-6
-this_atol = 1.e-8
+this_rtol = 1.e-8
+this_atol = 1.e-10
 
 # Solver
 solver = 'rk4'
@@ -189,12 +190,12 @@ kwgs = {
 
 
 # Function to get target v
-def generate_target_v(kwgs, beta):
+def generate_target_v(kwgs, VVs, tts, beta):
 # def generate_target_v(alphas, VVs, tts, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
     ts = []
     ys = []
     MFParams_targs = []
-    for idx, (alpha, VV, tt) in enumerate(zip(kwgs['alphas'], kwgs['VVs'], kwgs['tts'])):
+    for idx, (alpha, VV, tt) in enumerate(zip(kwgs['alphas'], VVs, tts)):
         # DEBUG LINES
         print("Sequence No.: ", idx + 1)
         
@@ -215,7 +216,7 @@ def generate_target_v(kwgs, beta):
 
 # Test out adjoint and empirical gradients
 # Generate target v
-t_targs, y_targs, MFParams_targs = generate_target_v(kwgs, beta_targ)
+t_targs, y_targs, MFParams_targs = generate_target_v(kwgs, kwgs['VV_origs'], kwgs['tt_origs'], beta_targ)
 
 obj, grad = objGradFunc(kwgs, 
                         kwgs['alphas'], 
@@ -262,7 +263,7 @@ for i in range(N_AllIters):
 
     ## Run grad descent on beta
     # Generate target v
-    ts, ys, MFParams_targs = generate_target_v(kwgs, beta0)
+    ts, ys, MFParams_targs = generate_target_v(kwgs, this_VVs, this_tts, beta0)
 
     # # Run gradient descent
     # myGradBB = GradDescent(kwgs, this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
@@ -282,8 +283,8 @@ for i in range(N_AllIters):
 
 # Plot sequences
 print("[k, m, g]: ", alphas)
-print("VV: ", VT_VVs)
-print("tt: ", VT_tts)
+# print("VV: ", VT_VVs)
+# print("tt: ", VT_tts)
 print("beta_targ: ", beta_targ)
 print("beta0: ", beta0)
 print("this_beta: ", this_beta)

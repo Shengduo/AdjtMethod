@@ -71,11 +71,11 @@ class MassFricParams:
             self.VtFuncs.append(this_vtFunc)
             self.stFuncs.append(this_stFunc)
 
-            # DEBUG LINES
-            print("~+"*30, " In MassFricParams ", "+~"*30)
-            print("this_V: ", this_V)
-            print("this_S: ", self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
-            print("~+"*30, "                   ", "+~"*30, flush=True)
+            # # DEBUG LINES
+            # print("~+"*30, " In MassFricParams ", "+~"*30)
+            # print("this_V: ", this_V)
+            # print("this_S: ", self.S[self.JumpIdx[i] : self.JumpIdx[i + 1] + 1])
+            # print("~+"*30, "                   ", "+~"*30, flush=True)
 
     # Define the function that gives V at t
     def VatT_interp(self, t):

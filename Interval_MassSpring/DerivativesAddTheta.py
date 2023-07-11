@@ -84,9 +84,9 @@ def DoDy(y, y_targ, t, p, MFParams, MFParams_targ, f_coef=1., normalization=True
     dfdy = computeDFdy(y, MFParams)
     
     if normalization == True: 
-        DoDy += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) / (torch.pow(torch.mean(torch.abs(ff_targ)), p)) * dfdy 
+        DoDy += p * torch.pow(ff - ff_targ, p - 1) * pow(f_coef, p) / (torch.pow(torch.mean(torch.abs(ff_targ)), p)) * dfdy 
     else:
-        DoDy += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) * dfdy 
+        DoDy += p * torch.pow(ff - ff_targ, p - 1) * pow(f_coef, p) * dfdy 
     
     # Normalize by time
     DoDy = DoDy / (t[-1] - t[0])
@@ -109,12 +109,12 @@ def DoDBeta(y, y_targ, t, p, MFParams, MFParams_targ, f_coef=1., normalization=T
     ff = computeF(y, MFParams)
     dfdbeta = computeDFDBeta(y, MFParams)
     if normalization == True:
-        DoDbeta += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) / (torch.pow(torch.mean(torch.abs(ff_targ)), p)) * dfdbeta 
+        DoDbeta += p * torch.pow(ff - ff_targ, p - 1) * pow(f_coef, p) / (torch.pow(torch.mean(torch.abs(ff_targ)), p)) * dfdbeta 
     else:
-        DoDbeta += p * torch.pow(ff - ff_targ, p - 1) * torch.pow(f_coef, p) * dfdbeta 
+        DoDbeta += p * torch.pow(ff - ff_targ, p - 1) * pow(f_coef, p) * dfdbeta 
 
     # Normalize by time
-    DoDBeta = DoDBeta / (t[-1] - t[0])
+    DoDbeta = DoDbeta / (t[-1] - t[0])
     return DoDbeta
 
 # ------------------------ Calculate the derivative: DC / D\beta -------------------------

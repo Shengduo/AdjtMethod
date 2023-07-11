@@ -54,13 +54,14 @@ def objGradFunc(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOn
     #     print("This RS params: ", this_RSParams)
     #     print("Objective value: ", obj)
     #     print("-"*30)
-        
+    #     print("MFParams_targ: ", MFParams_targ)
+
         # Compute dOdBeta
         if objOnly:
             grad = 0.
         else:
-            myAdj = AdjDerivs(this_seq.default_y, targ_y, this_seq.t, this_SpringSlider, MFParams_targ, 
-                              rtol = kwgs['this_rtol'], atol = kwgs['this_atol'], regularizedFlag = kwgs['regularizedFlag'], solver = kwgs['solver'])
+            myAdj = AdjDerivs(this_seq.default_y, targ_y, this_seq.t, kwgs['p'], this_SpringSlider, MFParams_targ, 
+                              regularizedFlag = kwgs['regularizedFlag'], rtol = kwgs['this_rtol'], atol = kwgs['this_atol'], solver = kwgs['solver'])
             grad = grad + myAdj.dOdBeta / kwgs['scaling']
         
         # Normalize by number of sequences

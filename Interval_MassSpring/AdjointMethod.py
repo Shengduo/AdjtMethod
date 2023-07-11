@@ -1,5 +1,6 @@
 # Class Adjoint derivatives
 ## Import standard librarys
+from tkinter import SEL_FIRST
 import torch
 import torchdiffeq
 import pickle
@@ -37,7 +38,7 @@ class AdjDerivs:
         self.solver = solver
         
         # The jump indexes in t and tt
-        self.tt = self.MFParams.T
+        self.tt = self.MFParams.TT
         self.JumpIdx = self.MFParams.JumpIdx
         self.JumpTT = self.MFParams.JumpT
 
@@ -59,7 +60,7 @@ class AdjDerivs:
             self.dCdy = DCDy(y, y_targ, t, MFParams)
             self.dCdBeta = DCDBeta(y, y_targ, t, MFParams)
         
-        self.dody = DoDy(y, y_targ, t, p, MFParams, MFParams_targ)
+        self.dody = DoDy(y, y_targ, t, p, MFParams, MFParams_targ) 
         self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         self.ddCdyDotdt = DDCDyDotDt(y, y_targ, t, MFParams)
         self.dodyDot = DoDyDot(y, y_targ, t, p, MFParams)
@@ -68,9 +69,19 @@ class AdjDerivs:
         self.dodyDot = DoDyDot(y, y_targ, t, p, MFParams)
         self.dCdyDot = DCDyDot(y, y_targ, t, MFParams)
         
-        # # DEBUG LINES
-        # print("self.dodBeta: ", self.dodBeta)
-        # print("self.dody: ", self.dody)
+        # # DEBUG LINES for NaNs
+        # # print("self.dodBeta: ", self.dodBeta)
+        # # print("self.dody: ", self.dody)
+        # print("~!" * 20, " NaNs in derivaties ", "~!" * 20)
+        # print("dody: ", torch.any(torch.isnan(self.dody)))
+        # print("dCdyDot: ", torch.any(torch.isnan(self.dCdyDot)))
+        # print("ddCdyDotdt: ", torch.any(torch.isnan(self.ddCdyDotdt)))
+        # print("dodyDot: ", torch.any(torch.isnan(self.dodyDot)))
+        # print("ddodyDotdt: ", torch.any(torch.isnan(self.ddodyDotdt)))
+        # print("dodBeta: ", torch.any(torch.isnan(self.dodBeta)))
+        # print("dodyDot: ", torch.any(torch.isnan(self.dodyDot)))
+        # print("dCdyDot: ", torch.any(torch.isnan(self.dCdyDot)))
+        # print("~!" * 20, "                    ", "~!" * 20)
 
         # Calculate A_z and u_z
         self.Az = self.A_z()
@@ -97,6 +108,9 @@ class AdjDerivs:
         A_l_discrete = torch.linalg.solve(dCdyDot, dCdy - ddCdyDotdt)
         A_l_discrete = torch.transpose(A_l_discrete, 0, 2)
         
+        # # DEBUG LINES
+        # print("NaNs in A_l_discrete? ", torch.any(torch.isnan(A_l_discrete)))
+
         # self.A_l_discrete = A_l_discrete
         # Define the series of interpolation functions
         A_ls = []
@@ -107,7 +121,17 @@ class AdjDerivs:
             this_A_l_discrete = torch.cat([this_A_l_discrete[:, :, [0]], this_A_l_discrete, this_A_l_discrete[:, :, [-1]]], -1)
             this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
             this_t = torch.cat([torch.tensor([self.JumpTT[this_idx - 1]]), this_t, torch.tensor([self.JumpTT[this_idx]])])
-            this_A_l = interp1d(self.T - this_t, this_A_l_discrete)
+            this_tau = self.T - this_t
+
+            # Deal with replicants
+            i = 0
+            j = len(this_tau)
+
+            if this_tau[0] == this_tau[1]:
+                i = 1
+            if this_tau[-1] == this_tau[-2]:
+                j = -1
+            this_A_l = interp1d(this_tau[i : j], this_A_l_discrete[:, :, i : j])
             A_ls.append(this_A_l)
         
         return A_ls
@@ -122,6 +146,9 @@ class AdjDerivs:
         u_l_discrete = torch.linalg.solve(dCdyDot, dody - ddodyDotdt)
         u_l_discrete = torch.movedim(u_l_discrete, 0, 1)
         
+        # # DEBUG LINES
+        # print("NaNs in u_l_discrete? ", torch.any(torch.isnan(u_l_discrete)))
+
         u_ls = []
         for idx in range(len(self.t_JumpIdx) - 1):
             # The real index
@@ -130,7 +157,18 @@ class AdjDerivs:
             this_u_l_discrete = torch.cat([this_u_l_discrete[:, [0]], this_u_l_discrete, this_u_l_discrete[:, [-1]]], -1)
             this_t = self.t[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx]]
             this_t = torch.cat([torch.tensor([self.JumpTT[this_idx - 1]]), this_t, torch.tensor([self.JumpTT[this_idx]])])
-            this_u_l = interp1d(self.T - this_t, this_u_l_discrete)
+            
+            this_tau = self.T - this_t
+
+            # Deal with replicants
+            i = 0
+            j = len(this_tau)
+
+            if this_tau[0] == this_tau[1]:
+                i = 1
+            if this_tau[-1] == this_tau[-2]:
+                j = -1
+            this_u_l = interp1d(this_tau[i : j], this_u_l_discrete[:, i : j])
             u_ls.append(this_u_l)
 
         return u_ls
@@ -251,8 +289,8 @@ class AdjDerivs:
             this_L0 = this_L[0, :, :].reshape(-1)
             L[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx], 0, :] = this_L[i : j, 0, :]
 
-        # # DEBUG LINES
-        # print("L: ", L)
+        # DEBUG LINES
+        print("L: ", L, flush=True)
         
         LDCDBeta = torch.movedim(self.dCdBeta, 2, 0)
         LDCDBeta = torch.matmul(L, LDCDBeta)
