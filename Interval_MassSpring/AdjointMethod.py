@@ -289,8 +289,8 @@ class AdjDerivs:
             this_L0 = this_L[0, :, :].reshape(-1)
             L[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx], 0, :] = this_L[i : j, 0, :]
 
-        # DEBUG LINES
-        print("L: ", L, flush=True)
+        # # DEBUG LINES
+        # print("L: ", L, flush=True)
         
         LDCDBeta = torch.movedim(self.dCdBeta, 2, 0)
         LDCDBeta = torch.matmul(L, LDCDBeta)

@@ -102,8 +102,8 @@ beta0 = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 # beta0 = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
 # Target beta
-# beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
-beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
+beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+# beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
@@ -139,8 +139,8 @@ lsrh_steps = 20
 NofTPts = VT_NofTpts
 
 # Tolerance parameters
-this_rtol = 1.e-8
-this_atol = 1.e-10
+this_rtol = 1.e-6
+this_atol = 1.e-8
 
 # Solver
 solver = 'rk4'
