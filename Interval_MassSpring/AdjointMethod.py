@@ -288,6 +288,12 @@ class AdjDerivs:
             this_L = torch.flip(this_L, [0])
             this_L0 = this_L[0, :, :].reshape(-1)
             L[self.t_JumpIdx[this_idx - 1] : self.t_JumpIdx[this_idx], 0, :] = this_L[i : j, 0, :]
+            
+            # # DEBUG LINES
+            # print("!-=" * 20)
+            # print("this_idx: ", this_idx)
+            # print("this_L[i : j, 0, :]: ", this_L[i : j, 0, :])
+            # print("this_t: ",  this_t)
 
         # # DEBUG LINES
         # print("L: ", L, flush=True)

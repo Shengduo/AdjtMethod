@@ -39,19 +39,19 @@ VT_Vrange = torch.tensor([5., 15.])
 VT_flag = "prescribed_linear"
 VT_nOfTerms = 5
 VT_nOfFourierTerms = 100
-res_path = "./plots/0710ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
+res_path = "./plots/0713ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
 # Multi data2
-alphas = torch.tensor([[100., 5., 9.8], 
-                       [100., 5., 9.8], 
-                       [100., 5., 9.8], 
-                       [100., 5., 9.8]])
+alphas = torch.tensor([[500., 5., 9.8], 
+                       [500., 5., 9.8], 
+                       [500., 5., 9.8], 
+                       [500., 5., 9.8]])
 
 # # Multi data2
-ones = 10 * [1.]
-tens = 10 * [10.]
+ones = 10 * [1.e-2]
+tens = 10 * [100.]
 VT_VVs = [ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
           ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
           ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
@@ -102,8 +102,8 @@ beta0 = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 # beta0 = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
 # Target beta
-beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
-# beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
+# beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
@@ -236,7 +236,7 @@ empirical_grad = empiricalGrad(kwgs,
                                kwgs['y0'], 
                                y_targs, 
                                MFParams_targs, 
-                               proportion = 0.01)
+                               proportion = 0.001)
 
 print("-$" * 20, " Gradient test ", "-$" * 20)
 print("Adjoint gradient: ", grad)

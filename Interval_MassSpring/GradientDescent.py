@@ -19,15 +19,68 @@ from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
 # from Derivatives import *
 from DerivativesAddTheta import *
+from random import shuffle
+from joblib import Parallel, delayed, effective_n_jobs
 
-## Fixed parameters
-# # Sequence specific parameters
-# T = 5.
-# NofTPts = 1000
+# Function that generates VVs and tts
+def genVVtt(totalNofSeqs, NofIntervalsRange, VVRange, VVLenRange):
+    VVseeds = []
+    VVseeds_len = []
 
-# # Tolerance parameters
-# this_rtol = 1.e-8
-# this_atol = 1.e-10
+    # Generate the seeds of VVs and tts
+    for i in range(totalNofSeqs):
+        NofSds = torch.randint(NofIntervalsRange[0], NofIntervalsRange[1], [1])
+        VVseed = torch.randint(VVRange[0], VVRange[1], [NofSds])
+        VVseed_len = 10 * torch.randint(VVLenRange[0], VVLenRange[1], [NofSds])
+        VVseeds.append(VVseed)
+        VVseeds_len.append(VVseed_len)
+
+
+    VVs = []
+    tts = []
+
+    # Generate VVs and tts
+    for idx, (VVseed, VVseed_len) in enumerate(zip(VVseeds, VVseeds_len)):
+        VV = torch.zeros(torch.sum(VVseed_len))
+        st = 0
+        for j in range(len(VVseed_len)):
+            VV[st : st + VVseed_len[j]] = torch.pow(10., VVseed[j])
+            st += VVseed_len[j]
+        VVs.append(VV)
+        tt = torch.linspace(0., 0.2 * len(VV), len(VV))
+        tts.append(tt)
+    
+    # data = {
+    #     "VVs" : VVs, 
+    #     "tts" : tts
+    # }
+    # torch.save(data, dataFilename)
+    
+    return VVs, tts
+
+
+# Get one y
+def get_yt(kwgs, alpha, VV, tt, beta, y0):
+    this_RSParam = beta * kwgs['scaling']
+    this_SpringSlider = MassFricParams(alpha, VV, tt, this_RSParam, y0, kwgs['lawFlag'], kwgs['regularizedFlag'])
+    
+    this_seq = TimeSequenceGen(kwgs['NofTPts'], this_SpringSlider, 
+                                rtol = kwgs['this_rtol'], 
+                                atol = kwgs['this_atol'], 
+                                regularizedFlag = kwgs['regularizedFlag'], 
+                                solver = kwgs['solver'])
+    return this_seq.default_y, this_seq.t, this_SpringSlider
+
+# Parallel getting ys
+def get_yts_parallel(kwgs, alphas, VVs, tts, beta, y0, n_Workers=16, pool=Parallel(n_jobs=16, backend='threading')):
+    res = pool(delayed(get_yt)(kwgs, alpha, VV, tt, beta, y0) 
+               for alpha, VV, tt in zip(alphas, VVs, tts))
+    
+    ys = [res[i][0] for i in len(res)]
+    ts = [res[i][1] for i in len(res)]
+    springSliders = [res[i][2] for i in len(res)]
+    return ys, ts, springSliders
+
 
 # Function observation function
 def objGradFunc(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOnly = False):
@@ -71,6 +124,34 @@ def objGradFunc(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOn
     return obj, grad
 
 
+# Parallel function to evaluate the objectives
+def objFunc_parallel(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
+    # Get the ys
+    ys, ts, springSliders = get_yts_parallel(kwgs, alphas, VVs, tts, beta, y0, MFParams_targs, n_Workers, parallel_pool)
+
+    # Initialize objective and gradient
+    objs = []
+
+    # Generate target v
+    for (targ_y, MFParams_targ, y, t, springSlider) in zip(targ_ys, MFParams_targs, ys, ts, springSliders):
+        # Compute the value of objective function
+        objs.append(O(y, targ_y, t, kwgs['p'], springSlider, MFParams_targ))
+        
+    return objs
+
+# Sample N sequences and find top n sequences, by VV and tt
+def SampleAndFindTopNSeqs(kwgs, N_samples, N, VVs_prev, tts_prev, beta, y0, MFParams_targ, n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
+    # First sample
+    VVs, tts = genVVtt(N_samples, kwgs['NofIntervalsRange'], kwgs['VVRange'], kwgs['VVLenRange'])
+
+    # Initialize VVs, tts, alphas
+    VVs = VVs + VVs_prev
+    tts = tts + tts_prev
+    alphas = [kwgs['alpha'] for i in range(len(VVs))]
+    MFParams_targs = [MFParams_targ for i in range(len(VVs))]
+
+    # Calculate os
+    objs = objFunc_parallel()
 # Function that provides empirical gradients through finite differences
 def empiricalGrad(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, proportion = 0.01):
     # Initialize gradient
