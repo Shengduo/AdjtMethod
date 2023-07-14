@@ -102,8 +102,8 @@ beta0 = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 # beta0 = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 
 # Target beta
-# beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
-beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
+beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
+# beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 
 # Beta ranges
 # beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
@@ -154,7 +154,7 @@ lawFlag = "aging"
 alter_grad_flag = True
 
 # Lp norm for the error
-p = 2
+p = 6
 
 # Store the keywords for optAlpha
 kwgs = {
@@ -236,7 +236,7 @@ empirical_grad = empiricalGrad(kwgs,
                                kwgs['y0'], 
                                y_targs, 
                                MFParams_targs, 
-                               proportion = 0.001)
+                               proportion = 0.01)
 
 print("-$" * 20, " Gradient test ", "-$" * 20)
 print("Adjoint gradient: ", grad)
