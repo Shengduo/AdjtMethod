@@ -150,8 +150,38 @@ def SampleAndFindTopNSeqs(kwgs, N_samples, N, VVs_prev, tts_prev, beta, y0, MFPa
     alphas = [kwgs['alpha'] for i in range(len(VVs))]
     MFParams_targs = [MFParams_targ for i in range(len(VVs))]
 
-    # Calculate os
-    objs = objFunc_parallel()
+    # Get targ_ys
+    targ_ys = get_yts_parallel(kwgs, alphas, VVs, tts, kwgs['beta_targ'], y0, n_Workers, parallel_pool)[0]
+    
+    # Calculate objs
+    objs = objFunc_parallel(kwgs, 
+                            alphas, 
+                            VVs, 
+                            tts, 
+                            beta, 
+                            y0, 
+                            targ_ys, 
+                            MFParams_targs, 
+                            n_Workers, 
+                            parallel_pool)
+    
+    # Take the top N VVs, tts, targ_ys
+    objs = torch.tensor(objs)
+    
+    # Sort
+    sorted, indices = torch.sort(objs, descending=True)
+    resIdx = indices[0:N]
+    resOs = sorted[0:N]
+
+    # Gather the results
+    VVs_res = [VVs[idx] for idx in resIdx]
+    tts_res = [tts[idx] for idx in resIdx]
+    targ_ys_res = [targ_ys[idx] for idx in resIdx]
+    
+    return VVs_res, tts_res, targ_ys_res
+
+
+    
 # Function that provides empirical gradients through finite differences
 def empiricalGrad(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, proportion = 0.01):
     # Initialize gradient
