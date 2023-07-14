@@ -72,24 +72,24 @@ def get_yt(kwgs, alpha, VV, tt, beta, y0):
     return this_seq.default_y, this_seq.t, this_SpringSlider
 
 # Parallel getting ys
-def get_yts_parallel(kwgs, alphas, VVs, tts, beta, y0, n_Workers=16, pool=Parallel(n_jobs=16, backend='threading')):
+def get_yts_parallel(kwgs, alpha, VVs, tts, beta, y0, n_Workers=16, pool=Parallel(n_jobs=16, backend='threading')):
     res = pool(delayed(get_yt)(kwgs, alpha, VV, tt, beta, y0) 
-               for alpha, VV, tt in zip(alphas, VVs, tts))
+            for VV, tt in zip(VVs, tts))
     
-    ys = [res[i][0] for i in len(res)]
-    ts = [res[i][1] for i in len(res)]
-    springSliders = [res[i][2] for i in len(res)]
+    ys = [res[i][0] for i in range(len(res))]
+    ts = [res[i][1] for i in range(len(res))]
+    springSliders = [res[i][2] for i in range(len(res))]
     return ys, ts, springSliders
 
 
 # Function observation function
-def objGradFunc(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOnly = False):
+def objGradFunc(kwgs, alpha, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOnly = False):
     # Initialize objective and gradient
     obj = 0.
     grad = torch.zeros(beta.shape)
 
     # Generate target v
-    for (alpha, VV, tt, targ_y, MFParams_targ) in zip(alphas, VVs, tts, targ_ys, MFParams_targs):
+    for (VV, tt, targ_y, MFParams_targ) in zip(VVs, tts, targ_ys, MFParams_targs):
         this_RSParams = beta * kwgs['scaling']
         this_SpringSlider = MassFricParams(alpha, VV, tt, this_RSParams, y0, kwgs['lawFlag'], kwgs['regularizedFlag'])
         
@@ -125,9 +125,9 @@ def objGradFunc(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, objOn
 
 
 # Parallel function to evaluate the objectives
-def objFunc_parallel(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
+def objFunc_parallel(kwgs, VVs, tts, beta, y0, targ_ys, MFParams_targs, n_Workers=16, parallel_pool=Parallel(n_jobs=16, backend='threading')):
     # Get the ys
-    ys, ts, springSliders = get_yts_parallel(kwgs, alphas, VVs, tts, beta, y0, MFParams_targs, n_Workers, parallel_pool)
+    ys, ts, springSliders = get_yts_parallel(kwgs, VVs, tts, beta, y0, MFParams_targs, n_Workers, parallel_pool)
 
     # Initialize objective and gradient
     objs = []
@@ -147,15 +147,15 @@ def SampleAndFindTopNSeqs(kwgs, N_samples, N, VVs_prev, tts_prev, beta, y0, MFPa
     # Initialize VVs, tts, alphas
     VVs = VVs + VVs_prev
     tts = tts + tts_prev
-    alphas = [kwgs['alpha'] for i in range(len(VVs))]
+    # alphas = [kwgs['alpha'] for i in range(len(VVs))]
     MFParams_targs = [MFParams_targ for i in range(len(VVs))]
 
     # Get targ_ys
-    targ_ys = get_yts_parallel(kwgs, alphas, VVs, tts, kwgs['beta_targ'], y0, n_Workers, parallel_pool)[0]
+    targ_ys = get_yts_parallel(kwgs, kwgs['alpha'], VVs, tts, kwgs['beta_targ'], y0, n_Workers, parallel_pool)[0]
     
     # Calculate objs
     objs = objFunc_parallel(kwgs, 
-                            alphas, 
+                            kwgs['alpha'], 
                             VVs, 
                             tts, 
                             beta, 
@@ -183,7 +183,7 @@ def SampleAndFindTopNSeqs(kwgs, N_samples, N, VVs_prev, tts_prev, beta, y0, MFPa
 
     
 # Function that provides empirical gradients through finite differences
-def empiricalGrad(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, proportion = 0.01):
+def empiricalGrad(kwgs, alpha, VVs, tts, beta, y0, targ_ys, MFParams_targs, proportion = 0.01):
     # Initialize gradient
     grad = torch.zeros(beta.shape)
 
@@ -199,7 +199,7 @@ def empiricalGrad(kwgs, alphas, VVs, tts, beta, y0, targ_ys, MFParams_targs, pro
         objs = []
         for beta_this in betas_to_study:
             obj = 0.
-            for (alpha, VV, tt, targ_y, MFParams_targ) in zip(alphas, VVs, tts, targ_ys, MFParams_targs):
+            for (VV, tt, targ_y, MFParams_targ) in zip(VVs, tts, targ_ys, MFParams_targs):
                 this_RSParams = beta_this * kwgs['scaling']
                 this_SpringSlider = MassFricParams(alpha, VV, tt, this_RSParams, y0, kwgs['lawFlag'], kwgs['regularizedFlag'])
                 
@@ -226,7 +226,7 @@ class GradDescent:
     # Constructor, initial value position
     def __init__(self, 
                  kwgs, 
-                 alphas, alpha_low, alpha_high, 
+                 alpha, alpha_low, alpha_high, 
                  VTs, # Temperarily fix the VTs relation now
                  beta0, beta_low, beta_high, 
                  y0, targ_ys, ts, MFParams_targs, 

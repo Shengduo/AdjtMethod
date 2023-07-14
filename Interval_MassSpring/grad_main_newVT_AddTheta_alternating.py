@@ -16,83 +16,58 @@ from xitorch.interpolate import Interp1D
 from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 
-
 ## Import local classes and functions
 from MassFricParams import MassFricParams
 from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
-from GradientDescent import GradDescent, objGradFunc, empiricalGrad
+from GradientDescent import GradDescent, objGradFunc, empiricalGrad, objFunc_parallel, get_yts_parallel, get_yt, genVVtt
 from plotSequences import plot_differences
-from GenerateVT import GenerateVT
+from joblib import Parallel, delayed, effective_n_jobs
+# from GenerateVT import GenerateVT
 
 torch.set_default_dtype(torch.float)
 
 # Gradient descent on fixed $\alpha = [k, m, g]$ and $V$ 
 # Set up the parameters
-plotsName = "LinearGen"
-
-# Generate VT series
-VT_Vrange = torch.tensor([5., 15.])
-# VT_NofTpts = 2000
-# VT_flag = "simple"
-# VT_flag = "prescribed_simple"
-VT_flag = "prescribed_linear"
-VT_nOfTerms = 5
-VT_nOfFourierTerms = 100
+plotsName = "GenSeqs"
 res_path = "./plots/0713ADRSfStar_f1_aging_AddFricVTs_Normed_data2_unAlternating/"
 Path(res_path).mkdir(parents=True, exist_ok=True)
 gen_plt_save_path = res_path + plotsName + ".png"
 
 # Multi data2
-alphas = torch.tensor([[500., 5., 9.8], 
-                       [500., 5., 9.8], 
-                       [500., 5., 9.8], 
-                       [500., 5., 9.8]])
+alpha = torch.tensor([500., 5., 9.8])
 
 # # Multi data2
 ones = 10 * [1.e-2]
 tens = 10 * [100.]
-VT_VVs = [ones + ones + tens + tens + ones + ones + tens + tens + ones + ones + ones + ones + ones + ones + ones, \
-          ones + ones + ones + ones + ones + ones + ones + tens + tens + tens + tens + tens + tens + tens + tens, \
-          ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones + ones, \
-          tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens + tens]
-VT_VVs = [torch.tensor(VV) for VV in VT_VVs]
-VT_tts = [torch.linspace(0., 0.2 * len(VV), len(VV)) for VV in VT_VVs]
 
-VT_Trange = torch.tensor([0., 30.])
-VT_Trange = torch.tensor([0., 30.])
+# Generate or load data
+generate_VVtts = True
+loadDataFilename = "./data/VVTTs0517.pt"
+saveDataFilename = "./data/VVTTs0713.pt"
+totalNofSeqs = 1024
+selectedNofSeqs = 8
+NofIntervalsRange = [5, 11]
+VVRange = [-2, 2]
+VVLenRange = [1, 11]
+
+# Determine method of getting data
+if generate_VVtts == True:
+    VVs, tts = genVVtt(4, NofIntervalsRange, VVRange, VVLenRange)
+    data = {
+        "VVs": VVs, 
+        "tts": tts, 
+    }
+    torch.save(data, saveDataFilename)
+else:
+    shit = torch.load(loadDataFilename)
+    VVs = shit['VVs']
+    tts = shit['tts']
 
 # # For prescribed VT
-VT_NofTpts = 10
+NofTPts = 10
 
-# VT_VVs = torch.tensor([[1., 1., 1., 1., 1., 1. ,1., 10., 10., 10., 10., 10., 10., 10., 10.]])
-# VT_tts = torch.linspace(0., 30., 15).reshape([1, -1])
-
-# Initialize VT_kwgs
-VT_kwgs = {
-    "nOfTerms" : VT_nOfTerms, 
-    "nOfFourierTerms" : VT_nOfFourierTerms,
-    "Trange" : VT_Trange, 
-    "Vrange" : VT_Vrange, 
-    "flag" : VT_flag, 
-    "NofTpts" : VT_NofTpts, 
-    "VVs" : VT_VVs, 
-    "tts" : VT_tts, 
-    "plt_save_path" : gen_plt_save_path, 
-}
-
-# # Get the series
-# VT_instance = GenerateVT(VT_kwgs)
-# print("Shit!")
-
-# VTs = VT_instance.VT
-
-# # Plot VT (optional)
-# VT_instance.plotVT()
-
-# Alpha range
-alp_low = torch.tensor([50., 0.5, 1., 9.])
-alp_hi = torch.tensor([100., 2., 10., 10.])
+# Initial condition
 y0 = torch.tensor([0., 1.0, 1.0])
 
 # Start beta
@@ -106,22 +81,16 @@ beta_targ = torch.tensor([0.011, 0.016, 1. / 1.e1, 0.58])
 # beta_targ = torch.tensor([0.008, 0.012, 1. / 2.e1, 0.3])
 
 # Beta ranges
-# beta_low = torch.tensor([0.001, 0.006, 1. / 5., 0.3])
-# beta_low = torch.tensor([-1., -1., 1. / 1.e3, 0.3])
-
-# beta_high = torch.tensor([1., 1., 1. / 1.e-1, 0.8])
-
-# Different start beta, closer to target
 beta_low = torch.tensor([0.001, 0.001, 0.001, 0.1])
-beta_high = torch.tensor([1., 1., 1.e6, 0.9])
+beta_high = torch.tensor([1., 1., 1.e2, 0.9])
 
 beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Document the unfixed groups
-# beta_unfixed_groups = [[0], [1], [2], [3]]
-# beta_unfixed_NofIters = torch.tensor([1, 1, 1, 1])
-beta_unfixed_groups = [[0, 1, 2, 3]]
-beta_unfixed_NofIters = torch.tensor([1])
+beta_unfixed_groups = [[0], [1], [2], [3]]
+beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+# beta_unfixed_groups = [[0, 1, 2, 3]]
+# beta_unfixed_NofIters = torch.tensor([1])
 
 scaling = torch.tensor([1., 1., 1., 1.])
 
@@ -136,7 +105,6 @@ lsrh_steps = 20
 
 # Sequence specific parameters
 # T = VT_Trange[1]
-NofTPts = VT_NofTpts
 
 # Tolerance parameters
 this_rtol = 1.e-6
@@ -158,13 +126,16 @@ p = 6
 
 # Store the keywords for optAlpha
 kwgs = {
+    'totalNofSeqs' : totalNofSeqs, 
+    'selectedNofSeqs' : selectedNofSeqs, 
+    'NofIntervalsRange' : NofIntervalsRange, 
+    'VVRange' : VVRange, 
+    'VVLenRange' : VVLenRange, 
     'y0' : y0, 
-    'alphas' : alphas, 
-    "VV_origs" : VT_VVs, 
-    "tt_origs" : VT_tts, 
+    'alpha' : alpha, 
+    "VV_origs" : VVs, 
+    "tt_origs" : tts, 
     'NofTPts' : NofTPts, 
-    'alp_low' : alp_low, 
-    'alp_high' : alp_hi, 
     'max_iters' : max_iters, 
     'beta_this' : beta0, 
     'beta_targ' : beta_targ, 
@@ -188,54 +159,39 @@ kwgs = {
     'beta_unfixed_NofIters' : beta_unfixed_NofIters, 
 }
 
-
-# Function to get target v
-def generate_target_v(kwgs, VVs, tts, beta):
-# def generate_target_v(alphas, VVs, tts, beta, y0, this_rtol, this_atol, regularizedFlag, solver, lawFlag):
-    ts = []
-    ys = []
-    MFParams_targs = []
-    for idx, (alpha, VV, tt) in enumerate(zip(kwgs['alphas'], VVs, tts)):
-        # DEBUG LINES
-        print("Sequence No.: ", idx + 1)
-        
-        targ_SpringSlider = MassFricParams(alpha, VV, tt, beta, kwgs['y0'], kwgs['lawFlag'], kwgs['regularizedFlag'])
-        # targ_SpringSlider.print_info()
-        targ_seq = TimeSequenceGen(kwgs['NofTPts'], targ_SpringSlider, 
-                                   rtol=kwgs['this_rtol'], atol=kwgs['this_atol'], 
-                                   regularizedFlag=kwgs['regularizedFlag'], solver=kwgs['solver'])
-        
-        ts.append(targ_seq.t)
-        ys.append(targ_seq.default_y)
-        MFParams_targs.append(targ_SpringSlider)
-
-    # v = targ_seq.default_y[1, :]
-    # t = targ_seq.t
-    return torch.stack(ts), torch.stack(ys), MFParams_targs
-
+# Initialize the parallel pool
+nWorkers = 16
+parallel_pool = Parallel(n_jobs=nWorkers, backend='threading')
 
 # Test out adjoint and empirical gradients
 # Generate target v
-t_targs, y_targs, MFParams_targs = generate_target_v(kwgs, kwgs['VV_origs'], kwgs['tt_origs'], beta_targ)
+y_orig_targs, t_orig_targs, MFParams_orig_targs = get_yts_parallel(kwgs, 
+                                                                   kwgs['alpha'], 
+                                                                   kwgs['VV_origs'], 
+                                                                   kwgs['tt_origs'], 
+                                                                   kwgs['beta_targ'], 
+                                                                   kwgs['y0'], 
+                                                                   nWorkers, 
+                                                                   parallel_pool)
 
 obj, grad = objGradFunc(kwgs, 
-                        kwgs['alphas'], 
+                        kwgs['alpha'], 
                         kwgs['VV_origs'], 
                         kwgs['tt_origs'], 
                         beta0, 
                         kwgs['y0'], 
-                        y_targs, 
-                        MFParams_targs, 
+                        y_orig_targs, 
+                        MFParams_orig_targs, 
                         objOnly = False)
 
 empirical_grad = empiricalGrad(kwgs, 
-                               kwgs['alphas'], 
+                               kwgs['alpha'], 
                                kwgs['VV_origs'], 
                                kwgs['tt_origs'], 
                                beta0, 
                                kwgs['y0'], 
-                               y_targs, 
-                               MFParams_targs, 
+                               y_orig_targs, 
+                               MFParams_orig_targs, 
                                proportion = 0.01)
 
 print("-$" * 20, " Gradient test ", "-$" * 20)
@@ -245,10 +201,10 @@ print("-$" * 20, "               ", "-$" * 20)
 
 ## Number of total alpha-beta iterations
 N_AllIters = 1
-this_alphas = alphas
+this_alpha = alpha
 this_beta = beta0
-this_VVs = VT_VVs
-this_tts = VT_tts
+this_VVs = VVs
+this_tts = tts
 
 ## Run alpha-beta iterations
 for i in range(N_AllIters):
@@ -256,14 +212,14 @@ for i in range(N_AllIters):
     print("#" * 40, " Total Iteration {0} ".format(i) + "#" * 40)
     
     ## First optimize alpha
-    kwgs['alphas'] = this_alphas
+    kwgs['alpha'] = this_alpha
     kwgs['beta_this'] = this_beta
     kwgs['VVs'] = this_VVs
     kwgs['tts'] = this_tts
 
     ## Run grad descent on beta
     # Generate target v
-    ts, ys, MFParams_targs = generate_target_v(kwgs, this_VVs, this_tts, beta0)
+    # ts, ys, MFParams_targs = generate_target_v(kwgs, this_VVs, this_tts, beta0)
 
     # # Run gradient descent
     # myGradBB = GradDescent(kwgs, this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
@@ -282,9 +238,7 @@ for i in range(N_AllIters):
     # print("Optimal beta: ", this_beta)
 
 # Plot sequences
-print("[k, m, g]: ", alphas)
-# print("VV: ", VT_VVs)
-# print("tt: ", VT_tts)
+print("[k, m, g]: ", alpha)
 print("beta_targ: ", beta_targ)
 print("beta0: ", beta0)
 print("this_beta: ", this_beta)
