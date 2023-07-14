@@ -97,11 +97,11 @@ def plot_differences(kwgs, betas, betas_legend, savePath = './plots/shit/'):
     # Generate the sequences
     VVs = kwgs['VV_origs']
     tts = kwgs['tt_origs']
-    alphas = kwgs['alphas']
+    alpha = kwgs['alpha']
 
     gen_Vs = []
     gen_ts = []
-    for idx, (alpha, VV, tt) in enumerate(zip(alphas, VVs, tts)):
+    for idx, (VV, tt) in enumerate(zip(VVs, tts)):
         # Store all sequences as a list
         ys = []
         ts = []

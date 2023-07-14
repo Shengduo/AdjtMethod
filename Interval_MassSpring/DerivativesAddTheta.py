@@ -60,7 +60,7 @@ def O(y, y_targ, t, p, MFParams, MFParams_targ, f_coef=1., normalization=True, i
         
     # Normalize by time, and then to the power 1/p
     O = O / (t[-1] - t[0])
-    # O = torch.pow(O, 1. / p)
+    O = torch.pow(O, 1. / p)
 
     # print("Relative L2 error: ", torch.sqrt(O) / torch.linalg.norm(v))
     return O

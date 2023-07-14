@@ -20,7 +20,8 @@ from matplotlib import pyplot as plt
 from MassFricParams import MassFricParams
 from TimeSequenceGen import TimeSequenceGen
 from AdjointMethod import AdjDerivs
-from GradientDescent import GradDescent, objGradFunc, empiricalGrad, objFunc_parallel, get_yts_parallel, get_yt, genVVtt
+from GradientDescent import GradDescent, objGradFunc, empiricalGrad, objFunc_parallel, \
+                            get_yts_parallel, get_yt, genVVtt, SampleAndFindTopNSeqs
 from plotSequences import plot_differences
 from joblib import Parallel, delayed, effective_n_jobs
 # from GenerateVT import GenerateVT
@@ -42,11 +43,11 @@ ones = 10 * [1.e-2]
 tens = 10 * [100.]
 
 # Generate or load data
-generate_VVtts = True
-loadDataFilename = "./data/VVTTs0517.pt"
+generate_VVtts = False
+loadDataFilename = "./data/VVTTs0713.pt"
 saveDataFilename = "./data/VVTTs0713.pt"
-totalNofSeqs = 1024
-selectedNofSeqs = 8
+totalNofSeqs = 256
+selectedNofSeqs = 4
 NofIntervalsRange = [5, 11]
 VVRange = [-2, 2]
 VVLenRange = [1, 11]
@@ -88,20 +89,20 @@ beta_fixed = torch.tensor([0, 0, 0, 0], dtype=torch.bool)
 
 # Document the unfixed groups
 beta_unfixed_groups = [[0], [1], [2], [3]]
-beta_unfixed_NofIters = torch.tensor([3, 3, 3, 3])
+beta_unfixed_NofIters = torch.tensor([1, 1, 1, 1])
 # beta_unfixed_groups = [[0, 1, 2, 3]]
 # beta_unfixed_NofIters = torch.tensor([1])
 
 scaling = torch.tensor([1., 1., 1., 1.])
 
 # Other arguments for optAlpha function
-max_iters = 5
+max_iters = 100
 maxFuncCalls = 200
 regularizedFlag = True
 noLocalSearch = True
 stepping = 'lsrh'
 # stepping = 'BB'
-lsrh_steps = 20
+lsrh_steps = 12
 
 # Sequence specific parameters
 # T = VT_Trange[1]
@@ -160,8 +161,8 @@ kwgs = {
 }
 
 # Initialize the parallel pool
-nWorkers = 16
-parallel_pool = Parallel(n_jobs=nWorkers, backend='threading')
+n_Workers = 1
+parallel_pool = Parallel(n_jobs=n_Workers, backend='threading')
 
 # Test out adjoint and empirical gradients
 # Generate target v
@@ -171,83 +172,126 @@ y_orig_targs, t_orig_targs, MFParams_orig_targs = get_yts_parallel(kwgs,
                                                                    kwgs['tt_origs'], 
                                                                    kwgs['beta_targ'], 
                                                                    kwgs['y0'], 
-                                                                   nWorkers, 
+                                                                   n_Workers, 
                                                                    parallel_pool)
+# Store target MFParams
+kwgs['MFParams_targ'] = MFParams_orig_targs[0]
 
-obj, grad = objGradFunc(kwgs, 
-                        kwgs['alpha'], 
-                        kwgs['VV_origs'], 
-                        kwgs['tt_origs'], 
-                        beta0, 
-                        kwgs['y0'], 
-                        y_orig_targs, 
-                        MFParams_orig_targs, 
-                        objOnly = False)
+obj = objGradFunc(kwgs, 
+                  kwgs['alpha'], 
+                  kwgs['VV_origs'], 
+                  kwgs['tt_origs'], 
+                  beta0, 
+                  kwgs['y0'], 
+                  y_orig_targs, 
+                  MFParams_orig_targs, 
+                  objOnly = True)
 
-empirical_grad = empiricalGrad(kwgs, 
-                               kwgs['alpha'], 
-                               kwgs['VV_origs'], 
-                               kwgs['tt_origs'], 
-                               beta0, 
-                               kwgs['y0'], 
-                               y_orig_targs, 
-                               MFParams_orig_targs, 
-                               proportion = 0.01)
+# empirical_grad = empiricalGrad(kwgs, 
+#                                kwgs['alpha'], 
+#                                kwgs['VV_origs'], 
+#                                kwgs['tt_origs'], 
+#                                beta0, 
+#                                kwgs['y0'], 
+#                                y_orig_targs, 
+#                                MFParams_orig_targs, 
+#                                proportion = 0.01)
 
-print("-$" * 20, " Gradient test ", "-$" * 20)
-print("Adjoint gradient: ", grad)
-print("Finite difference gradient: ", empirical_grad)
-print("-$" * 20, "               ", "-$" * 20)
+# print("-$" * 20, " Gradient test ", "-$" * 20)
+# print("Adjoint gradient: ", grad)
+# print("Finite difference gradient: ", empirical_grad)
+# print("-$" * 20, "               ", "-$" * 20)
 
 ## Number of total alpha-beta iterations
 N_AllIters = 1
-this_alpha = alpha
-this_beta = beta0
-this_VVs = VVs
-this_tts = tts
+# this_alpha = alpha
+this_beta = beta0.clone()
+VVs_prev = VVs
+tts_prev = tts
 
 ## Run alpha-beta iterations
+obj_origs = [obj]
+optimal_betas = [this_beta]
+MFParams_targs = [kwgs['MFParams_targ'] for i in range(kwgs['selectedNofSeqs'])]
+
 for i in range(N_AllIters):
     # Print out info
     print("#" * 40, " Total Iteration {0} ".format(i) + "#" * 40)
-    
+    this_VVs, this_tts, this_targ_ys = SampleAndFindTopNSeqs(kwgs, 
+                                                             kwgs['totalNofSeqs'], 
+                                                             kwgs['selectedNofSeqs'], 
+                                                             VVs_prev, 
+                                                             tts_prev, 
+                                                             this_beta, 
+                                                             kwgs['y0'], 
+                                                             kwgs['MFParams_targ'], 
+                                                             n_Workers, 
+                                                             parallel_pool)
     ## First optimize alpha
-    kwgs['alpha'] = this_alpha
+    # kwgs['alpha'] = this_alpha
     kwgs['beta_this'] = this_beta
     kwgs['VVs'] = this_VVs
     kwgs['tts'] = this_tts
 
-    ## Run grad descent on beta
+    # # Run grad descent on beta
     # Generate target v
     # ts, ys, MFParams_targs = generate_target_v(kwgs, this_VVs, this_tts, beta0)
+                #  kwgs, 
+                #  alpha,
+                #  VVs, tts, 
+                #  beta0, beta_low, beta_high, 
+                #  y0, targ_ys, MFParams_targs, 
+                #  objGrad_func, max_steps, scaling = torch.tensor([1., 1., 1., 1.]), 
+                #  stepping = 'BB', obs_rtol = 1e-5, grad_atol = 1.e-10, lsrh_steps = 10, 
+                #  regularizedFlag = False, 
+                #  NofTPts = 1000, this_rtol = 1.e-6, this_atol = 1.e-8, 
+                #  solver = 'dopri5', lawFlag = "aging", alter_grad_flag = False
+    # Run gradient descent
+    myGradBB = GradDescent(kwgs, kwgs['alpha'], this_VVs, this_tts,
+                           this_beta, kwgs['beta_low'], kwgs['beta_high'], 
+                           kwgs['y0'], this_targ_ys, MFParams_targs, 
+                           objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
+                           max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
+                           regularizedFlag = kwgs['regularizedFlag'], 
+                           NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'], 
+                           solver = kwgs['solver'], lawFlag = kwgs['lawFlag'], alter_grad_flag = kwgs['alter_grad_flag'])
+    
+    myGradBB.run()
+    
+    # Update parameters
+    this_beta = myGradBB.beta_optimal
+    optimal_betas.append(this_beta)
+    print("Optimal beta: ", this_beta)
 
-    # # Run gradient descent
-    # myGradBB = GradDescent(kwgs, this_alphas, kwgs['alp_low'], kwgs['alp_high'], kwgs['VTs'], 
-    #                        this_beta, kwgs['beta_low'], kwgs['beta_high'], 
-    #                        kwgs['y0'], vs, ts, MFParams_targs, 
-    #                        objGrad_func = objGradFunc, scaling = kwgs['scaling'], 
-    #                        max_steps = kwgs['max_iters'], stepping = kwgs['stepping'], obs_rtol = 1e-5, lsrh_steps = kwgs['lsrh_steps'], 
-    #                        regularizedFlag = kwgs['regularizedFlag'], 
-    #                        NofTPts = kwgs['NofTPts'], this_rtol = kwgs['this_rtol'], this_atol = kwgs['this_atol'], 
-    #                        solver = kwgs['solver'], lawFlag = kwgs['lawFlag'], alter_grad_flag = kwgs['alter_grad_flag'])
-    
-    # myGradBB.run()
-    
-    # # Update parameters
-    # this_beta = myGradBB.beta_optimal
-    # print("Optimal beta: ", this_beta)
+    VVs_prev = this_VVs
+    tts_prev = this_tts
+    this_obj_orig = objGradFunc(kwgs, 
+                                kwgs['alpha'], 
+                                kwgs['VV_origs'], 
+                                kwgs['tt_origs'], 
+                                this_beta, 
+                                kwgs['y0'], 
+                                y_orig_targs, 
+                                MFParams_orig_targs, 
+                                objOnly = True)
+    obj_origs.append(this_obj_orig)
+    optimal_betas.append(this_beta)
+
+# Find optimal obj
+sorted, indices = torch.sort(obj_origs)
+final_optimal_beta = optimal_betas[indices[0]]
 
 # Plot sequences
 print("[k, m, g]: ", alpha)
 print("beta_targ: ", beta_targ)
 print("beta0: ", beta0)
-print("this_beta: ", this_beta)
+print("final_optimal_beta: ", final_optimal_beta)
 print("stepping: ", stepping)
 print("solver: ", solver)
 print("lawFlag: ", lawFlag)
 print("alter_grad_flag", alter_grad_flag)
-# betas = [beta_targ, beta0, this_beta]
-# betas_legend = ["True", "Init", "Finl"]
-betas = [beta0, beta_targ]
-betas_legend = ["Init", "True"]
+betas = [beta_targ, beta0, final_optimal_beta]
+betas_legend = ["True", "Init", "Finl"]
+# betas = [beta0, beta_targ]
+# betas_legend = ["Init", "True"]
 plot_differences(kwgs, betas, betas_legend, res_path)
